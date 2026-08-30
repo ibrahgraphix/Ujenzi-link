@@ -1,0 +1,6 @@
+{
+  "name": "Ujenzi Link",
+  "description": "Construction industry marketplace & supplier directory by Plan Moja Company Ltd. Build Quality For Less.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
