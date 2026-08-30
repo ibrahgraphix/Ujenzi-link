@@ -1,5 +1,4 @@
 import { Category } from '../types';
-import { MOCK_CATEGORIES } from '../data/mockData';
 import apiClient from './apiClient';
 
 const STORAGE_KEY = 'ujenzi_categories_v1';
@@ -11,7 +10,7 @@ function mapBackendCategory(item: any): Category {
     slug: item.slug || (item.name ? item.name.toLowerCase().replace(/\s+/g, '-') : 'category'),
     iconName: item.iconName || item.icon_name || 'Package',
     description: item.description || '',
-    itemCount: item.itemCount ?? item.item_count ?? 12,
+    itemCount: item.itemCount ?? item.item_count ?? 0,
     imageUrl: item.imageUrl || item.image_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=400&q=80',
     popular: item.popular ?? true,
   };
@@ -20,11 +19,11 @@ function mapBackendCategory(item: any): Category {
 export async function getCategories(): Promise<Category[]> {
   try {
     const res = await apiClient.get<any[]>('/api/categories');
-    if (res && Array.isArray(res) && res.length > 0) {
+    if (res && Array.isArray(res)) {
       return res.map(mapBackendCategory);
     }
   } catch (err) {
-    console.warn('Failed to fetch categories from API, using fallback:', err);
+    console.warn('Failed to fetch categories from API:', err);
   }
 
   try {
@@ -34,7 +33,7 @@ export async function getCategories(): Promise<Category[]> {
     // fallback
   }
 
-  return MOCK_CATEGORIES;
+  return [];
 }
 
 export async function saveCategory(category: Category): Promise<Category> {

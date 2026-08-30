@@ -1,5 +1,5 @@
 import { supabase } from '../config';
-import { User, BuyerProfile, ProviderProfile, UserRole, BuyerType, ProviderType } from '../models';
+import { User, UserRole, BuyerType, ProviderType } from '../models';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,22 +18,22 @@ export class AuthService {
   }) {
     const { email, password, name, phone, role, buyerType, providerType, businessName, description, locationId } = data;
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+    // Create user in Supabase Auth via Admin API to bypass email confirmation
+    const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name, phone, role }
+    });
 
-    if (existingUser) {
-      throw new Error('User with this email already exists');
+    if (signUpError || !authData.user) {
+      throw new Error(`Failed to create auth user: ${signUpError?.message}`);
     }
 
-    // Hash password
+    const userId = authData.user.id;
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user
-    const userId = uuidv4();
+    // Create user profile in public users table
     const { data: user, error: userError } = await supabase
       .from('users')
       .insert({
@@ -50,7 +50,9 @@ export class AuthService {
       .single();
 
     if (userError) {
-      throw new Error(`Failed to create user: ${userError.message}`);
+      // Clean up Supabase Auth user if public profile insertion fails
+      await supabase.auth.admin.deleteUser(userId);
+      throw new Error(`Failed to create user profile: ${userError.message}`);
     }
 
     // Create role-specific profile
@@ -92,22 +94,26 @@ export class AuthService {
   }
 
   async loginUser(email: string, password: string) {
+    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError || !authData.user || !authData.session) {
+      throw new Error(signInError?.message || 'Invalid email or password');
+    }
+
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email)
+      .eq('id', authData.user.id)
       .single();
 
     if (error || !user) {
-      throw new Error('Invalid email or password');
+      throw new Error('User profile not found');
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
-      throw new Error('Invalid email or password');
-    }
-
-    return user;
+    return { user, token: authData.session.access_token };
   }
 
   async getUserById(userId: string) {

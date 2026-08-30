@@ -1,0 +1,34 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+const requiredEnvVars = [
+  'PORT',
+  'NODE_ENV',
+  'SUPABASE_URL',
+  'SUPABASE_SECRET_KEY',
+  'SUPABASE_JWKS_URL',
+  'SUPABASE_PUBLISHABLE_KEY',
+  'INTERNAL_EMAIL_DOMAIN',
+];
+
+const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
+
+if (missingEnvVars.length > 0) {
+  console.error('\n❌ CRITICAL STARTUP ERROR: Missing required environment variables:');
+  missingEnvVars.forEach((key) => {
+    console.error(`   - ${key}`);
+  });
+  console.error('\nPlease check your .env file or server environment and restart the server.\n');
+  process.exit(1);
+}
+
+export const config = {
+  port: parseInt(process.env.PORT || '3001', 10),
+  nodeEnv: process.env.NODE_ENV!,
+  supabaseUrl: process.env.SUPABASE_URL!,
+  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY!,
+  supabaseJwksUrl: process.env.SUPABASE_JWKS_URL!,
+  supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY!,
+  internalEmailDomain: process.env.INTERNAL_EMAIL_DOMAIN!,
+};
+export type Config = typeof config;

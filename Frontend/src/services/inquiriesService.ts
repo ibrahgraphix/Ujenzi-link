@@ -1,5 +1,4 @@
 import { Inquiry } from '../types';
-import { MOCK_INQUIRIES } from '../data/mockData';
 import apiClient from './apiClient';
 
 const STORAGE_KEY = 'ujenzi_inquiries_v1';
@@ -39,11 +38,11 @@ export async function getInquiries(userId?: string, role?: 'buyer' | 'provider' 
       res = await apiClient.get('/api/inquiries/received');
     }
     const items = Array.isArray(res) ? res : res?.inquiries || res?.data || [];
-    if (Array.isArray(items) && items.length > 0) {
+    if (Array.isArray(items)) {
       return items.map(mapBackendInquiry);
     }
   } catch (err) {
-    console.warn(`Failed to fetch inquiries for role ${role} from API, using fallback:`, err);
+    console.warn(`Failed to fetch inquiries for role ${role} from API:`, err);
   }
 
   try {
@@ -52,17 +51,14 @@ export async function getInquiries(userId?: string, role?: 'buyer' | 'provider' 
       const stored: Inquiry[] = JSON.parse(item);
       if (!userId || role === 'admin') return stored;
       if (role === 'buyer') return stored.filter((i) => i.buyerId === userId);
-      if (role === 'provider') return stored.filter((i) => i.providerId === userId || i.providerId === 'prov-plan-moja-contractors');
+      if (role === 'provider') return stored.filter((i) => i.providerId === userId);
       return stored;
     }
   } catch {
     // fallback
   }
 
-  if (!userId || role === 'admin') return MOCK_INQUIRIES;
-  if (role === 'buyer') return MOCK_INQUIRIES.filter((i) => i.buyerId === userId);
-  if (role === 'provider') return MOCK_INQUIRIES.filter((i) => i.providerId === userId || i.providerId === 'prov-plan-moja-contractors');
-  return MOCK_INQUIRIES;
+  return [];
 }
 
 export async function createInquiry(data: Omit<Inquiry, 'id' | 'createdAt' | 'status'>): Promise<Inquiry> {

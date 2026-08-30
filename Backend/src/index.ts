@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware';
 import healthRoutes from './routes/health';
 import authRoutes from './routes/auth';
@@ -14,11 +13,10 @@ import adminListingsRoutes from './routes/adminListings';
 import advertRoutes from './routes/adverts';
 import analyticsRoutes from './routes/analytics';
 import dashboardRoutes from './routes/dashboard';
-
-dotenv.config();
+import { config } from './config';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = config.port;
 
 // Middleware
 app.use(cors());
@@ -57,7 +55,7 @@ app.listen(PORT, () => {
   console.log(`📢 Adverts: http://localhost:${PORT}/api/adverts`);
   console.log(`📈 Analytics: http://localhost:${PORT}/api/analytics`);
   console.log(`📊 Dashboard: http://localhost:${PORT}/api/admin/dashboard`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌍 Environment: ${config.nodeEnv}`);
 });
 
 export default app;

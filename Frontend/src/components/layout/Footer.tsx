@@ -1,10 +1,18 @@
 import React from 'react';
-import { Building2, Phone, Mail, MapPin, ShieldCheck, ArrowUpRight, Heart } from 'lucide-react';
-import { MOCK_CATEGORIES } from '../../data/mockData';
+import { Building2, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
 }
+
+const FEATURED_CATEGORIES = [
+  'Cement & Aggregates',
+  'Steel Rebar & Metal',
+  'Roofing & Iron Sheets',
+  'Plumbing & Drainage',
+  'Electrical & Solar',
+  'Tiling & Finishing',
+];
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
@@ -79,13 +87,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               Popular Materials
             </h4>
             <ul className="space-y-2 text-xs">
-              {MOCK_CATEGORIES.slice(0, 6).map((cat) => (
-                <li key={cat.id}>
+              {FEATURED_CATEGORIES.map((catName) => (
+                <li key={catName}>
                   <button
-                    onClick={() => onNavigate('listings', { category: cat.name })}
+                    onClick={() => onNavigate('listings', { category: catName })}
                     className="hover:text-[#2E86D8] transition-colors text-left"
                   >
-                    {cat.name}
+                    {catName}
                   </button>
                 </li>
               ))}

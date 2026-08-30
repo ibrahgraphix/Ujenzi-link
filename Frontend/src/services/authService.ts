@@ -17,7 +17,7 @@ interface AuthResponse {
 
 function mapBackendUserToFrontendUser(backendUser: any): User {
   const role: AccountType = backendUser.role || backendUser.accountType || 'buyer';
-  
+
   return {
     id: backendUser.id || `user-${Date.now()}`,
     name: backendUser.name || backendUser.email?.split('@')[0] || 'User',
@@ -38,71 +38,38 @@ function mapBackendUserToFrontendUser(backendUser: any): User {
 }
 
 export async function login(email: string, password?: string): Promise<{ user: User; token: string }> {
-  try {
-    const res = await apiClient.post<AuthResponse>('/api/auth/login', {
-      email,
-      password: password || 'password123',
-    });
+  const res = await apiClient.post<AuthResponse>('/api/auth/login', {
+    email,
+    password: password || '',
+  });
 
-    const frontendUser = mapBackendUserToFrontendUser(res.user);
-    setStoredToken(res.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(frontendUser));
+  const frontendUser = mapBackendUserToFrontendUser(res.user);
+  setStoredToken(res.token);
+  localStorage.setItem(USER_KEY, JSON.stringify(frontendUser));
 
-    return { user: frontendUser, token: res.token };
-  } catch (err) {
-    console.warn('Real API login failed, falling back to local session handling:', err);
-    
-    // Fallback for offline/demo operation
-    const mockUser: User = {
-      id: 'user-mock-1',
-      email,
-      name: email.split('@')[0],
-      accountType: email.includes('admin') ? 'admin' : email.includes('provider') ? 'provider' : 'buyer',
-      phone: '+255 700 000 000',
-      location: { country: 'Tanzania', region: 'Dar es Salaam' },
-      createdAt: new Date().toISOString(),
-    };
-    const mockToken = 'mock-jwt-token';
-    setStoredToken(mockToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(mockUser));
-    return { user: mockUser, token: mockToken };
-  }
+  return { user: frontendUser, token: res.token };
 }
 
 export async function register(
   userData: Omit<User, 'id' | 'createdAt'> & { password?: string; createdAt?: string }
 ): Promise<{ user: User; token: string }> {
-  try {
-    const payload = {
-      email: userData.email,
-      password: userData.password || 'password123',
-      name: userData.name,
-      phone: userData.phone || '+255 700 000 000',
-      role: userData.accountType,
-      buyerType: userData.buyerRole?.toLowerCase(),
-      providerType: userData.providerType,
-      businessName: userData.businessName || userData.name,
-    };
+  const payload = {
+    email: userData.email,
+    password: userData.password || '',
+    name: userData.name,
+    phone: userData.phone || '+255 700 000 000',
+    role: userData.accountType,
+    buyerType: userData.buyerRole?.toLowerCase(),
+    providerType: userData.providerType,
+    businessName: userData.businessName || userData.name,
+  };
 
-    const res = await apiClient.post<AuthResponse>('/api/auth/register', payload);
-    const frontendUser = mapBackendUserToFrontendUser(res.user);
-    setStoredToken(res.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(frontendUser));
+  const res = await apiClient.post<AuthResponse>('/api/auth/register', payload);
+  const frontendUser = mapBackendUserToFrontendUser(res.user);
+  setStoredToken(res.token);
+  localStorage.setItem(USER_KEY, JSON.stringify(frontendUser));
 
-    return { user: frontendUser, token: res.token };
-  } catch (err) {
-    console.warn('Real API register failed, falling back to local session handling:', err);
-
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      ...userData,
-    };
-    const mockToken = 'mock-jwt-token';
-    setStoredToken(mockToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-    return { user: newUser, token: mockToken };
-  }
+  return { user: frontendUser, token: res.token };
 }
 
 export async function logout(): Promise<void> {
@@ -122,17 +89,13 @@ export async function getCurrentUser(): Promise<User | null> {
       return user;
     }
   } catch (err) {
-    console.warn('Failed to fetch current user from API, checking local storage:', err);
+    // Token is invalid or expired — clear local session
+    console.warn('Session check failed, clearing local token:', err);
+    setStoredToken(null);
+    localStorage.removeItem(USER_KEY);
+    return null;
   }
 
-  const savedUser = localStorage.getItem(USER_KEY);
-  if (savedUser) {
-    try {
-      return JSON.parse(savedUser);
-    } catch {
-      return null;
-    }
-  }
   return null;
 }
 

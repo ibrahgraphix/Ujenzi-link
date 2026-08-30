@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import { AuthService } from '../services/authService';
 import { UserRole, BuyerType, ProviderType } from '../models';
 import { AppError } from '../middleware';
@@ -49,16 +48,8 @@ export class AuthController {
         locationId
       });
 
-      // Generate JWT token
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        },
-        process.env.JWT_SECRET || 'default_secret',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
-      );
+      // Log in automatically to retrieve real Supabase access token
+      const loginResult = await authService.loginUser(email, password);
 
       res.status(201).json({
         status: 'success',
@@ -71,7 +62,7 @@ export class AuthController {
             phone: user.phone,
             role: user.role
           },
-          token
+          token: loginResult.token
         }
       });
     } catch (error) {
@@ -90,18 +81,7 @@ export class AuthController {
         throw new AppError(400, 'Email and password are required');
       }
 
-      const user = await authService.loginUser(email, password);
-
-      // Generate JWT token
-      const token = jwt.sign(
-        {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        },
-        process.env.JWT_SECRET || 'default_secret',
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
-      );
+      const { user, token } = await authService.loginUser(email, password);
 
       res.status(200).json({
         status: 'success',

@@ -1,16 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
+import { config } from './env';
 
-dotenv.config();
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+export const supabase: SupabaseClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
   auth: {
     autoRefreshToken: false,
     persistSession: false

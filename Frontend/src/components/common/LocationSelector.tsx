@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, RotateCcw } from 'lucide-react';
-import { TANZANIA_LOCATIONS } from '../../data/mockData';
 import { LocationHierarchy } from '../../types';
 import { getRegions, getDistrictsByRegion } from '../../services/locationsService';
 
@@ -29,11 +28,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   useEffect(() => {
     getRegions().then((regs) => {
-      if (regs && regs.length > 0) {
-        setRegionsList(regs);
-      } else {
-        setRegionsList(TANZANIA_LOCATIONS.regions.map((r) => r.name));
-      }
+      setRegionsList(regs || []);
     });
   }, []);
 
@@ -47,21 +42,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   useEffect(() => {
     if (selectedRegion) {
       getDistrictsByRegion(selectedRegion).then((dists) => {
-        if (dists && dists.length > 0) {
-          setDistrictsList(dists);
-        } else {
-          const found = TANZANIA_LOCATIONS.regions.find((r) => r.name === selectedRegion);
-          setDistrictsList(found ? found.districts.map((d) => d.name) : []);
-        }
+        setDistrictsList(dists || []);
       });
     } else {
       setDistrictsList([]);
     }
   }, [selectedRegion]);
-
-  const currentRegionData = TANZANIA_LOCATIONS.regions.find((r) => r.name === selectedRegion);
-  const currentDistrictData = currentRegionData?.districts.find((d) => d.name === selectedDistrict);
-  const currentWardData = currentDistrictData?.wards?.find((w) => w.name === selectedWard);
 
   const handleRegionChange = (newRegion: string) => {
     setSelectedRegion(newRegion);
@@ -182,19 +168,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {showAllLevels && (
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ward / Area</label>
-            <select
+            <input
+              type="text"
+              placeholder="e.g. Mikocheni, Kariakoo..."
               value={selectedWard}
               onChange={(e) => handleWardChange(e.target.value)}
-              disabled={!selectedDistrict || !currentDistrictData}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
-            >
-              <option value="">{selectedDistrict ? 'All Wards' : 'Select District first'}</option>
-              {currentDistrictData?.wards?.map((w) => (
-                <option key={w.name} value={w.name}>
-                  {w.name}
-                </option>
-              ))}
-            </select>
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
+            />
           </div>
         )}
 
@@ -202,19 +182,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {showAllLevels && (
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 mb-1">Street / Landmark</label>
-            <select
+            <input
+              type="text"
+              placeholder="e.g. Old Bagamoyo Rd..."
               value={selectedStreet}
               onChange={(e) => handleStreetChange(e.target.value)}
-              disabled={!selectedWard || !currentWardData}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
-            >
-              <option value="">{selectedWard ? 'All Streets' : 'Select Ward first'}</option>
-              {currentWardData?.streets?.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
+            />
           </div>
         )}
       </div>

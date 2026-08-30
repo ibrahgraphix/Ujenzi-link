@@ -1,5 +1,4 @@
 import { Provider, ProviderType } from '../types';
-import { MOCK_PROVIDERS } from '../data/mockData';
 import apiClient from './apiClient';
 
 const STORAGE_KEY = 'ujenzi_providers_v1';
@@ -21,9 +20,9 @@ function mapBackendProvider(p: any): Provider {
     bio: p.description || p.bio || 'Quality construction material supplier in Tanzania.',
     isVerified: p.is_verified ?? p.isVerified ?? false,
     verificationDate: p.verificationDate || p.updated_at,
-    rating: p.rating ?? 4.9,
-    reviewsCount: p.reviewsCount ?? 18,
-    yearsInBusiness: p.yearsInBusiness || 5,
+    rating: p.rating ?? 5.0,
+    reviewsCount: p.reviewsCount ?? 0,
+    yearsInBusiness: p.yearsInBusiness || 1,
     specialties: p.specialties || ['Construction Materials'],
     joinedDate: p.created_at || p.joinedDate || new Date().toISOString().split('T')[0],
     status: p.is_verified ? 'active' : p.status || 'pending',
@@ -34,7 +33,7 @@ export async function getProviders(type?: string): Promise<Provider[]> {
   try {
     const res = await apiClient.get<any[]>('/api/admin/providers');
     const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data || [];
-    if (Array.isArray(items) && items.length > 0) {
+    if (Array.isArray(items)) {
       const mapped = items.map(mapBackendProvider);
       if (type && type !== 'all') {
         return mapped.filter((p) => p.providerType === type);
@@ -42,7 +41,7 @@ export async function getProviders(type?: string): Promise<Provider[]> {
       return mapped;
     }
   } catch (err) {
-    console.warn('Failed to fetch providers from API, using fallback:', err);
+    console.warn('Failed to fetch providers from API:', err);
   }
 
   try {
@@ -58,10 +57,7 @@ export async function getProviders(type?: string): Promise<Provider[]> {
     // fallback
   }
 
-  if (type && type !== 'all') {
-    return MOCK_PROVIDERS.filter((p) => p.providerType === type);
-  }
-  return MOCK_PROVIDERS;
+  return [];
 }
 
 export async function getProviderById(id: string): Promise<Provider | null> {

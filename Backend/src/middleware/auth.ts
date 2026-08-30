@@ -1,7 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { JWTPayload, AuthRequest, UserRole } from '../models';
+import { Response, NextFunction } from 'express';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { config, supabase } from '../config';
+import { AuthRequest, UserRole } from '../models';
 import { AppError } from './errorHandler';
+
+// Remote JWKS set initialization
+const JWKS = createRemoteJWKSet(new URL(config.supabaseJwksUrl));
 
 export const authenticate = async (
   req: AuthRequest,
@@ -17,21 +21,44 @@ export const authenticate = async (
 
     const token = authHeader.substring(7);
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'default_secret'
-    ) as JWTPayload;
-
-    req.user = decoded;
-    next();
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
+    // Verify token using jose JWKS
+    let payload;
+    try {
+      const result = await jwtVerify(token, JWKS);
+      payload = result.payload;
+    } catch (jwtError: any) {
+      if (jwtError.code === 'ERR_JWT_EXPIRED' || jwtError.message?.toLowerCase().includes('expired')) {
+        throw new AppError(401, 'Token expired');
+      }
       throw new AppError(401, 'Invalid token');
     }
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new AppError(401, 'Token expired');
+
+    const userId = payload.sub;
+    const email = payload.email as string;
+
+    if (!userId) {
+      throw new AppError(401, 'Invalid token: Missing subject claim');
     }
-    throw error;
+
+    // Fetch user's role from the public users table
+    const { data: dbUser, error: dbError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (dbError || !dbUser) {
+      throw new AppError(401, 'User profile not found');
+    }
+
+    req.user = {
+      userId,
+      email,
+      role: dbUser.role as UserRole,
+    };
+    next();
+  } catch (error) {
+    next(error);
   }
 };
 

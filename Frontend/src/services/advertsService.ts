@@ -1,5 +1,4 @@
 import { Advert } from '../types';
-import { MOCK_ADVERTS } from '../data/mockData';
 import apiClient from './apiClient';
 
 const STORAGE_KEY = 'ujenzi_adverts_v1';
@@ -8,7 +7,7 @@ function mapBackendAdvert(ad: any): Advert {
   return {
     id: ad.id || `ad-${Date.now()}`,
     title: ad.title || 'Advert',
-    subtitle: ad.subtitle || 'Special Offer',
+    subtitle: ad.subtitle || '',
     sponsorName: ad.sponsorName || ad.sponsor_name || 'Ujenzi Partner',
     bannerUrl: ad.bannerUrl || ad.image_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=1200&q=80',
     targetUrl: ad.targetUrl || ad.link_url || '#',
@@ -19,8 +18,8 @@ function mapBackendAdvert(ad: any): Advert {
     startDate: ad.startDate || ad.starts_at || new Date().toISOString(),
     endDate: ad.endDate || ad.ends_at || new Date(Date.now() + 30 * 86400000).toISOString(),
     isActive: ad.isActive ?? ad.is_active ?? true,
-    impressions: ad.impressions || 1500,
-    clicks: ad.clicks || 120,
+    impressions: ad.impressions || 0,
+    clicks: ad.clicks || 0,
     ctaText: ad.ctaText || 'Learn More',
   };
 }
@@ -28,11 +27,11 @@ function mapBackendAdvert(ad: any): Advert {
 export async function getAdverts(): Promise<Advert[]> {
   try {
     const res = await apiClient.get<any[]>('/api/adverts/active');
-    if (res && Array.isArray(res) && res.length > 0) {
+    if (res && Array.isArray(res)) {
       return res.map(mapBackendAdvert);
     }
   } catch (err) {
-    console.warn('Failed to fetch active adverts from API, using fallback:', err);
+    console.warn('Failed to fetch active adverts from API:', err);
   }
 
   try {
@@ -42,7 +41,7 @@ export async function getAdverts(): Promise<Advert[]> {
     // fallback
   }
 
-  return MOCK_ADVERTS;
+  return [];
 }
 
 export async function getAllAdvertsAdmin(): Promise<Advert[]> {
@@ -52,7 +51,7 @@ export async function getAllAdvertsAdmin(): Promise<Advert[]> {
       return res.map(mapBackendAdvert);
     }
   } catch (err) {
-    console.warn('Failed to fetch all adverts via admin API, using fallback:', err);
+    console.warn('Failed to fetch all adverts via admin API:', err);
   }
   return getAdverts();
 }

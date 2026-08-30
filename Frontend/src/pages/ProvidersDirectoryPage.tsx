@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { Provider, ProviderType } from '../types';
 import { getProviders } from '../services/providersService';
+import { getRegions } from '../services/locationsService';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
-import { TANZANIA_LOCATIONS } from '../data/mockData';
 
 interface ProvidersDirectoryPageProps {
   initialType?: string;
@@ -38,6 +38,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   onOpenInquiry,
 }) => {
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [regionsList, setRegionsList] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string>(initialType);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [query, setQuery] = useState<string>('');
@@ -46,8 +47,12 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const all = await getProviders();
-      setProviders(all);
+      const [allProviders, regs] = await Promise.all([
+        getProviders(),
+        getRegions(),
+      ]);
+      setProviders(allProviders);
+      setRegionsList(regs);
       setIsLoading(false);
     };
     load();
@@ -55,14 +60,14 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
 
   const filteredProviders = providers.filter((p) => {
     if (selectedType !== 'all' && p.providerType !== selectedType) return false;
-    if (selectedRegion && p.location.region.toLowerCase() !== selectedRegion.toLowerCase()) return false;
+    if (selectedRegion && p.location?.region?.toLowerCase() !== selectedRegion.toLowerCase()) return false;
     if (query.trim()) {
       const q = query.toLowerCase();
       return (
         p.name.toLowerCase().includes(q) ||
         p.businessName.toLowerCase().includes(q) ||
         p.bio.toLowerCase().includes(q) ||
-        p.specialties.some((s) => s.toLowerCase().includes(q))
+        p.specialties?.some((s) => s.toLowerCase().includes(q))
       );
     }
     return true;
@@ -118,9 +123,9 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
               className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium focus:outline-none"
             >
               <option value="">All Tanzania Regions</option>
-              {TANZANIA_LOCATIONS.regions.map((reg) => (
-                <option key={reg.name} value={reg.name}>
-                  {reg.name}
+              {regionsList.map((reg) => (
+                <option key={reg} value={reg}>
+                  {reg}
                 </option>
               ))}
             </select>
@@ -203,7 +208,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
                   </div>
                   <div className="flex items-center gap-1 text-slate-600 truncate max-w-[150px]">
                     <MapPin className="w-3.5 h-3.5 text-[#2E86D8] shrink-0" />
-                    <span className="truncate">{provider.location.region}</span>
+                    <span className="truncate">{provider.location?.region}</span>
                   </div>
                 </div>
 

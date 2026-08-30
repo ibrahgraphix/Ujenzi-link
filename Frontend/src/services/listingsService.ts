@@ -1,5 +1,4 @@
 import { Listing, ProviderType } from '../types';
-import { MOCK_LISTINGS } from '../data/mockData';
 import apiClient from './apiClient';
 
 const STORAGE_KEY = 'ujenzi_listings_v1';
@@ -46,8 +45,8 @@ function mapBackendListing(item: any): Listing {
     providerName: providerProfile.business_name || providerUser.name || item.providerName || 'Local Supplier',
     providerType: (providerProfile.provider_type as ProviderType) || item.providerType || 'Retailer/Supplier',
     isVerified: providerProfile.is_verified ?? item.isVerified ?? false,
-    rating: item.rating ?? 4.8,
-    reviewsCount: item.reviewsCount ?? 12,
+    rating: item.rating ?? 5.0,
+    reviewsCount: item.reviewsCount ?? 0,
     createdAt: item.created_at || item.createdAt || new Date().toISOString(),
     status: item.status || 'active',
     isFeatured: item.isFeatured ?? item.admin_created ?? false,
@@ -145,12 +144,12 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
     const res = await apiClient.get<any>(endpoint);
 
     const items = Array.isArray(res) ? res : res?.listings || res?.data || [];
-    if (Array.isArray(items) && items.length > 0) {
+    if (Array.isArray(items)) {
       const mapped = items.map(mapBackendListing);
       return filterAndSortListingsLocally(mapped, params);
     }
   } catch (err) {
-    console.warn('Failed to fetch listings from API, using local storage/mock fallback:', err);
+    console.warn('Failed to fetch listings from API:', err);
   }
 
   try {
@@ -163,7 +162,7 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
     // fallback
   }
 
-  return filterAndSortListingsLocally(MOCK_LISTINGS, params);
+  return [];
 }
 
 export async function getListingById(id: string): Promise<Listing | null> {
@@ -234,7 +233,7 @@ export async function saveListing(listingData: Partial<Listing> & { id?: string 
     providerType: listingData.providerType || 'Retailer/Supplier',
     isVerified: listingData.isVerified || false,
     rating: 5.0,
-    reviewsCount: 1,
+    reviewsCount: 0,
     createdAt: new Date().toISOString().split('T')[0],
     status: listingData.status || 'active',
     isFeatured: listingData.isFeatured || false,

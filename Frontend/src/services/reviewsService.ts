@@ -1,5 +1,4 @@
 import { Review } from '../types';
-import { MOCK_REVIEWS } from '../data/mockData';
 
 const STORAGE_KEY = 'ujenzi_reviews_v1';
 
@@ -7,7 +6,6 @@ function getFromStorage<T>(key: string, defaultData: T): T {
   try {
     const item = localStorage.getItem(key);
     if (!item) {
-      localStorage.setItem(key, JSON.stringify(defaultData));
       return defaultData;
     }
     return JSON.parse(item);
@@ -25,7 +23,7 @@ function saveToStorage<T>(key: string, data: T): void {
 }
 
 export async function getReviews(providerId?: string): Promise<Review[]> {
-  const reviews = getFromStorage<Review[]>(STORAGE_KEY, MOCK_REVIEWS);
+  const reviews = getFromStorage<Review[]>(STORAGE_KEY, []);
   if (providerId) {
     return reviews.filter((r) => r.providerId === providerId);
   }
@@ -33,7 +31,7 @@ export async function getReviews(providerId?: string): Promise<Review[]> {
 }
 
 export async function addReview(review: Omit<Review, 'id' | 'date'>): Promise<Review> {
-  const reviews = getFromStorage<Review[]>(STORAGE_KEY, MOCK_REVIEWS);
+  const reviews = getFromStorage<Review[]>(STORAGE_KEY, []);
   const newRev: Review = {
     ...review,
     id: `rev-${Date.now()}`,

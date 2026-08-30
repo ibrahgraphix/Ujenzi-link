@@ -1,5 +1,4 @@
 import { User } from '../types';
-import { MOCK_USERS } from '../data/mockData';
 import apiClient from './apiClient';
 
 const STORAGE_KEY_USERS = 'ujenzi_users_v1';
@@ -24,11 +23,11 @@ export async function getUsers(): Promise<User[]> {
   try {
     const res = await apiClient.get<any[]>('/api/admin/users');
     const items = Array.isArray(res) ? res : (res as any)?.users || (res as any)?.data || [];
-    if (Array.isArray(items) && items.length > 0) {
+    if (Array.isArray(items)) {
       return items.map(mapBackendUser);
     }
   } catch (err) {
-    console.warn('Failed to fetch users from admin API, using fallback:', err);
+    console.warn('Failed to fetch users from admin API:', err);
   }
 
   try {
@@ -38,7 +37,7 @@ export async function getUsers(): Promise<User[]> {
     // fallback
   }
 
-  return MOCK_USERS;
+  return [];
 }
 
 export async function deactivateUser(userId: string): Promise<boolean> {
@@ -71,7 +70,7 @@ export async function getFavorites(userId: string): Promise<string[]> {
   } catch {
     // fallback
   }
-  return ['list-twiga-extra-425', 'list-plan-moja-construction'];
+  return [];
 }
 
 export async function toggleFavorite(userId: string, listingId: string): Promise<string[]> {
@@ -82,7 +81,7 @@ export async function toggleFavorite(userId: string, listingId: string): Promise
   } catch {
     favMap = {};
   }
-  const current = favMap[userId] || ['list-twiga-extra-425', 'list-plan-moja-construction'];
+  const current = favMap[userId] || [];
   const exists = current.includes(listingId);
   const updated = exists ? current.filter((id) => id !== listingId) : [...current, listingId];
   favMap[userId] = updated;
