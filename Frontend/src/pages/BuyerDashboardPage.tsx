@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Listing, Inquiry } from '../types';
-import { api } from '../services/api';
+import { getInquiries } from '../services/inquiriesService';
+import { getListings, getListingById } from '../services/listingsService';
 import { Button } from '../components/common/Button';
 import { ListingCard } from '../components/common/ListingCard';
 import { EmptyState } from '../components/common/EmptyState';
@@ -44,8 +45,8 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
     const load = async () => {
       setIsLoading(true);
       const [allListings, allInquiries] = await Promise.all([
-        api.getListings(),
-        api.getInquiries(),
+        getListings(),
+        getInquiries(),
       ]);
 
       setFavoriteListings(allListings.filter((l) => favorites.includes(l.id)));

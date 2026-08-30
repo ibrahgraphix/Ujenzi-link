@@ -27,7 +27,12 @@ import {
   Cell,
 } from 'recharts';
 import { Provider, Listing, Advert, Category } from '../types';
-import { api } from '../services/api';
+import { getProviders, verifyProvider } from '../services/providersService';
+import { getListings, deleteListing } from '../services/listingsService';
+import { getAdverts, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
+import { getCategories, saveCategory, deleteCategory } from '../services/categoriesService';
+import { getUsers } from '../services/usersService';
+import { getTrafficStats } from '../services/trafficService';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -76,10 +81,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const loadAdminData = async () => {
     setIsLoading(true);
     const [allProv, allListings, allAds, allCats] = await Promise.all([
-      api.getProviders(),
-      api.getListings(),
-      api.getAdverts(),
-      api.getCategories(),
+      getProviders(),
+      getListings(),
+      getAdverts(),
+      getCategories(),
     ]);
     setProviders(allProv);
     setListings(allListings);
@@ -94,7 +99,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
   const handleToggleVerification = async (provider: Provider) => {
     const newStatus = !provider.isVerified;
-    await api.verifyProvider(provider.id, newStatus);
+    await verifyProvider(provider.id, newStatus);
     setProviders((prev) =>
       prev.map((p) => (p.id === provider.id ? { ...p, isVerified: newStatus } : p))
     );
@@ -103,14 +108,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
   const handleDeleteListing = async (id: string) => {
     if (window.confirm('Delete this listing from the marketplace?')) {
-      await api.deleteListing(id);
+      await deleteListing(id);
       setListings((prev) => prev.filter((l) => l.id !== id));
       success('Listing removed.');
     }
   };
 
   const handleToggleAdvert = async (ad: Advert) => {
-    const updated = await api.updateAdvert(ad.id, { isActive: !ad.isActive });
+    const updated = await updateAdvert(ad.id, { isActive: !ad.isActive });
     setAdverts((prev) => prev.map((a) => (a.id === ad.id ? updated : a)));
     success(`Advert "${ad.title}" is now ${!ad.isActive ? 'Active' : 'Paused'}.`);
   };
@@ -121,7 +126,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       error('Please provide an advert title.');
       return;
     }
-    const newAd = await api.createAdvert({
+    const newAd = await createAdvert({
       title: adTitle,
       subtitle: adSubtitle,
       bannerUrl: adImageUrl || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=1200&q=80',

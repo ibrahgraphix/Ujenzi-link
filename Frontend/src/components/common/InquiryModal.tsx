@@ -4,7 +4,7 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input, Textarea } from './Input';
 import { Listing, Provider } from '../../types';
-import { api } from '../../services/api';
+import { createInquiry } from '../../services/inquiriesService';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -49,7 +49,7 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await api.createInquiry({
+      await createInquiry({
         listingId: listing?.id,
         listingTitle: listing?.title,
         listingImage: listing?.images?.[0],

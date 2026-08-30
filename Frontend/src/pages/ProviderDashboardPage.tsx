@@ -18,7 +18,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Listing, Inquiry, Provider, LocationHierarchy, Category } from '../types';
-import { api } from '../services/api';
+import { getListings, createListing, updateListing, deleteListing } from '../services/listingsService';
+import { getInquiries, updateInquiryStatus } from '../services/inquiriesService';
+import { getCategories } from '../services/categoriesService';
+import { getProviders } from '../services/providersService';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -73,10 +76,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const loadProviderData = async () => {
     setIsLoading(true);
     const [allListings, allInquiries, allCats, allProviders] = await Promise.all([
-      api.getListings(),
-      api.getInquiries(),
-      api.getCategories(),
-      api.getProviders(),
+      getListings(),
+      getInquiries(),
+      getCategories(),
+      getProviders(),
     ]);
 
     const prov = allProviders.find((p) => p.name === user?.name || p.id === 'prov-1') || allProviders[0];
@@ -120,7 +123,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
 
   const handleDeleteListing = async (id: string) => {
     if (window.confirm('Are you sure you want to remove this listing?')) {
-      await api.deleteListing(id);
+      await deleteListing(id);
       setMyListings((prev) => prev.filter((l) => l.id !== id));
       success('Listing deleted successfully.');
     }
@@ -143,7 +146,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     }
 
     if (editingListingId) {
-      const updated = await api.updateListing(editingListingId, {
+      const updated = await updateListing(editingListingId, {
         title: listingTitle,
         category: listingCategory,
         price: Number(listingPrice),
@@ -157,7 +160,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       setMyListings((prev) => prev.map((l) => (l.id === editingListingId ? updated : l)));
       success('Listing updated successfully.');
     } else {
-      const created = await api.createListing({
+      const created = await createListing({
         title: listingTitle,
         category: listingCategory,
         providerId: myProvider?.id || 'prov-1',
@@ -182,7 +185,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   };
 
   const handleInquiryStatusChange = async (inquiryId: string, newStatus: any) => {
-    await api.updateInquiryStatus(inquiryId, newStatus);
+    await updateInquiryStatus(inquiryId, newStatus);
     setInquiries((prev) =>
       prev.map((inq) => (inq.id === inquiryId ? { ...inq, status: newStatus } : inq))
     );

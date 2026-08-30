@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, RotateCcw } from 'lucide-react';
 import { TANZANIA_LOCATIONS } from '../../data/mockData';
 import { LocationHierarchy } from '../../types';
+import { getRegions, getDistrictsByRegion } from '../../services/locationsService';
 
 interface LocationSelectorProps {
   value?: LocationHierarchy;
   onChange: (location: LocationHierarchy) => void;
-  showAllLevels?: boolean; // if true, shows ward and street
+  showAllLevels?: boolean;
   compact?: boolean;
   className?: string;
 }
@@ -23,12 +24,40 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [selectedWard, setSelectedWard] = useState<string>(value?.ward || '');
   const [selectedStreet, setSelectedStreet] = useState<string>(value?.street || '');
 
+  const [regionsList, setRegionsList] = useState<string[]>([]);
+  const [districtsList, setDistrictsList] = useState<string[]>([]);
+
+  useEffect(() => {
+    getRegions().then((regs) => {
+      if (regs && regs.length > 0) {
+        setRegionsList(regs);
+      } else {
+        setRegionsList(TANZANIA_LOCATIONS.regions.map((r) => r.name));
+      }
+    });
+  }, []);
+
   useEffect(() => {
     setSelectedRegion(value?.region || '');
     setSelectedDistrict(value?.district || '');
     setSelectedWard(value?.ward || '');
     setSelectedStreet(value?.street || '');
   }, [value?.region, value?.district, value?.ward, value?.street]);
+
+  useEffect(() => {
+    if (selectedRegion) {
+      getDistrictsByRegion(selectedRegion).then((dists) => {
+        if (dists && dists.length > 0) {
+          setDistrictsList(dists);
+        } else {
+          const found = TANZANIA_LOCATIONS.regions.find((r) => r.name === selectedRegion);
+          setDistrictsList(found ? found.districts.map((d) => d.name) : []);
+        }
+      });
+    } else {
+      setDistrictsList([]);
+    }
+  }, [selectedRegion]);
 
   const currentRegionData = TANZANIA_LOCATIONS.regions.find((r) => r.name === selectedRegion);
   const currentDistrictData = currentRegionData?.districts.find((d) => d.name === selectedDistrict);
@@ -123,9 +152,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
           >
             <option value="">All Regions</option>
-            {TANZANIA_LOCATIONS.regions.map((r) => (
-              <option key={r.name} value={r.name}>
-                {r.name}
+            {regionsList.map((r) => (
+              <option key={r} value={r}>
+                {r}
               </option>
             ))}
           </select>
@@ -137,13 +166,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           <select
             value={selectedDistrict}
             onChange={(e) => handleDistrictChange(e.target.value)}
-            disabled={!selectedRegion || !currentRegionData}
+            disabled={!selectedRegion || districtsList.length === 0}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
           >
             <option value="">{selectedRegion ? 'All Districts' : 'Select Region first'}</option>
-            {currentRegionData?.districts.map((d) => (
-              <option key={d.name} value={d.name}>
-                {d.name}
+            {districtsList.map((d) => (
+              <option key={d} value={d}>
+                {d}
               </option>
             ))}
           </select>

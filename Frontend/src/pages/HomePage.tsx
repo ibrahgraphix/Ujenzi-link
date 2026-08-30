@@ -23,7 +23,10 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Listing, Provider, Category, Advert } from '../types';
-import { api } from '../services/api';
+import { getListings } from '../services/listingsService';
+import { getProviders } from '../services/providersService';
+import { getCategories } from '../services/categoriesService';
+import { getAdverts } from '../services/advertsService';
 import { ListingCard } from '../components/common/ListingCard';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
@@ -57,10 +60,10 @@ export const HomePage: React.FC<HomePageProps> = ({
   useEffect(() => {
     const loadData = async () => {
       const [allListings, allProviders, allCats, allAds] = await Promise.all([
-        api.getListings(),
-        api.getProviders(),
-        api.getCategories(),
-        api.getAdverts(),
+        getListings(),
+        getProviders(),
+        getCategories(),
+        getAdverts(),
       ]);
 
       setFeaturedListings(allListings.slice(0, 6));

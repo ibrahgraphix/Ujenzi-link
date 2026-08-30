@@ -17,6 +17,7 @@ import { ContactPage } from './pages/ContactPage';
 import { TermsPage } from './pages/TermsPage';
 import { InquiryModal } from './components/common/InquiryModal';
 import { Listing, Provider } from './types';
+import { trackVisit } from './services/trafficService';
 
 const MainApp: React.FC = () => {
   const { user } = useAuth();
@@ -26,6 +27,10 @@ const MainApp: React.FC = () => {
   const [pageParams, setPageParams] = useState<Record<string, any>>({});
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    trackVisit(`/${currentPage}`);
+  }, [currentPage]);
 
   // Inquiry Modal Global State
   const [inquiryModal, setInquiryModal] = useState<{
@@ -239,10 +244,10 @@ const MainApp: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
         <MainApp />
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

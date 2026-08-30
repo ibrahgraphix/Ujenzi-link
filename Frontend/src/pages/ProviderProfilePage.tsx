@@ -15,7 +15,9 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import { Provider, Listing, Review } from '../types';
-import { api } from '../services/api';
+import { getProviderById } from '../services/providersService';
+import { getListings } from '../services/listingsService';
+import { getReviews, addReview } from '../services/reviewsService';
 import { Button } from '../components/common/Button';
 import { ListingCard } from '../components/common/ListingCard';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
@@ -56,12 +58,12 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
   useEffect(() => {
     const loadProvider = async () => {
       setIsLoading(true);
-      const prov = await api.getProviderById(providerId);
+      const prov = await getProviderById(providerId);
       if (prov) {
         setProvider(prov);
         const [provListings, provReviews] = await Promise.all([
-          api.getListings({ providerId: prov.id }),
-          api.getReviews(prov.id),
+          getListings({ providerId: prov.id }),
+          getReviews(prov.id),
         ]);
         setListings(provListings);
         setReviews(provReviews);
@@ -111,7 +113,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
       return;
     }
 
-    const newRev = await api.addReview({
+    const newRev = await addReview({
       providerId: provider.id,
       authorName: reviewName,
       authorLocation: reviewLocation || 'Tanzania',

@@ -1,16 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AccountType, ProviderType, BuyerRole, LocationHierarchy } from '../types';
+import { User } from '../types';
 import { MOCK_USERS } from '../data/mockData';
-import { api } from '../services/api';
+import { getFavorites, toggleFavorite as toggleFavoriteApi } from '../services/usersService';
+import * as authService from '../services/authService';
 import { useToast } from './ToastContext';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loginAs: (role: 'buyer' | 'provider' | 'admin') => void;
-  login: (email: string, password?: string) => boolean | Promise<boolean>;
-  signUp: (userData: Omit<User, 'id' | 'createdAt'>) => void | Promise<boolean>;
-  signup: (userData: Omit<User, 'id' | 'createdAt'>) => void | Promise<boolean>;
+  login: (email: string, password?: string) => Promise<boolean>;
+  signUp: (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<boolean>;
+  signup: (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<boolean>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
   favorites: string[];
@@ -30,17 +31,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch {
       // fallback
     }
-    // Default to Buyer user for interactive ease
     return MOCK_USERS[0];
   });
 
   const [favorites, setFavorites] = useState<string[]>([]);
-  const { success, info } = useToast();
+  const { success, info, error } = useToast();
+
+  useEffect(() => {
+    // Sync current auth state from backend or local token
+    authService.getCurrentUser().then((currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      }
+    });
+
+    const handleUnauthorized = () => {
+      setUser(null);
+      localStorage.removeItem(CURRENT_USER_KEY);
+      error('Session expired. Please log in again.', 'Authentication Error');
+    };
+
+    window.addEventListener('ujenzi:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('ujenzi:unauthorized', handleUnauthorized);
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-      api.getFavorites(user.id).then(setFavorites);
+      getFavorites(user.id).then(setFavorites);
     } else {
       localStorage.removeItem(CURRENT_USER_KEY);
       setFavorites([]);
@@ -57,47 +77,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       targetUser = MOCK_USERS[0];
     }
     setUser(targetUser);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(targetUser));
     success(`Switched role to ${targetUser.name} (${targetUser.accountType.toUpperCase()})`, 'Demo Profile Activated');
   };
 
-  const login = (email: string, _password?: string): boolean => {
-    const found = MOCK_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (found) {
-      setUser(found);
-      success(`Welcome back, ${found.name}!`, 'Signed In');
+  const login = async (email: string, password?: string): Promise<boolean> => {
+    try {
+      const res = await authService.login(email, password);
+      setUser(res.user);
+      success(`Welcome back, ${res.user.name}!`, 'Signed In');
       return true;
+    } catch (err: any) {
+      error(err.message || 'Login failed. Please check your credentials.');
+      return false;
     }
-    // Create new temporary user if email not found
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      name: email.split('@')[0],
-      email,
-      phone: '+255 700 000 000',
-      accountType: 'buyer',
-      buyerRole: 'Developer',
-      location: {
-        country: 'Tanzania',
-        region: 'Dar es Salaam',
-      },
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setUser(newUser);
-    success(`Welcome to Ujenzi Link, ${newUser.name}!`, 'Account Created');
-    return true;
   };
 
-  const signUp = (userData: Omit<User, 'id' | 'createdAt'>): boolean => {
-    const newUser: User = {
-      ...userData,
-      id: `user-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setUser(newUser);
-    success(`Account created successfully as ${newUser.accountType === 'provider' ? newUser.providerType : newUser.buyerRole}!`, 'Welcome');
-    return true;
+  const signUp = async (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }): Promise<boolean> => {
+    try {
+      const res = await authService.register(userData);
+      setUser(res.user);
+      success(`Account created successfully as ${res.user.name}!`, 'Welcome');
+      return true;
+    } catch (err: any) {
+      error(err.message || 'Registration failed.');
+      return false;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
     info('You have been signed out.');
   };
@@ -116,7 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       info('Please sign in or select a demo role to bookmark listings.');
       return;
     }
-    const updated = await api.toggleFavorite(user.id, listingId);
+    const updated = await toggleFavoriteApi(user.id, listingId);
     setFavorites(updated);
     if (updated.includes(listingId)) {
       success('Listing added to your saved favorites!');

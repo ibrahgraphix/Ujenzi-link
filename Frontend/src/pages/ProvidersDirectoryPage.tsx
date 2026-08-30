@@ -11,7 +11,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Provider, ProviderType } from '../types';
-import { api } from '../services/api';
+import { getProviders } from '../services/providersService';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { TANZANIA_LOCATIONS } from '../data/mockData';
@@ -46,7 +46,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const all = await api.getProviders();
+      const all = await getProviders();
       setProviders(all);
       setIsLoading(false);
     };

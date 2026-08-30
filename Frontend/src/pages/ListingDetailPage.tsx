@@ -17,7 +17,8 @@ import {
   Star,
 } from 'lucide-react';
 import { Listing, Provider } from '../types';
-import { api } from '../services/api';
+import { getListingById, getListings } from '../services/listingsService';
+import { getProviderById } from '../services/providersService';
 import { Button } from '../components/common/Button';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { ListingCard } from '../components/common/ListingCard';
@@ -51,12 +52,12 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
   useEffect(() => {
     const loadListingDetails = async () => {
       setIsLoading(true);
-      const current = await api.getListingById(listingId);
+      const current = await getListingById(listingId);
       if (current) {
         setListing(current);
         const [prov, allListings] = await Promise.all([
-          api.getProviderById(current.providerId),
-          api.getListings({ category: current.category }),
+          getProviderById(current.providerId),
+          getListings({ category: current.category }),
         ]);
         setProvider(prov);
         setRelatedListings(allListings.filter((l) => l.id !== current.id).slice(0, 3));

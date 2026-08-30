@@ -13,7 +13,8 @@ import {
   Building,
 } from 'lucide-react';
 import { Listing, Category, ProviderType, LocationHierarchy } from '../types';
-import { api, ListingFilterParams } from '../services/api';
+import { getListings, ListingFilterParams } from '../services/listingsService';
+import { getCategories } from '../services/categoriesService';
 import { ListingCard } from '../components/common/ListingCard';
 import { LocationSelector } from '../components/common/LocationSelector';
 import { EmptyState } from '../components/common/EmptyState';
@@ -73,7 +74,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
   const itemsPerPage = 9;
 
   useEffect(() => {
-    api.getCategories().then(setCategories);
+    getCategories().then(setCategories);
   }, []);
 
   const fetchFilteredListings = async () => {
@@ -91,7 +92,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       sortBy,
     };
 
-    const results = await api.getListings(params);
+    const results = await getListings(params);
     setListings(results);
     setCurrentPage(1);
     setIsLoading(false);
