@@ -3,6 +3,7 @@ import { MapPin, Heart, MessageSquare, Phone, ShieldCheck, ArrowUpRight } from '
 import { Listing } from '../../types';
 import { ProviderTypeBadge, VerifiedBadge } from './Badge';
 import { useAuth } from '../../context/AuthContext';
+import { cardImageUrl } from '../../utils/imagekit';
 
 interface ListingCardProps {
   listing: Listing;
@@ -43,8 +44,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({
   };
 
   const primaryImage = listing.images && listing.images.length > 0
-    ? listing.images[0]
-    : 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80';
+    ? cardImageUrl(listing.images[0])
+    : cardImageUrl('https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80');
 
   if (layout === 'list') {
     return (

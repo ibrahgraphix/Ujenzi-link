@@ -16,6 +16,11 @@ export class ListingController {
 
       const listing = await listingService.getListingById(listingId);
 
+      // Public endpoint: only return active listings
+      if (listing.status !== ListingStatus.ACTIVE) {
+        throw new AppError(404, 'Listing not found');
+      }
+
       res.status(200).json({
         status: 'success',
         data: { listing }
@@ -38,7 +43,8 @@ export class ListingController {
         price,
         unit,
         locationId,
-        imageUrls
+        images,
+        imageUrls,
       } = req.body;
 
       if (!categoryId || !title || !description || !price || !locationId) {
@@ -71,7 +77,8 @@ export class ListingController {
         unit,
         locationId,
         adminCreated,
-        imageUrls
+        images,
+        imageUrls,
       });
 
       res.status(201).json({
@@ -98,7 +105,8 @@ export class ListingController {
         unit,
         locationId,
         status,
-        imageUrls
+        images,
+        imageUrls,
       } = req.body;
 
       if (!listingId) {
@@ -121,7 +129,8 @@ export class ListingController {
           unit,
           locationId,
           status,
-          imageUrls
+          images,
+          imageUrls,
         }
       );
 

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AdminListingService } from '../services/adminListingService';
 import { AppError } from '../middleware';
 import { ListingStatus, UserRole, AuthRequest } from '../models';
@@ -14,7 +14,6 @@ export class AdminListingController {
         throw new AppError(401, 'User not authenticated');
       }
 
-      // Only admins can access this endpoint
       if (req.user.role !== UserRole.ADMIN) {
         throw new AppError(403, 'Only admins can view all listings');
       }
@@ -35,6 +34,92 @@ export class AdminListingController {
     } catch (error) {
       if (error instanceof Error) {
         throw new AppError(500, error.message);
+      }
+      throw error;
+    }
+  };
+
+  getPendingListings = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can view pending listings');
+      }
+
+      const listings = await adminListingService.getPendingListings();
+
+      res.status(200).json({
+        status: 'success',
+        data: { listings }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(500, error.message);
+      }
+      throw error;
+    }
+  };
+
+  approveListing = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { listingId } = req.params;
+
+      if (!listingId) {
+        throw new AppError(400, 'Listing ID is required');
+      }
+
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can approve listings');
+      }
+
+      const listing = await adminListingService.approveListing(listingId, req.user.userId);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Listing approved and is now active',
+        data: { listing }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  };
+
+  rejectListing = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { listingId } = req.params;
+
+      if (!listingId) {
+        throw new AppError(400, 'Listing ID is required');
+      }
+
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can reject listings');
+      }
+
+      const listing = await adminListingService.rejectListing(listingId, req.user.userId);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Listing rejected and marked inactive',
+        data: { listing }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
       }
       throw error;
     }
@@ -61,7 +146,6 @@ export class AdminListingController {
         throw new AppError(401, 'User not authenticated');
       }
 
-      // Only admins can change listing status
       if (req.user.role !== UserRole.ADMIN) {
         throw new AppError(403, 'Only admins can change listing status');
       }

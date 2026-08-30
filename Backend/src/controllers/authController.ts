@@ -18,7 +18,10 @@ export class AuthController {
         providerType,
         businessName,
         description,
-        locationId
+        locationId,
+        institutionName,
+        projectName,
+        projectDescription
       } = req.body;
 
       // Validate required fields
@@ -45,7 +48,10 @@ export class AuthController {
         providerType,
         businessName,
         description,
-        locationId
+        locationId,
+        institutionName,
+        projectName,
+        projectDescription
       });
 
       // Log in automatically to retrieve real Supabase access token

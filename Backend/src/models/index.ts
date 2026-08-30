@@ -27,7 +27,8 @@ export enum ProviderType {
 export enum ListingStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
-  SOLD = 'sold'
+  SOLD = 'sold',
+  PENDING_REVIEW = 'pending_review'
 }
 
 // Inquiry status enum
@@ -54,6 +55,9 @@ export interface BuyerProfile {
   user_id: string;
   buyer_type: BuyerType;
   company_name?: string;
+  institution_name?: string;
+  project_name?: string;
+  project_description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +69,8 @@ export interface ProviderProfile {
   business_name: string;
   description?: string;
   location_id?: string;
+  logo?: string;
+  logo_file_id?: string;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
@@ -74,6 +80,7 @@ export interface Location {
   id: string;
   country: string;
   region: string;
+  county?: string;
   district: string;
   ward?: string;
   street?: string;
@@ -108,6 +115,7 @@ export interface ListingImage {
   id: string;
   listing_id: string;
   image_url: string;
+  file_id?: string;
   display_order: number;
   created_at: string;
 }
@@ -127,8 +135,11 @@ export interface Advert {
   id: string;
   title: string;
   image_url: string;
+  image_file_id?: string;
   link_url: string;
   is_active: boolean;
+  is_paid: boolean;
+  price_amount?: number;
   starts_at: string;
   ends_at: string;
   provider_id?: string;

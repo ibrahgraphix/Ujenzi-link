@@ -13,6 +13,9 @@ import adminListingsRoutes from './routes/adminListings';
 import advertRoutes from './routes/adverts';
 import analyticsRoutes from './routes/analytics';
 import dashboardRoutes from './routes/dashboard';
+import buyerProfileRoutes from './routes/buyerProfile';
+import uploadRoutes from './routes/uploads';
+import providerProfileRoutes from './routes/providerProfile';
 import { config } from './config';
 
 const app = express();
@@ -36,6 +39,9 @@ app.use('/api/admin/listings', adminListingsRoutes);
 app.use('/api/adverts', advertRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin/dashboard', dashboardRoutes);
+app.use('/api/buyer', buyerProfileRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use('/api/provider', providerProfileRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -2,6 +2,7 @@ import React from 'react';
 import { Sparkles, Phone, MessageSquare, ExternalLink, ArrowRight } from 'lucide-react';
 import { Advert } from '../../types';
 import { Button } from './Button';
+import { cardImageUrl } from '../../utils/imagekit';
 
 interface AdvertBannerProps {
   advert: Advert;
@@ -80,7 +81,7 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
       {/* Background Image with overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src={advert.bannerUrl}
+          src={cardImageUrl(advert.bannerUrl)}
           alt={advert.title}
           className="w-full h-full object-cover opacity-25 filter blur-[1px]"
         />

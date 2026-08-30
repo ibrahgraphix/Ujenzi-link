@@ -24,6 +24,7 @@ import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { ListingCard } from '../components/common/ListingCard';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { detailImageUrl, thumbnailUrl, logoImageUrl } from '../utils/imagekit';
 
 interface ListingDetailPageProps {
   listingId: string;
@@ -163,7 +164,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
           {/* Main Large Image */}
           <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-md">
             <img
-              src={images[selectedImageIndex] || images[0]}
+              src={detailImageUrl(images[selectedImageIndex] || images[0])}
               alt={listing.title}
               className="w-full h-full object-cover"
             />
@@ -192,7 +193,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                       : 'border-slate-200 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                  <img src={thumbnailUrl(img)} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -330,7 +331,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                 className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-[#2E86D8] cursor-pointer transition-colors"
               >
                 <img
-                  src={provider?.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80'}
+                  src={logoImageUrl(provider?.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80')}
                   alt={listing.providerName}
                   className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
                 />

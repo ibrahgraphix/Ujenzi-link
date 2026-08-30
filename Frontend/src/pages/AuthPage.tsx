@@ -10,11 +10,13 @@ import {
   ShieldCheck,
   ArrowRight,
   Sparkles,
+  Briefcase,
+  Home,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
-import { AccountType, ProviderType, BuyerRole } from '../types';
+import { AccountType, ProviderType } from '../types';
 import { useToast } from '../context/ToastContext';
 
 interface AuthPageProps {
@@ -41,7 +43,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [phone, setPhone] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [providerType, setProviderType] = useState<ProviderType>('Retailer/Supplier');
-  const [buyerRole, setBuyerRole] = useState<BuyerRole>('Homeowner');
+
+  // Buyer type: 'customer' (simple buyer) or 'client' (institution/project-based)
+  const [buyerType, setBuyerType] = useState<'customer' | 'client'>('customer');
+
+  // Client-only fields
+  const [institutionName, setInstitutionName] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,9 +77,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         email,
         phone,
         accountType,
+        buyerType: accountType === 'buyer' ? buyerType : undefined,
         businessName: accountType === 'provider' ? businessName || name : undefined,
         providerType: accountType === 'provider' ? providerType : undefined,
-        buyerRole: accountType === 'buyer' ? buyerRole : undefined,
+        institutionName: accountType === 'buyer' && buyerType === 'client' ? institutionName : undefined,
+        projectName: accountType === 'buyer' && buyerType === 'client' ? projectName : undefined,
+        projectDescription: accountType === 'buyer' && buyerType === 'client' ? projectDescription : undefined,
         location: { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
       });
 
@@ -204,6 +216,82 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 required
               />
 
+              {/* Buyer-specific fields */}
+              {accountType === 'buyer' && (
+                <div className="space-y-4">
+                  {/* Customer vs Client toggle */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      Buyer Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div
+                        onClick={() => setBuyerType('customer')}
+                        className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center text-center ${
+                          buyerType === 'customer'
+                            ? 'border-[#2E86D8] bg-blue-50/50 text-[#1B3A6B]'
+                            : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                        }`}
+                      >
+                        <Home className="w-5 h-5 mb-1 text-[#2E86D8]" />
+                        <span className="text-xs font-bold">Customer</span>
+                        <span className="text-[10px] text-slate-400">Personal / Homeowner</span>
+                      </div>
+
+                      <div
+                        onClick={() => setBuyerType('client')}
+                        className={`p-3 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center text-center ${
+                          buyerType === 'client'
+                            ? 'border-[#8B5E3C] bg-amber-50/50 text-[#8B5E3C]'
+                            : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                        }`}
+                      >
+                        <Briefcase className="w-5 h-5 mb-1 text-[#8B5E3C]" />
+                        <span className="text-xs font-bold">Client</span>
+                        <span className="text-[10px] text-slate-400">Institution / Project</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Client-only project fields */}
+                  {buyerType === 'client' && (
+                    <div className="space-y-3 p-4 bg-amber-50/60 border border-amber-200 rounded-2xl">
+                      <p className="text-[11px] font-semibold text-amber-700 flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5" />
+                        Institution & Project Details
+                      </p>
+                      <Input
+                        label="Institution / Organization Name"
+                        type="text"
+                        placeholder="e.g. Tanzania Roads Authority"
+                        value={institutionName}
+                        onChange={(e) => setInstitutionName(e.target.value)}
+                      />
+                      <Input
+                        label="Project Name"
+                        type="text"
+                        placeholder="e.g. Dodoma Road Expansion Phase II"
+                        value={projectName}
+                        onChange={(e) => setProjectName(e.target.value)}
+                      />
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                          Project Description
+                        </label>
+                        <textarea
+                          rows={3}
+                          placeholder="Briefly describe the project scope and material requirements..."
+                          value={projectDescription}
+                          onChange={(e) => setProjectDescription(e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium resize-none focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Provider-specific fields */}
               {accountType === 'provider' && (
                 <>
                   <Input
@@ -233,24 +321,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     </select>
                   </div>
                 </>
-              )}
-
-              {accountType === 'buyer' && (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Your Primary Activity
-                  </label>
-                  <select
-                    value={buyerRole}
-                    onChange={(e) => setBuyerRole(e.target.value as BuyerRole)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
-                  >
-                    <option value="Homeowner">Homeowner / Private Builder</option>
-                    <option value="Property Developer">Commercial Property Developer</option>
-                    <option value="Contractor Sourcing">Contractor Sourcing Materials</option>
-                    <option value="Site Engineer">Site Engineer / Project Manager</option>
-                  </select>
-                </div>
               )}
 
               <Input

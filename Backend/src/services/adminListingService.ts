@@ -69,6 +69,37 @@ export class AdminListingService {
     };
   }
 
+  async getPendingListings() {
+    const { data: listings, error } = await supabase
+      .from('listings')
+      .select(`
+        *,
+        categories (*),
+        locations (*),
+        provider_profiles (
+          *,
+          users (*)
+        ),
+        listing_images (*)
+      `)
+      .eq('status', ListingStatus.PENDING_REVIEW)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch pending listings: ${error.message}`);
+    }
+
+    return listings || [];
+  }
+
+  async approveListing(listingId: string, adminId: string) {
+    return this.changeListingStatus(listingId, ListingStatus.ACTIVE, adminId);
+  }
+
+  async rejectListing(listingId: string, adminId: string) {
+    return this.changeListingStatus(listingId, ListingStatus.INACTIVE, adminId);
+  }
+
   async changeListingStatus(listingId: string, status: ListingStatus, adminId: string) {
     // Check if listing exists
     const { data: listing, error: fetchError } = await supabase

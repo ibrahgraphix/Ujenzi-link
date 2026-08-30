@@ -26,7 +26,38 @@ router.get('/me', authenticate, asyncHandler(async (req: any, res: any) => {
     return res.status(404).json({ status: 'error', message: 'User not found' });
   }
 
-  res.json({ status: 'success', data: { user } });
+  const enrichedUser: Record<string, any> = { ...user };
+
+  if (user.role === 'buyer') {
+    const { data: buyerProfile } = await supabase
+      .from('buyer_profiles')
+      .select('buyer_type, institution_name, project_name, project_description')
+      .eq('user_id', userId)
+      .single();
+
+    if (buyerProfile) {
+      enrichedUser.buyer_type = buyerProfile.buyer_type;
+      enrichedUser.institution_name = buyerProfile.institution_name;
+      enrichedUser.project_name = buyerProfile.project_name;
+      enrichedUser.project_description = buyerProfile.project_description;
+    }
+  }
+
+  if (user.role === 'provider') {
+    const { data: providerProfile } = await supabase
+      .from('provider_profiles')
+      .select('provider_type, business_name, is_verified')
+      .eq('user_id', userId)
+      .single();
+
+    if (providerProfile) {
+      enrichedUser.provider_type = providerProfile.provider_type;
+      enrichedUser.business_name = providerProfile.business_name;
+      enrichedUser.is_verified = providerProfile.is_verified;
+    }
+  }
+
+  res.json({ status: 'success', data: { user: enrichedUser } });
 }));
 
 router.get('/admin-only', authenticate, authorize(UserRole.ADMIN), asyncHandler(async (req: any, res: any) => {

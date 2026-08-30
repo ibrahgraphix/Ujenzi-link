@@ -83,6 +83,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       query: query || undefined,
       category: category !== 'all' ? category : undefined,
       region: location.region || undefined,
+      county: location.county || undefined,
       district: location.district || undefined,
       ward: location.ward || undefined,
       providerType: providerType !== 'all' ? providerType : undefined,

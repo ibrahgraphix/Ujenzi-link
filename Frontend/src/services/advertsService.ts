@@ -18,6 +18,9 @@ function mapBackendAdvert(ad: any): Advert {
     startDate: ad.startDate || ad.starts_at || new Date().toISOString(),
     endDate: ad.endDate || ad.ends_at || new Date(Date.now() + 30 * 86400000).toISOString(),
     isActive: ad.isActive ?? ad.is_active ?? true,
+    isPaid: ad.isPaid ?? ad.is_paid ?? false,
+    priceAmount: ad.priceAmount ?? ad.price_amount ?? undefined,
+    bannerFileId: ad.bannerFileId || ad.image_file_id,
     impressions: ad.impressions || 0,
     clicks: ad.clicks || 0,
     ctaText: ad.ctaText || 'Learn More',
@@ -46,9 +49,10 @@ export async function getAdverts(): Promise<Advert[]> {
 
 export async function getAllAdvertsAdmin(): Promise<Advert[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/adverts');
-    if (res && Array.isArray(res)) {
-      return res.map(mapBackendAdvert);
+    const res = await apiClient.get<{ adverts: any[] }>('/api/adverts');
+    const items = Array.isArray(res) ? res : res?.adverts || [];
+    if (Array.isArray(items)) {
+      return items.map(mapBackendAdvert);
     }
   } catch (err) {
     console.warn('Failed to fetch all adverts via admin API:', err);
@@ -56,18 +60,23 @@ export async function getAllAdvertsAdmin(): Promise<Advert[]> {
   return getAdverts();
 }
 
-export async function createAdvert(advertData: Omit<Advert, 'id'>): Promise<Advert> {
+export async function createAdvert(
+  advertData: Omit<Advert, 'id'> & { bannerFileId?: string }
+): Promise<Advert> {
   try {
     const payload = {
       title: advertData.title,
-      image_url: advertData.bannerUrl,
-      link_url: advertData.targetUrl || '#',
-      is_active: advertData.isActive ?? true,
-      starts_at: advertData.startDate || new Date().toISOString(),
-      ends_at: advertData.endDate || new Date(Date.now() + 30 * 86400000).toISOString(),
+      imageUrl: advertData.bannerUrl,
+      imageFileId: advertData.bannerFileId,
+      linkUrl: advertData.targetUrl || '#',
+      isActive: advertData.isActive ?? true,
+      isPaid: advertData.isPaid ?? false,
+      priceAmount: advertData.priceAmount,
+      startsAt: advertData.startDate || new Date().toISOString(),
+      endsAt: advertData.endDate || new Date(Date.now() + 30 * 86400000).toISOString(),
     };
     const res = await apiClient.post('/api/adverts', payload);
-    if (res) return mapBackendAdvert(res);
+    if (res) return mapBackendAdvert(res.advert || res);
   } catch (err) {
     console.warn('Failed to create advert via API, updating locally:', err);
   }
@@ -83,16 +92,19 @@ export async function createAdvert(advertData: Omit<Advert, 'id'>): Promise<Adve
   return newAd;
 }
 
-export async function updateAdvert(id: string, advertData: Partial<Advert>): Promise<Advert> {
+export async function updateAdvert(id: string, advertData: Partial<Advert> & { bannerFileId?: string }): Promise<Advert> {
   try {
     const payload = {
       title: advertData.title,
-      image_url: advertData.bannerUrl,
-      link_url: advertData.targetUrl,
-      is_active: advertData.isActive,
+      imageUrl: advertData.bannerUrl,
+      imageFileId: advertData.bannerFileId,
+      linkUrl: advertData.targetUrl,
+      isActive: advertData.isActive,
+      isPaid: advertData.isPaid,
+      priceAmount: advertData.priceAmount,
     };
     const res = await apiClient.put(`/api/adverts/${id}`, payload);
-    if (res) return mapBackendAdvert(res);
+    if (res) return mapBackendAdvert(res.advert || res);
   } catch (err) {
     console.warn(`Failed to update advert ${id} via API, updating locally:`, err);
   }

@@ -9,6 +9,9 @@ const requiredEnvVars = [
   'SUPABASE_JWKS_URL',
   'SUPABASE_PUBLISHABLE_KEY',
   'INTERNAL_EMAIL_DOMAIN',
+  'IMAGEKIT_PUBLIC_KEY',
+  'IMAGEKIT_PRIVATE_KEY',
+  'IMAGEKIT_URL_ENDPOINT',
 ];
 
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
@@ -30,5 +33,8 @@ export const config = {
   supabaseJwksUrl: process.env.SUPABASE_JWKS_URL!,
   supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY!,
   internalEmailDomain: process.env.INTERNAL_EMAIL_DOMAIN!,
+  imagekitPublicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
+  imagekitPrivateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
+  imagekitUrlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
 };
 export type Config = typeof config;

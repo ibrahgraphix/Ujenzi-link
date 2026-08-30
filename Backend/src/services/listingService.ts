@@ -1,7 +1,34 @@
 import { supabase } from '../config';
-import { Listing, ListingImage, ListingStatus, UserRole } from '../models';
+import { ListingStatus, UserRole } from '../models';
+import { ImageKitService, ImagePayload } from './imagekitService';
+
+const imageKitService = new ImageKitService();
+
+function normalizeImages(
+  images?: ImagePayload[],
+  imageUrls?: string[]
+): ImagePayload[] {
+  if (images && images.length > 0) {
+    return images.filter((img) => img.url);
+  }
+  if (imageUrls && imageUrls.length > 0) {
+    return imageUrls.map((url) => ({ url }));
+  }
+  return [];
+}
 
 export class ListingService {
+  private async getListingImageFileIds(listingId: string): Promise<string[]> {
+    const { data: rows } = await supabase
+      .from('listing_images')
+      .select('file_id')
+      .eq('listing_id', listingId);
+
+    return (rows || [])
+      .map((row) => row.file_id)
+      .filter((id): id is string => Boolean(id));
+  }
+
   async getListingById(listingId: string) {
     const { data: listing, error } = await supabase
       .from('listings')
@@ -34,6 +61,7 @@ export class ListingService {
     unit?: string;
     locationId: string;
     adminCreated?: boolean;
+    images?: ImagePayload[];
     imageUrls?: string[];
   }) {
     const {
@@ -45,10 +73,12 @@ export class ListingService {
       unit,
       locationId,
       adminCreated = false,
-      imageUrls = []
+      images,
+      imageUrls,
     } = data;
 
-    // Verify provider exists
+    const normalizedImages = normalizeImages(images, imageUrls);
+
     const { data: provider, error: providerError } = await supabase
       .from('provider_profiles')
       .select('id')
@@ -59,7 +89,6 @@ export class ListingService {
       throw new Error('Provider not found');
     }
 
-    // Create listing
     const { data: listing, error: listingError } = await supabase
       .from('listings')
       .insert({
@@ -71,10 +100,10 @@ export class ListingService {
         price,
         unit,
         location_id: locationId,
-        status: ListingStatus.ACTIVE,
+        status: ListingStatus.PENDING_REVIEW,
         admin_created: adminCreated,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -83,19 +112,17 @@ export class ListingService {
       throw new Error(`Failed to create listing: ${listingError?.message}`);
     }
 
-    // Add images if provided
-    if (imageUrls.length > 0) {
-      const images = imageUrls.map((url, index) => ({
+    if (normalizedImages.length > 0) {
+      const rows = normalizedImages.map((img, index) => ({
         id: crypto.randomUUID(),
         listing_id: listing.id,
-        image_url: url,
+        image_url: img.url,
+        file_id: img.fileId || null,
         display_order: index + 1,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       }));
 
-      const { error: imagesError } = await supabase
-        .from('listing_images')
-        .insert(images);
+      const { error: imagesError } = await supabase.from('listing_images').insert(rows);
 
       if (imagesError) {
         throw new Error(`Listing created but failed to add images: ${imagesError.message}`);
@@ -105,28 +132,24 @@ export class ListingService {
     return listing;
   }
 
-  async updateListing(listingId: string, userId: string, userRole: UserRole, data: {
-    categoryId?: string;
-    title?: string;
-    description?: string;
-    price?: number;
-    unit?: string;
-    locationId?: string;
-    status?: ListingStatus;
-    imageUrls?: string[];
-  }) {
-    const {
-      categoryId,
-      title,
-      description,
-      price,
-      unit,
-      locationId,
-      status,
-      imageUrls
-    } = data;
+  async updateListing(
+    listingId: string,
+    userId: string,
+    userRole: UserRole,
+    data: {
+      categoryId?: string;
+      title?: string;
+      description?: string;
+      price?: number;
+      unit?: string;
+      locationId?: string;
+      status?: ListingStatus;
+      images?: ImagePayload[];
+      imageUrls?: string[];
+    }
+  ) {
+    const { categoryId, title, description, price, unit, locationId, status, images, imageUrls } = data;
 
-    // Get existing listing
     const { data: existingListing, error: fetchError } = await supabase
       .from('listings')
       .select('*')
@@ -137,12 +160,10 @@ export class ListingService {
       throw new Error('Listing not found');
     }
 
-    // Check permissions: providers can only edit their own listings, admins can edit any
     if (userRole === UserRole.PROVIDER && existingListing.provider_id !== userId) {
       throw new Error('You can only edit your own listings');
     }
 
-    // Update listing
     const { data: listing, error: updateError } = await supabase
       .from('listings')
       .update({
@@ -153,7 +174,7 @@ export class ListingService {
         unit,
         location_id: locationId,
         status,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', listingId)
       .select()
@@ -163,39 +184,38 @@ export class ListingService {
       throw new Error(`Failed to update listing: ${updateError?.message}`);
     }
 
-    // Update images if provided
-    if (imageUrls !== undefined) {
-      // Delete existing images
-      await supabase
-        .from('listing_images')
-        .delete()
-        .eq('listing_id', listingId);
+    if (images !== undefined || imageUrls !== undefined) {
+      const normalizedImages = normalizeImages(images, imageUrls);
+      const oldFileIds = await this.getListingImageFileIds(listingId);
 
-      // Add new images
-      if (imageUrls.length > 0) {
-        const images = imageUrls.map((url, index) => ({
+      await supabase.from('listing_images').delete().eq('listing_id', listingId);
+
+      if (normalizedImages.length > 0) {
+        const rows = normalizedImages.map((img, index) => ({
           id: crypto.randomUUID(),
           listing_id: listingId,
-          image_url: url,
+          image_url: img.url,
+          file_id: img.fileId || null,
           display_order: index + 1,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         }));
 
-        const { error: imagesError } = await supabase
-          .from('listing_images')
-          .insert(images);
+        const { error: imagesError } = await supabase.from('listing_images').insert(rows);
 
         if (imagesError) {
           throw new Error(`Listing updated but failed to update images: ${imagesError.message}`);
         }
       }
+
+      const newFileIds = new Set(normalizedImages.map((img) => img.fileId).filter(Boolean));
+      const orphanedFileIds = oldFileIds.filter((id) => !newFileIds.has(id));
+      await imageKitService.deleteFiles(orphanedFileIds);
     }
 
     return listing;
   }
 
   async deleteListing(listingId: string, userId: string, userRole: UserRole) {
-    // Get existing listing
     const { data: existingListing, error: fetchError } = await supabase
       .from('listings')
       .select('*')
@@ -206,26 +226,21 @@ export class ListingService {
       throw new Error('Listing not found');
     }
 
-    // Check permissions: providers can only delete their own listings, admins can delete any
     if (userRole === UserRole.PROVIDER && existingListing.provider_id !== userId) {
       throw new Error('You can only delete your own listings');
     }
 
-    // Delete listing images first
-    await supabase
-      .from('listing_images')
-      .delete()
-      .eq('listing_id', listingId);
+    const fileIds = await this.getListingImageFileIds(listingId);
 
-    // Delete listing
-    const { error: deleteError } = await supabase
-      .from('listings')
-      .delete()
-      .eq('id', listingId);
+    await supabase.from('listing_images').delete().eq('listing_id', listingId);
+
+    const { error: deleteError } = await supabase.from('listings').delete().eq('id', listingId);
 
     if (deleteError) {
       throw new Error(`Failed to delete listing: ${deleteError.message}`);
     }
+
+    await imageKitService.deleteFiles(fileIds);
 
     return { message: 'Listing deleted successfully' };
   }

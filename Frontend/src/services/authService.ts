@@ -9,14 +9,32 @@ interface AuthResponse {
     phone?: string;
     role: 'buyer' | 'provider' | 'admin';
     buyerType?: string;
+    buyer_type?: string;
     providerType?: string;
+    provider_type?: string;
     businessName?: string;
+    business_name?: string;
+    institutionName?: string;
+    institution_name?: string;
+    projectName?: string;
+    project_name?: string;
+    projectDescription?: string;
+    project_description?: string;
+    isVerified?: boolean;
+    is_verified?: boolean;
   };
   token: string;
 }
 
 function mapBackendUserToFrontendUser(backendUser: any): User {
   const role: AccountType = backendUser.role || backendUser.accountType || 'buyer';
+  const buyerType = backendUser.buyerType || backendUser.buyer_type;
+  const buyerRole: BuyerRole =
+    buyerType === 'client'
+      ? 'Client'
+      : buyerType === 'customer'
+        ? 'Customer'
+        : backendUser.buyerRole || 'Customer';
 
   return {
     id: backendUser.id || `user-${Date.now()}`,
@@ -24,8 +42,12 @@ function mapBackendUserToFrontendUser(backendUser: any): User {
     email: backendUser.email || '',
     phone: backendUser.phone || '+255 700 000 000',
     accountType: role,
-    buyerRole: backendUser.buyerRole || (backendUser.buyerType as BuyerRole) || 'Customer',
-    providerType: backendUser.providerType as ProviderType || 'Retailer/Supplier',
+    buyerRole,
+    buyerType: buyerType as 'customer' | 'client' | undefined,
+    institutionName: backendUser.institutionName || backendUser.institution_name,
+    projectName: backendUser.projectName || backendUser.project_name,
+    projectDescription: backendUser.projectDescription || backendUser.project_description,
+    providerType: (backendUser.providerType || backendUser.provider_type) as ProviderType || 'Retailer/Supplier',
     businessName: backendUser.businessName || backendUser.business_name,
     location: backendUser.location || {
       country: 'Tanzania',
@@ -43,30 +65,50 @@ export async function login(email: string, password?: string): Promise<{ user: U
     password: password || '',
   });
 
-  const frontendUser = mapBackendUserToFrontendUser(res.user);
   setStoredToken(res.token);
+
+  // Hydrate full profile (buyer_type, institution fields, etc.)
+  const fullUser = await getCurrentUser();
+  const frontendUser = fullUser || mapBackendUserToFrontendUser(res.user);
   localStorage.setItem(USER_KEY, JSON.stringify(frontendUser));
 
   return { user: frontendUser, token: res.token };
 }
 
 export async function register(
-  userData: Omit<User, 'id' | 'createdAt'> & { password?: string; createdAt?: string }
+  userData: Omit<User, 'id' | 'createdAt'> & {
+    password?: string;
+    createdAt?: string;
+    buyerType?: 'customer' | 'client';
+    institutionName?: string;
+    projectName?: string;
+    projectDescription?: string;
+  }
 ): Promise<{ user: User; token: string }> {
-  const payload = {
+  const buyerType = userData.buyerType || userData.buyerRole?.toLowerCase();
+
+  const payload: Record<string, unknown> = {
     email: userData.email,
     password: userData.password || '',
     name: userData.name,
     phone: userData.phone || '+255 700 000 000',
     role: userData.accountType,
-    buyerType: userData.buyerRole?.toLowerCase(),
+    buyerType,
     providerType: userData.providerType,
     businessName: userData.businessName || userData.name,
   };
 
+  if (buyerType === 'client') {
+    payload.institutionName = userData.institutionName;
+    payload.projectName = userData.projectName;
+    payload.projectDescription = userData.projectDescription;
+  }
+
   const res = await apiClient.post<AuthResponse>('/api/auth/register', payload);
-  const frontendUser = mapBackendUserToFrontendUser(res.user);
   setStoredToken(res.token);
+
+  const fullUser = await getCurrentUser();
+  const frontendUser = fullUser || mapBackendUserToFrontendUser(res.user);
   localStorage.setItem(USER_KEY, JSON.stringify(frontendUser));
 
   return { user: frontendUser, token: res.token };
@@ -89,7 +131,6 @@ export async function getCurrentUser(): Promise<User | null> {
       return user;
     }
   } catch (err) {
-    // Token is invalid or expired — clear local session
     console.warn('Session check failed, clearing local token:', err);
     setStoredToken(null);
     localStorage.removeItem(USER_KEY);

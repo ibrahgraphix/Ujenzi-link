@@ -1,5 +1,8 @@
 import { supabase } from '../config';
 import { Advert } from '../models';
+import { ImageKitService } from './imagekitService';
+
+const imageKitService = new ImageKitService();
 
 export class AdvertService {
   async getActiveAdverts() {
@@ -69,13 +72,16 @@ export class AdvertService {
   async createAdvert(data: {
     title: string;
     imageUrl: string;
+    imageFileId?: string;
     linkUrl: string;
     isActive: boolean;
+    isPaid?: boolean;
+    priceAmount?: number;
     startsAt: string;
     endsAt: string;
     providerId?: string;
   }, adminId: string) {
-    const { title, imageUrl, linkUrl, isActive, startsAt, endsAt, providerId } = data;
+    const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
 
     const { data: advert, error } = await supabase
       .from('adverts')
@@ -83,8 +89,11 @@ export class AdvertService {
         id: crypto.randomUUID(),
         title,
         image_url: imageUrl,
+        image_file_id: imageFileId || null,
         link_url: linkUrl,
         is_active: isActive,
+        is_paid: isPaid ?? false,
+        price_amount: priceAmount ?? null,
         starts_at: startsAt,
         ends_at: endsAt,
         provider_id: providerId,
@@ -107,32 +116,59 @@ export class AdvertService {
   async updateAdvert(advertId: string, data: {
     title?: string;
     imageUrl?: string;
+    imageFileId?: string;
     linkUrl?: string;
     isActive?: boolean;
+    isPaid?: boolean;
+    priceAmount?: number;
     startsAt?: string;
     endsAt?: string;
     providerId?: string;
   }, adminId: string) {
-    const { title, imageUrl, linkUrl, isActive, startsAt, endsAt, providerId } = data;
+    const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('adverts')
+      .select('image_file_id')
+      .eq('id', advertId)
+      .single();
+
+    if (fetchError || !existing) {
+      throw new Error('Advert not found');
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (title !== undefined) updatePayload.title = title;
+    if (imageUrl !== undefined) updatePayload.image_url = imageUrl;
+    if (imageFileId !== undefined) updatePayload.image_file_id = imageFileId;
+    if (linkUrl !== undefined) updatePayload.link_url = linkUrl;
+    if (isActive !== undefined) updatePayload.is_active = isActive;
+    if (isPaid !== undefined) updatePayload.is_paid = isPaid;
+    if (priceAmount !== undefined) updatePayload.price_amount = priceAmount;
+    if (startsAt !== undefined) updatePayload.starts_at = startsAt;
+    if (endsAt !== undefined) updatePayload.ends_at = endsAt;
+    if (providerId !== undefined) updatePayload.provider_id = providerId;
 
     const { data: advert, error } = await supabase
       .from('adverts')
-      .update({
-        title,
-        image_url: imageUrl,
-        link_url: linkUrl,
-        is_active: isActive,
-        starts_at: startsAt,
-        ends_at: endsAt,
-        provider_id: providerId,
-        updated_at: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('id', advertId)
       .select()
       .single();
 
     if (error || !advert) {
       throw new Error(`Failed to update advert: ${error?.message}`);
+    }
+
+    if (
+      imageFileId !== undefined &&
+      existing.image_file_id &&
+      existing.image_file_id !== imageFileId
+    ) {
+      await imageKitService.deleteFile(existing.image_file_id);
     }
 
     // Log admin action
@@ -145,7 +181,7 @@ export class AdvertService {
     // Get advert details before deletion for logging
     const { data: advert, error: fetchError } = await supabase
       .from('adverts')
-      .select('title')
+      .select('title, image_file_id')
       .eq('id', advertId)
       .single();
 
@@ -160,6 +196,10 @@ export class AdvertService {
 
     if (deleteError) {
       throw new Error(`Failed to delete advert: ${deleteError.message}`);
+    }
+
+    if (advert.image_file_id) {
+      await imageKitService.deleteFile(advert.image_file_id);
     }
 
     // Log admin action

@@ -69,4 +69,90 @@ export class AdminProviderController {
       throw error;
     }
   };
+
+  getPendingProviders = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can view pending providers');
+      }
+
+      const providers = await adminProviderService.getPendingProviders();
+
+      res.status(200).json({
+        status: 'success',
+        data: { providers }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(500, error.message);
+      }
+      throw error;
+    }
+  };
+
+  approveProvider = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { providerId } = req.params;
+
+      if (!providerId) {
+        throw new AppError(400, 'Provider ID is required');
+      }
+
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can approve providers');
+      }
+
+      const provider = await adminProviderService.approveProvider(providerId, req.user.userId);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Provider approved successfully',
+        data: { provider }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  };
+
+  deactivateProvider = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { providerId } = req.params;
+
+      if (!providerId) {
+        throw new AppError(400, 'Provider ID is required');
+      }
+
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can deactivate providers');
+      }
+
+      const provider = await adminProviderService.deactivateProvider(providerId, req.user.userId);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Provider deactivated successfully',
+        data: { provider }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  };
 }

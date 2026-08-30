@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, RotateCcw } from 'lucide-react';
 import { LocationHierarchy } from '../../types';
-import { getRegions, getDistrictsByRegion } from '../../services/locationsService';
+import {
+  getRegions,
+  getCountiesByRegion,
+  getDistrictsByCounty,
+  getWardsByDistrict,
+} from '../../services/locationsService';
 
 interface LocationSelectorProps {
   value?: LocationHierarchy;
@@ -12,55 +17,83 @@ interface LocationSelectorProps {
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
-  value = { country: 'Tanzania', region: '', district: '', ward: '', street: '' },
+  value = { country: 'Tanzania', region: '', county: '', district: '', ward: '', street: '' },
   onChange,
   showAllLevels = true,
   compact = false,
   className = '',
 }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>(value?.region || '');
+  const [selectedCounty, setSelectedCounty] = useState<string>(value?.county || '');
   const [selectedDistrict, setSelectedDistrict] = useState<string>(value?.district || '');
   const [selectedWard, setSelectedWard] = useState<string>(value?.ward || '');
   const [selectedStreet, setSelectedStreet] = useState<string>(value?.street || '');
 
   const [regionsList, setRegionsList] = useState<string[]>([]);
+  const [countiesList, setCountiesList] = useState<string[]>([]);
   const [districtsList, setDistrictsList] = useState<string[]>([]);
+  const [wardsList, setWardsList] = useState<string[]>([]);
 
+  // Load regions on mount
   useEffect(() => {
-    getRegions().then((regs) => {
-      setRegionsList(regs || []);
-    });
+    getRegions().then((regs) => setRegionsList(regs || []));
   }, []);
 
+  // Sync from external value changes
   useEffect(() => {
     setSelectedRegion(value?.region || '');
+    setSelectedCounty(value?.county || '');
     setSelectedDistrict(value?.district || '');
     setSelectedWard(value?.ward || '');
     setSelectedStreet(value?.street || '');
-  }, [value?.region, value?.district, value?.ward, value?.street]);
+  }, [value?.region, value?.county, value?.district, value?.ward, value?.street]);
 
+  // Load counties when region changes
   useEffect(() => {
     if (selectedRegion) {
-      getDistrictsByRegion(selectedRegion).then((dists) => {
-        setDistrictsList(dists || []);
-      });
+      getCountiesByRegion(selectedRegion).then((counties) => setCountiesList(counties || []));
     } else {
-      setDistrictsList([]);
+      setCountiesList([]);
     }
   }, [selectedRegion]);
 
+  // Load districts when county changes
+  useEffect(() => {
+    if (selectedRegion && selectedCounty) {
+      getDistrictsByCounty(selectedRegion, selectedCounty).then((dists) =>
+        setDistrictsList(dists || [])
+      );
+    } else {
+      setDistrictsList([]);
+    }
+  }, [selectedRegion, selectedCounty]);
+
+  // Load wards when district changes
+  useEffect(() => {
+    if (selectedRegion && selectedCounty && selectedDistrict) {
+      getWardsByDistrict(selectedRegion, selectedCounty, selectedDistrict).then((wards) =>
+        setWardsList(wards || [])
+      );
+    } else {
+      setWardsList([]);
+    }
+  }, [selectedRegion, selectedCounty, selectedDistrict]);
+
   const handleRegionChange = (newRegion: string) => {
     setSelectedRegion(newRegion);
+    setSelectedCounty('');
     setSelectedDistrict('');
     setSelectedWard('');
     setSelectedStreet('');
-    onChange({
-      country: 'Tanzania',
-      region: newRegion,
-      district: '',
-      ward: '',
-      street: '',
-    });
+    onChange({ country: 'Tanzania', region: newRegion, county: '', district: '', ward: '', street: '' });
+  };
+
+  const handleCountyChange = (newCounty: string) => {
+    setSelectedCounty(newCounty);
+    setSelectedDistrict('');
+    setSelectedWard('');
+    setSelectedStreet('');
+    onChange({ country: 'Tanzania', region: selectedRegion, county: newCounty, district: '', ward: '', street: '' });
   };
 
   const handleDistrictChange = (newDistrict: string) => {
@@ -70,6 +103,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     onChange({
       country: 'Tanzania',
       region: selectedRegion,
+      county: selectedCounty,
       district: newDistrict,
       ward: '',
       street: '',
@@ -82,6 +116,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     onChange({
       country: 'Tanzania',
       region: selectedRegion,
+      county: selectedCounty,
       district: selectedDistrict,
       ward: newWard,
       street: '',
@@ -93,6 +128,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     onChange({
       country: 'Tanzania',
       region: selectedRegion,
+      county: selectedCounty,
       district: selectedDistrict,
       ward: selectedWard,
       street: newStreet,
@@ -101,14 +137,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   const handleReset = () => {
     setSelectedRegion('');
+    setSelectedCounty('');
     setSelectedDistrict('');
     setSelectedWard('');
     setSelectedStreet('');
-    onChange({
-      country: 'Tanzania',
-      region: '',
-    });
+    onChange({ country: 'Tanzania', region: '' });
   };
+
+  const selectClass =
+    'w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20';
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -128,19 +165,37 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         )}
       </div>
 
-      <div className={`grid gap-2.5 ${compact ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
+      <div
+        className={`grid gap-2.5 ${
+          compact ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        }`}
+      >
         {/* Region */}
         <div>
           <label className="block text-[11px] font-semibold text-slate-500 mb-1">Region</label>
-          <select
-            value={selectedRegion}
-            onChange={(e) => handleRegionChange(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
-          >
+          <select value={selectedRegion} onChange={(e) => handleRegionChange(e.target.value)} className={selectClass}>
             <option value="">All Regions</option>
             {regionsList.map((r) => (
               <option key={r} value={r}>
                 {r}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* County */}
+        <div>
+          <label className="block text-[11px] font-semibold text-slate-500 mb-1">County</label>
+          <select
+            value={selectedCounty}
+            onChange={(e) => handleCountyChange(e.target.value)}
+            disabled={!selectedRegion}
+            className={selectClass}
+          >
+            <option value="">{selectedRegion ? (countiesList.length > 0 ? 'All Counties' : 'No counties listed') : 'Select Region first'}</option>
+            {countiesList.map((c) => (
+              <option key={c} value={c}>
+                {c}
               </option>
             ))}
           </select>
@@ -152,8 +207,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           <select
             value={selectedDistrict}
             onChange={(e) => handleDistrictChange(e.target.value)}
-            disabled={!selectedRegion || districtsList.length === 0}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
+            disabled={!selectedCounty && districtsList.length === 0}
+            className={selectClass}
           >
             <option value="">{selectedRegion ? 'All Districts' : 'Select Region first'}</option>
             {districtsList.map((d) => (
@@ -168,13 +223,29 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {showAllLevels && (
           <div>
             <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ward / Area</label>
-            <input
-              type="text"
-              placeholder="e.g. Mikocheni, Kariakoo..."
-              value={selectedWard}
-              onChange={(e) => handleWardChange(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
-            />
+            {wardsList.length > 0 ? (
+              <select
+                value={selectedWard}
+                onChange={(e) => handleWardChange(e.target.value)}
+                disabled={!selectedDistrict}
+                className={selectClass}
+              >
+                <option value="">All Wards</option>
+                {wardsList.map((w) => (
+                  <option key={w} value={w}>
+                    {w}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                placeholder="e.g. Mikocheni, Kariakoo..."
+                value={selectedWard}
+                onChange={(e) => handleWardChange(e.target.value)}
+                className={selectClass}
+              />
+            )}
           </div>
         )}
 
@@ -187,21 +258,22 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               placeholder="e.g. Old Bagamoyo Rd..."
               value={selectedStreet}
               onChange={(e) => handleStreetChange(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
+              className={selectClass}
             />
           </div>
         )}
       </div>
 
-      {/* Selected location summary badge */}
+      {/* Selected location summary */}
       {selectedRegion && (
         <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
-          <span className="font-semibold text-slate-800">Filtered:</span>
+          <span className="font-semibold text-slate-800">Location:</span>
           <span>
             {selectedRegion}
-            {selectedDistrict ? ` > ${selectedDistrict}` : ''}
-            {selectedWard ? ` > ${selectedWard}` : ''}
-            {selectedStreet ? ` > ${selectedStreet}` : ''}
+            {selectedCounty ? ` › ${selectedCounty}` : ''}
+            {selectedDistrict ? ` › ${selectedDistrict}` : ''}
+            {selectedWard ? ` › ${selectedWard}` : ''}
+            {selectedStreet ? ` › ${selectedStreet}` : ''}
           </span>
         </div>
       )}

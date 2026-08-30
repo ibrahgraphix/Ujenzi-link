@@ -15,6 +15,7 @@ import { getProviders } from '../services/providersService';
 import { getRegions } from '../services/locationsService';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
+import { logoImageUrl } from '../utils/imagekit';
 
 interface ProvidersDirectoryPageProps {
   initialType?: string;
@@ -165,7 +166,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
               <div>
                 <div className="flex items-start gap-4 mb-4">
                   <img
-                    src={provider.logo}
+                    src={logoImageUrl(provider.logo)}
                     alt={provider.name}
                     className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shrink-0"
                   />

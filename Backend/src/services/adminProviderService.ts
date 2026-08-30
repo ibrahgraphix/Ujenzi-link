@@ -59,17 +59,94 @@ export class AdminProviderService {
     };
   }
 
+  async getPendingProviders() {
+    const { data: providers, error } = await supabase
+      .from('provider_profiles')
+      .select(`
+        *,
+        users (*),
+        locations (*)
+      `)
+      .eq('is_verified', false)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch pending providers: ${error.message}`);
+    }
+
+    // Exclude deactivated user accounts from pending queue
+    return (providers || []).filter((p: any) => p.users?.is_active !== false);
+  }
+
+  async approveProvider(providerId: string, adminId: string) {
+    const { data: provider, error: fetchError } = await supabase
+      .from('provider_profiles')
+      .select('id, business_name')
+      .eq('id', providerId)
+      .single();
+
+    if (fetchError || !provider) {
+      throw new Error('Provider not found');
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from('provider_profiles')
+      .update({ is_verified: true, updated_at: new Date().toISOString() })
+      .eq('id', providerId)
+      .select()
+      .single();
+
+    if (updateError || !updated) {
+      throw new Error(`Failed to approve provider: ${updateError?.message}`);
+    }
+
+    await this.logAdminAction(adminId, 'approve_provider', 'provider_profiles', providerId, `Approved provider: ${provider.business_name}`);
+
+    return updated;
+  }
+
+  async deactivateProvider(providerId: string, adminId: string) {
+    const { data: provider, error: fetchError } = await supabase
+      .from('provider_profiles')
+      .select('id, business_name, user_id')
+      .eq('id', providerId)
+      .single();
+
+    if (fetchError || !provider) {
+      throw new Error('Provider not found');
+    }
+
+    const { data: updated, error: updateError } = await supabase
+      .from('provider_profiles')
+      .update({ is_verified: false, updated_at: new Date().toISOString() })
+      .eq('id', providerId)
+      .select()
+      .single();
+
+    if (updateError || !updated) {
+      throw new Error(`Failed to deactivate provider: ${updateError?.message}`);
+    }
+
+    // Deactivate the linked user account
+    if (provider.user_id) {
+      await supabase
+        .from('users')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', provider.user_id);
+    }
+
+    await this.logAdminAction(adminId, 'deactivate_provider', 'provider_profiles', providerId, `Deactivated/rejected provider: ${provider.business_name}`);
+
+    return updated;
+  }
+
   async getProviderById(providerId: string) {
     const { data: provider, error } = await supabase
       .from('provider_profiles')
       .select(`
         *,
         users (*),
-        locations (*),
-        buyer_profiles (
-          *,
-          users (*)
-        )
+        locations (*)
       `)
       .eq('id', providerId)
       .single();
@@ -110,8 +187,27 @@ export class AdminProviderService {
       stats: {
         totalListings: listings.length,
         activeListings: listings.filter((l: any) => l.status === 'active').length,
+        pendingListings: listings.filter((l: any) => l.status === 'pending_review').length,
         inactiveListings: listings.filter((l: any) => l.status === 'inactive').length
       }
     };
+  }
+
+  private async logAdminAction(adminId: string, action: string, targetTable: string, targetId: string, details?: string) {
+    const { error } = await supabase
+      .from('admin_logs')
+      .insert({
+        id: crypto.randomUUID(),
+        admin_id: adminId,
+        action,
+        target_table: targetTable,
+        target_id: targetId,
+        details,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error(`Failed to log admin action: ${error.message}`);
+    }
   }
 }

@@ -33,6 +33,38 @@ export async function getRegions(): Promise<string[]> {
   return DEFAULT_REGIONS;
 }
 
+export async function getCountiesByRegion(region: string): Promise<string[]> {
+  if (!region || region === 'all') return [];
+
+  try {
+    const res = await apiClient.get<{ counties: string[] }>(
+      `/api/search/locations/regions/${encodeURIComponent(region)}/counties`
+    );
+    if (res && Array.isArray(res.counties)) {
+      return res.counties;
+    }
+  } catch (err) {
+    console.warn(`Failed to fetch counties for region ${region} from API:`, err);
+  }
+  return [];
+}
+
+export async function getDistrictsByCounty(region: string, county: string): Promise<string[]> {
+  if (!region || !county) return [];
+
+  try {
+    const res = await apiClient.get<{ districts: string[] }>(
+      `/api/search/locations/regions/${encodeURIComponent(region)}/counties/${encodeURIComponent(county)}/districts`
+    );
+    if (res && Array.isArray(res.districts) && res.districts.length > 0) {
+      return res.districts;
+    }
+  } catch (err) {
+    console.warn(`Failed to fetch districts for county ${county} from API:`, err);
+  }
+  return DEFAULT_DISTRICTS[region] || ['Central', 'North', 'South', 'East', 'West'];
+}
+
 export async function getDistrictsByRegion(region: string): Promise<string[]> {
   if (!region || region === 'all') return [];
 
@@ -48,4 +80,20 @@ export async function getDistrictsByRegion(region: string): Promise<string[]> {
   }
 
   return DEFAULT_DISTRICTS[region] || ['Central', 'North', 'South', 'East', 'West'];
+}
+
+export async function getWardsByDistrict(region: string, county: string, district: string): Promise<string[]> {
+  if (!region || !county || !district) return [];
+
+  try {
+    const res = await apiClient.get<{ wards: string[] }>(
+      `/api/search/locations/regions/${encodeURIComponent(region)}/counties/${encodeURIComponent(county)}/districts/${encodeURIComponent(district)}/wards`
+    );
+    if (res && Array.isArray(res.wards)) {
+      return res.wards;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch wards from API:', err);
+  }
+  return [];
 }

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Listing, Inquiry, Provider, LocationHierarchy, Category } from '../types';
-import { getListings, createListing, updateListing, deleteListing } from '../services/listingsService';
+import { getListings, getProviderListings, createListing, updateListing, deleteListing } from '../services/listingsService';
 import { getInquiries, updateInquiryStatus } from '../services/inquiriesService';
 import { getCategories } from '../services/categoriesService';
 import { getProviders } from '../services/providersService';
@@ -26,8 +26,12 @@ import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
 import { LocationSelector } from '../components/common/LocationSelector';
+import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { useToast } from '../context/ToastContext';
+import { UploadedImage } from '../services/uploadService';
+import { updateProviderLogo } from '../services/providersService';
+import { logoImageUrl, thumbnailUrl } from '../utils/imagekit';
 
 interface ProviderDashboardPageProps {
   initialAction?: string;
@@ -64,7 +68,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const [listingMinOrder, setListingMinOrder] = useState('10 Bags');
   const [listingDeliveryAvailable, setListingDeliveryAvailable] = useState(true);
   const [listingDescription, setListingDescription] = useState('');
-  const [listingImages, setListingImages] = useState('');
+  const [listingImageItems, setListingImageItems] = useState<UploadedImage[]>([]);
+  const [providerLogo, setProviderLogo] = useState<UploadedImage | null>(null);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
   const [listingLocation, setListingLocation] = useState<LocationHierarchy>({
     country: 'Tanzania',
     region: user?.location?.region || 'Dar es Salaam',
@@ -75,20 +81,40 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
 
   const loadProviderData = async () => {
     setIsLoading(true);
-    const [allListings, allInquiries, allCats, allProviders] = await Promise.all([
-      getListings(),
+    const [allInquiries, allCats, allProviders] = await Promise.all([
       getInquiries(),
       getCategories(),
       getProviders(),
     ]);
 
-    const prov = allProviders.find((p) => p.name === user?.name || p.id === 'prov-1') || allProviders[0];
+    const prov = allProviders.find((p) => p.name === user?.name || p.id === user?.id || p.id === 'prov-1') || allProviders[0];
     setMyProvider(prov);
-    setMyListings(allListings.filter((l) => l.providerId === prov.id || l.providerName === user?.name));
+    if (prov?.logo) {
+      setProviderLogo({ url: prov.logo, fileId: prov.logoFileId || '' });
+    }
+
+    const providerListings = prov ? await getProviderListings(prov.id) : [];
+    setMyListings(providerListings.length > 0 ? providerListings : (await getListings()).filter((l) => l.providerId === prov?.id || l.providerName === user?.name));
     setInquiries(allInquiries);
     setCategories(allCats);
     setIsLoading(false);
   };
+
+  const getListingStatusLabel = (status: Listing['status']) => {
+    switch (status) {
+      case 'active':
+        return { label: 'Active', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+      case 'pending_review':
+        return { label: 'Pending Review', className: 'bg-amber-50 text-amber-700 border-amber-200' };
+      case 'inactive':
+        return { label: 'Inactive', className: 'bg-slate-100 text-slate-600 border-slate-200' };
+      default:
+        return { label: status, className: 'bg-slate-100 text-slate-600 border-slate-200' };
+    }
+  };
+
+  const activeListingCount = myListings.filter((l) => l.status === 'active').length;
+  const pendingListingCount = myListings.filter((l) => l.status === 'pending_review').length;
 
   useEffect(() => {
     loadProviderData();
@@ -103,7 +129,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setListingMinOrder('1 Unit');
     setListingDeliveryAvailable(true);
     setListingDescription('');
-    setListingImages('https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=800&q=80');
+    setListingImageItems([]);
     setIsListingModalOpen(true);
   };
 
@@ -116,7 +142,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setListingMinOrder(listing.minOrderQuantity || '1 Unit');
     setListingDeliveryAvailable(listing.deliveryAvailable);
     setListingDescription(listing.description);
-    setListingImages(listing.images.join(', '));
+    setListingImageItems(
+      listing.imageItems?.map((img) => ({ url: img.url, fileId: img.fileId || '' })) ||
+        listing.images.map((url) => ({ url, fileId: '' }))
+    );
     setListingLocation(listing.location);
     setIsListingModalOpen(true);
   };
@@ -136,13 +165,11 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       return;
     }
 
-    const imgs = listingImages
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const imgs = listingImageItems.filter((img) => img.url);
 
     if (imgs.length === 0) {
-      imgs.push('https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80');
+      error('Please upload at least one listing image.');
+      return;
     }
 
     if (editingListingId) {
@@ -154,7 +181,8 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         minOrderQuantity: listingMinOrder,
         deliveryAvailable: listingDeliveryAvailable,
         description: listingDescription,
-        images: imgs,
+        images: imgs.map((img) => img.url),
+        imageItems: imgs,
         location: listingLocation,
       });
       setMyListings((prev) => prev.map((l) => (l.id === editingListingId ? updated : l)));
@@ -173,7 +201,8 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         deliveryAvailable: listingDeliveryAvailable,
         description: listingDescription,
         location: listingLocation,
-        images: imgs,
+        images: imgs.map((img) => img.url),
+        imageItems: imgs,
         specifications: { 'Origin': 'Tanzania Standard', 'Condition': 'Brand New Stock' },
         isVerified: true,
       });
@@ -192,13 +221,32 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     success(`Inquiry status updated to ${newStatus}`);
   };
 
+  const handleSaveLogo = async () => {
+    if (!providerLogo?.url) {
+      error('Please upload a logo image first.');
+      return;
+    }
+    setIsSavingLogo(true);
+    try {
+      const updated = await updateProviderLogo(providerLogo.url, providerLogo.fileId || undefined);
+      if (updated) {
+        setMyProvider(updated);
+        success('Business logo updated successfully.');
+      }
+    } catch {
+      error('Failed to update logo. Please try again.');
+    } finally {
+      setIsSavingLogo(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-[#12284C] via-[#1B3A6B] to-[#8B5E3C] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <img
-            src={myProvider?.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80'}
+            src={logoImageUrl(myProvider?.logo || providerLogo?.url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80')}
             alt={myProvider?.name}
             className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-white shadow-md bg-white shrink-0"
           />
@@ -246,11 +294,41 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         </div>
       </div>
 
+      {/* Logo / Profile Settings */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6">
+        <h3 className="text-sm font-bold text-slate-900 mb-1">Business Logo</h3>
+        <p className="text-xs text-slate-500 mb-4">Upload your company logo shown on your public supplier profile.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <ImageUpload
+            label="Company Logo"
+            folderType="providers"
+            entityId={myProvider?.id}
+            value={providerLogo}
+            onChange={(val) => setProviderLogo(val as UploadedImage | null)}
+            hint="Square or landscape logo, PNG/JPG recommended."
+          />
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSaveLogo}
+            disabled={isSavingLogo || !providerLogo}
+            className="md:mb-2"
+          >
+            {isSavingLogo ? 'Saving…' : 'Save Logo'}
+          </Button>
+        </div>
+      </div>
+
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-semibold mb-1">Active Listings</div>
-          <div className="text-2xl font-extrabold text-[#1B3A6B]">{myListings.length}</div>
+          <div className="text-2xl font-extrabold text-[#1B3A6B]">{activeListingCount}</div>
+          {pendingListingCount > 0 && (
+            <div className="text-[11px] text-amber-600 font-semibold mt-1">
+              {pendingListingCount} pending review
+            </div>
+          )}
         </div>
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-semibold mb-1">Direct Inquiries</div>
@@ -297,7 +375,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       {activeTab === 'listings' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Your Active Offerings</h3>
+            <h3 className="text-sm font-bold text-slate-900">Your Catalog</h3>
             <Button variant="primary" size="sm" onClick={handleOpenAdd} leftIcon={<PlusCircle className="w-4 h-4" />}>
               Add Material / Service
             </Button>
@@ -323,17 +401,29 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <img
-                      src={listing.images[0] || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80'}
+                      src={thumbnailUrl(listing.images[0] || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80')}
                       alt={listing.title}
                       className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0"
                     />
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] font-bold bg-blue-50 text-[#1B3A6B] px-2 py-0.5 rounded-full">
                           {listing.category}
                         </span>
+                        {(() => {
+                          const st = getListingStatusLabel(listing.status);
+                          return (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.className}`}>
+                              {st.label}
+                            </span>
+                          );
+                        })()}
                         <span className="text-xs text-slate-400">•</span>
-                        <span className="text-xs text-slate-500">{listing.location.region}, {listing.location.district}</span>
+                        <span className="text-xs text-slate-500">
+                          {listing.location.region}
+                          {listing.location.county ? `, ${listing.location.county}` : ''}
+                          {listing.location.district ? `, ${listing.location.district}` : ''}
+                        </span>
                       </div>
                       <h4 className="text-sm font-bold text-slate-900 truncate mt-0.5">{listing.title}</h4>
                       <div className="text-xs font-black text-[#1B3A6B] mt-1">
@@ -534,11 +624,14 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
             />
           </div>
 
-          <Input
-            label="Image URL (Comma separated)"
-            placeholder="https://..."
-            value={listingImages}
-            onChange={(e) => setListingImages(e.target.value)}
+          <ImageUpload
+            label="Listing Photos *"
+            folderType="listings"
+            entityId={editingListingId || myProvider?.id}
+            multiple
+            maxFiles={6}
+            value={listingImageItems}
+            onChange={(val) => setListingImageItems((val as UploadedImage[]) || [])}
           />
 
           <Textarea

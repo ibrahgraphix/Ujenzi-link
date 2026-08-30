@@ -14,6 +14,7 @@ export type ProviderType =
 export interface LocationHierarchy {
   country: string;
   region: string;
+  county?: string;
   district?: string;
   ward?: string;
   street?: string;
@@ -26,12 +27,21 @@ export interface User {
   phone: string;
   accountType: AccountType;
   buyerRole?: BuyerRole;
+  buyerType?: 'customer' | 'client';
+  institutionName?: string;
+  projectName?: string;
+  projectDescription?: string;
   providerType?: ProviderType;
   businessName?: string;
   location: LocationHierarchy;
   avatar?: string;
   isVerified?: boolean;
   createdAt: string;
+}
+
+export interface StoredImage {
+  url: string;
+  fileId?: string;
 }
 
 export interface Listing {
@@ -43,6 +53,7 @@ export interface Listing {
   unit: string;
   description: string;
   images: string[];
+  imageItems?: StoredImage[];
   location: LocationHierarchy;
   providerId: string;
   providerName: string;
@@ -51,7 +62,7 @@ export interface Listing {
   rating: number;
   reviewsCount: number;
   createdAt: string;
-  status: 'active' | 'inactive' | 'draft';
+  status: 'active' | 'inactive' | 'draft' | 'pending_review';
   isFeatured?: boolean;
   tags?: string[];
   minOrderQuantity?: string;
@@ -65,6 +76,7 @@ export interface Provider {
   businessName: string;
   providerType: ProviderType;
   logo: string;
+  logoFileId?: string;
   coverImage?: string;
   phone: string;
   whatsapp: string;
@@ -106,6 +118,7 @@ export interface Advert {
   subtitle?: string;
   sponsorName: string;
   bannerUrl: string;
+  bannerFileId?: string;
   targetUrl?: string;
   phoneNumber?: string;
   whatsapp?: string;
@@ -114,6 +127,8 @@ export interface Advert {
   startDate: string;
   endDate: string;
   isActive: boolean;
+  isPaid?: boolean;
+  priceAmount?: number;
   impressions: number;
   clicks: number;
   ctaText?: string;

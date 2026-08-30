@@ -7,6 +7,7 @@ export interface ListingFilterParams {
   query?: string;
   category?: string;
   region?: string;
+  county?: string;
   district?: string;
   ward?: string;
   providerType?: string;
@@ -17,10 +18,21 @@ export interface ListingFilterParams {
   providerId?: string;
 }
 
-function mapBackendListing(item: any): Listing {
-  const images = Array.isArray(item.listing_images)
-    ? item.listing_images.map((img: any) => img.image_url || img.url || img).filter(Boolean)
-    : item.images || ['https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80'];
+export function mapBackendListing(item: any): Listing {
+  const imageItems = Array.isArray(item.listing_images)
+    ? item.listing_images
+        .map((img: any) => ({
+          url: img.image_url || img.url,
+          fileId: img.file_id || img.fileId,
+        }))
+        .filter((img: { url?: string }) => Boolean(img.url))
+    : [];
+
+  const images = imageItems.length > 0
+    ? imageItems.map((img: { url: string }) => img.url)
+    : Array.isArray(item.images)
+      ? item.images
+      : ['https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80'];
 
   const categoryName = item.categories?.name || item.category || 'Building Materials';
 
@@ -36,11 +48,21 @@ function mapBackendListing(item: any): Listing {
     unit: item.unit || 'Unit',
     description: item.description || '',
     images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80'],
-    location: item.locations || item.location || {
-      country: 'Tanzania',
-      region: item.region || 'Dar es Salaam',
-      district: item.district || 'Kinondoni',
-    },
+    imageItems: imageItems.length > 0 ? imageItems : undefined,
+    location: item.locations
+      ? {
+          country: item.locations.country || 'Tanzania',
+          region: item.locations.region || '',
+          county: item.locations.county || '',
+          district: item.locations.district || '',
+          ward: item.locations.ward || '',
+          street: item.locations.street || '',
+        }
+      : item.location || {
+          country: 'Tanzania',
+          region: item.region || 'Dar es Salaam',
+          district: item.district || 'Kinondoni',
+        },
     providerId: item.provider_id || item.providerId || providerProfile.id || 'prov-demo',
     providerName: providerProfile.business_name || providerUser.name || item.providerName || 'Local Supplier',
     providerType: (providerProfile.provider_type as ProviderType) || item.providerType || 'Retailer/Supplier',
@@ -79,6 +101,12 @@ function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFi
 
   if (params.region && params.region !== 'all') {
     result = result.filter((l) => l.location.region.toLowerCase() === params.region!.toLowerCase());
+  }
+
+  if (params.county && params.county !== 'all') {
+    result = result.filter(
+      (l) => l.location.county && l.location.county.toLowerCase() === params.county!.toLowerCase()
+    );
   }
 
   if (params.district && params.district !== 'all') {
@@ -129,12 +157,24 @@ function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFi
   return result;
 }
 
+export async function getProviderListings(providerId: string): Promise<Listing[]> {
+  try {
+    const res = await apiClient.get<{ listings: any[] }>(`/api/listings/provider/${providerId}`);
+    const items = res?.listings || [];
+    return items.map(mapBackendListing);
+  } catch (err) {
+    console.warn(`Failed to fetch provider listings for ${providerId}:`, err);
+    return [];
+  }
+}
+
 export async function getListings(params?: ListingFilterParams): Promise<Listing[]> {
   try {
     const queryParams = new URLSearchParams();
     if (params?.query) queryParams.set('keyword', params.query);
     if (params?.category && params.category !== 'all') queryParams.set('categoryId', params.category);
     if (params?.region && params.region !== 'all') queryParams.set('region', params.region);
+    if (params?.county && params.county !== 'all') queryParams.set('county', params.county);
     if (params?.district && params.district !== 'all') queryParams.set('district', params.district);
     if (params?.minPrice) queryParams.set('minPrice', params.minPrice.toString());
     if (params?.maxPrice) queryParams.set('maxPrice', params.maxPrice.toString());
@@ -169,7 +209,7 @@ export async function getListingById(id: string): Promise<Listing | null> {
   try {
     const res = await apiClient.get<any>(`/api/listings/${id}`);
     if (res) {
-      return mapBackendListing(res);
+      return mapBackendListing(res.listing || res);
     }
   } catch (err) {
     console.warn(`Failed to fetch listing ${id} from API:`, err);
@@ -179,8 +219,18 @@ export async function getListingById(id: string): Promise<Listing | null> {
   return all.find((l) => l.id === id) || null;
 }
 
-export async function saveListing(listingData: Partial<Listing> & { id?: string }): Promise<Listing> {
+export async function saveListing(
+  listingData: Partial<Listing> & {
+    id?: string;
+    imageItems?: { url: string; fileId?: string }[];
+  }
+): Promise<Listing> {
   try {
+    const images =
+      listingData.imageItems ||
+      listingData.images?.map((url) => ({ url })) ||
+      [];
+
     const payload = {
       title: listingData.title,
       description: listingData.description,
@@ -188,7 +238,8 @@ export async function saveListing(listingData: Partial<Listing> & { id?: string 
       unit: listingData.unit,
       categoryId: listingData.category,
       providerId: listingData.providerId,
-      imageUrls: listingData.images,
+      images,
+      imageUrls: images.map((img) => img.url),
     };
 
     let res: any;
@@ -197,7 +248,7 @@ export async function saveListing(listingData: Partial<Listing> & { id?: string 
     } else {
       res = await apiClient.post('/api/listings', payload);
     }
-    if (res) return mapBackendListing(res);
+    if (res) return mapBackendListing(res.listing || res);
   } catch (err) {
     console.warn('Failed to save listing via API, operating locally:', err);
   }

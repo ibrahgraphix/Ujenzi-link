@@ -56,7 +56,7 @@ export class AdvertController {
 
   createAdvert = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { title, imageUrl, linkUrl, isActive, startsAt, endsAt, providerId } = req.body;
+      const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
 
       if (!title || !imageUrl || !linkUrl || !startsAt || !endsAt) {
         throw new AppError(400, 'Missing required fields: title, imageUrl, linkUrl, startsAt, endsAt');
@@ -74,8 +74,11 @@ export class AdvertController {
       const advert = await advertService.createAdvert({
         title,
         imageUrl,
+        imageFileId,
         linkUrl,
         isActive: isActive !== undefined ? isActive : true,
+        isPaid: isPaid !== undefined ? isPaid : false,
+        priceAmount: priceAmount !== undefined ? Number(priceAmount) : undefined,
         startsAt,
         endsAt,
         providerId
@@ -97,7 +100,7 @@ export class AdvertController {
   updateAdvert = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { advertId } = req.params;
-      const { title, imageUrl, linkUrl, isActive, startsAt, endsAt, providerId } = req.body;
+      const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
 
       if (!advertId) {
         throw new AppError(400, 'Advert ID is required');
@@ -117,8 +120,11 @@ export class AdvertController {
         {
           title,
           imageUrl,
+          imageFileId,
           linkUrl,
           isActive,
+          isPaid,
+          priceAmount: priceAmount !== undefined ? Number(priceAmount) : undefined,
           startsAt,
           endsAt,
           providerId

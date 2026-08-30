@@ -5,6 +5,7 @@ export class SearchService {
     keyword?: string;
     categoryId?: string;
     region?: string;
+    county?: string;
     district?: string;
     minPrice?: number;
     maxPrice?: number;
@@ -15,6 +16,7 @@ export class SearchService {
       keyword,
       categoryId,
       region,
+      county,
       district,
       minPrice,
       maxPrice,
@@ -46,14 +48,13 @@ export class SearchService {
       query = query.eq('category_id', categoryId);
     }
 
-    // Filter by location (region/district)
-    if (region || district) {
-      // Join with locations table to filter
-      if (district) {
-        query = query.eq('locations.district', district);
-      } else if (region) {
-        query = query.eq('locations.region', region);
-      }
+    // Filter by location hierarchy
+    if (district) {
+      query = query.eq('locations.district', district);
+    } else if (county) {
+      query = query.eq('locations.county', county);
+    } else if (region) {
+      query = query.eq('locations.region', region);
     }
 
     // Filter by price range
@@ -64,7 +65,7 @@ export class SearchService {
       query = query.lte('price', maxPrice);
     }
 
-    // Only show active listings
+    // Only show active listings (public endpoint)
     query = query.eq('status', 'active');
 
     // Pagination
@@ -101,12 +102,42 @@ export class SearchService {
       throw new Error(`Failed to fetch regions: ${error.message}`);
     }
 
-    // Get unique regions
     const regions = [...new Set(locations.map(loc => loc.region).filter(Boolean))];
-
     return regions;
   }
 
+  async getCountiesByRegion(region: string) {
+    const { data: locations, error } = await supabase
+      .from('locations')
+      .select('county')
+      .eq('region', region)
+      .order('county');
+
+    if (error) {
+      throw new Error(`Failed to fetch counties: ${error.message}`);
+    }
+
+    const counties = [...new Set(locations.map(loc => loc.county).filter(Boolean))];
+    return counties;
+  }
+
+  async getDistrictsByCounty(region: string, county: string) {
+    const { data: locations, error } = await supabase
+      .from('locations')
+      .select('district')
+      .eq('region', region)
+      .eq('county', county)
+      .order('district');
+
+    if (error) {
+      throw new Error(`Failed to fetch districts by county: ${error.message}`);
+    }
+
+    const districts = [...new Set(locations.map(loc => loc.district).filter(Boolean))];
+    return districts;
+  }
+
+  /** Legacy: districts by region only (no county). Used as fallback. */
   async getDistrictsByRegion(region: string) {
     const { data: locations, error } = await supabase
       .from('locations')
@@ -118,17 +149,16 @@ export class SearchService {
       throw new Error(`Failed to fetch districts: ${error.message}`);
     }
 
-    // Get unique districts
     const districts = [...new Set(locations.map(loc => loc.district).filter(Boolean))];
-
     return districts;
   }
 
-  async getWardsByDistrict(region: string, district: string) {
+  async getWardsByDistrict(region: string, county: string, district: string) {
     const { data: locations, error } = await supabase
       .from('locations')
       .select('ward')
       .eq('region', region)
+      .eq('county', county)
       .eq('district', district)
       .order('ward');
 
@@ -136,17 +166,16 @@ export class SearchService {
       throw new Error(`Failed to fetch wards: ${error.message}`);
     }
 
-    // Get unique wards
     const wards = [...new Set(locations.map(loc => loc.ward).filter(Boolean))];
-
     return wards;
   }
 
-  async getStreetsByWard(region: string, district: string, ward: string) {
+  async getStreetsByWard(region: string, county: string, district: string, ward: string) {
     const { data: locations, error } = await supabase
       .from('locations')
       .select('street')
       .eq('region', region)
+      .eq('county', county)
       .eq('district', district)
       .eq('ward', ward)
       .order('street');
@@ -155,9 +184,7 @@ export class SearchService {
       throw new Error(`Failed to fetch streets: ${error.message}`);
     }
 
-    // Get unique streets
     const streets = [...new Set(locations.map(loc => loc.street).filter(Boolean))];
-
     return streets;
   }
 
@@ -165,14 +192,14 @@ export class SearchService {
     const { data: locations, error } = await supabase
       .from('locations')
       .select('*')
-      .order('region, district, ward, street');
+      .order('region, county, district, ward, street');
 
     if (error) {
       throw new Error(`Failed to fetch location hierarchy: ${error.message}`);
     }
 
-    // Build hierarchy structure
-    const hierarchy: Record<string, Record<string, Record<string, string[]>>> = {};
+    // Build hierarchy: region > county > district > ward > street[]
+    const hierarchy: Record<string, Record<string, Record<string, Record<string, string[]>>>> = {};
 
     locations.forEach(loc => {
       if (!loc.region) return;
@@ -181,18 +208,23 @@ export class SearchService {
         hierarchy[loc.region] = {};
       }
 
+      const countyKey = loc.county || '__no_county__';
+      if (!hierarchy[loc.region][countyKey]) {
+        hierarchy[loc.region][countyKey] = {};
+      }
+
       if (loc.district) {
-        if (!hierarchy[loc.region][loc.district]) {
-          hierarchy[loc.region][loc.district] = {};
+        if (!hierarchy[loc.region][countyKey][loc.district]) {
+          hierarchy[loc.region][countyKey][loc.district] = {};
         }
 
         if (loc.ward) {
-          if (!hierarchy[loc.region][loc.district][loc.ward]) {
-            hierarchy[loc.region][loc.district][loc.ward] = [];
+          if (!hierarchy[loc.region][countyKey][loc.district][loc.ward]) {
+            hierarchy[loc.region][countyKey][loc.district][loc.ward] = [];
           }
 
           if (loc.street) {
-            hierarchy[loc.region][loc.district][loc.ward].push(loc.street);
+            hierarchy[loc.region][countyKey][loc.district][loc.ward].push(loc.street);
           }
         }
       }

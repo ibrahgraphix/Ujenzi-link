@@ -29,15 +29,26 @@ import {
 import { Provider, Listing, Advert, Category } from '../types';
 import { getProviders, verifyProvider } from '../services/providersService';
 import { getListings, deleteListing } from '../services/listingsService';
-import { getAdverts, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
+import { getAllAdvertsAdmin, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
+import {
+  getPendingProviders,
+  getPendingListings,
+  approveProvider,
+  deactivateProvider,
+  approveListing,
+  rejectListing,
+} from '../services/adminService';
 import { getCategories, saveCategory, deleteCategory } from '../services/categoriesService';
 import { getUsers } from '../services/usersService';
 import { getTrafficStats } from '../services/trafficService';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
+import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { useToast } from '../context/ToastContext';
+import { UploadedImage } from '../services/uploadService';
+import { cardImageUrl, logoImageUrl } from '../utils/imagekit';
 
 interface AdminDashboardPageProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
@@ -63,9 +74,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 }) => {
   const { success, error } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'analytics' | 'providers' | 'listings' | 'adverts'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'pending' | 'providers' | 'listings' | 'adverts'>('analytics');
+  const [pendingSubTab, setPendingSubTab] = useState<'providers' | 'listings'>('providers');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [pendingProviders, setPendingProviders] = useState<Provider[]>([]);
+  const [pendingListings, setPendingListings] = useState<Listing[]>([]);
   const [adverts, setAdverts] = useState<Advert[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,28 +88,60 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [isAdvertModalOpen, setIsAdvertModalOpen] = useState(false);
   const [adTitle, setAdTitle] = useState('');
   const [adSubtitle, setAdSubtitle] = useState('');
-  const [adImageUrl, setAdImageUrl] = useState('');
+  const [adImage, setAdImage] = useState<UploadedImage | null>(null);
   const [adLinkUrl, setAdLinkUrl] = useState('');
   const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'featured_section' | 'banner'>('hero');
+  const [adIsPaid, setAdIsPaid] = useState(false);
+  const [adPriceAmount, setAdPriceAmount] = useState('');
 
   const loadAdminData = async () => {
     setIsLoading(true);
-    const [allProv, allListings, allAds, allCats] = await Promise.all([
+    const [allProv, allListings, allAds, allCats, pendingProv, pendingList] = await Promise.all([
       getProviders(),
       getListings(),
-      getAdverts(),
+      getAllAdvertsAdmin(),
       getCategories(),
+      getPendingProviders(),
+      getPendingListings(),
     ]);
     setProviders(allProv);
     setListings(allListings);
     setAdverts(allAds);
     setCategories(allCats);
+    setPendingProviders(pendingProv);
+    setPendingListings(pendingList);
     setIsLoading(false);
   };
 
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  const handleApproveProvider = async (provider: Provider) => {
+    await approveProvider(provider.id);
+    await loadAdminData();
+    success(`${provider.businessName} has been approved.`);
+  };
+
+  const handleRejectProvider = async (provider: Provider) => {
+    if (!window.confirm(`Deactivate provider account for ${provider.businessName}?`)) return;
+    await deactivateProvider(provider.id);
+    await loadAdminData();
+    success(`${provider.businessName} has been deactivated.`);
+  };
+
+  const handleApproveListing = async (listing: Listing) => {
+    await approveListing(listing.id);
+    await loadAdminData();
+    success(`"${listing.title}" is now live on the marketplace.`);
+  };
+
+  const handleRejectListing = async (listing: Listing) => {
+    if (!window.confirm(`Reject listing "${listing.title}"?`)) return;
+    await rejectListing(listing.id);
+    await loadAdminData();
+    success(`"${listing.title}" has been rejected.`);
+  };
 
   const handleToggleVerification = async (provider: Provider) => {
     const newStatus = !provider.isVerified;
@@ -126,13 +172,20 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       error('Please provide an advert title.');
       return;
     }
+    if (!adImage?.url) {
+      error('Please upload a banner image.');
+      return;
+    }
     const newAd = await createAdvert({
       title: adTitle,
       subtitle: adSubtitle,
-      bannerUrl: adImageUrl || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=1200&q=80',
+      bannerUrl: adImage.url,
+      bannerFileId: adImage.fileId,
       targetUrl: adLinkUrl || '/contact',
       position: adPosition,
       isActive: true,
+      isPaid: adIsPaid,
+      priceAmount: adPriceAmount ? Number(adPriceAmount) : undefined,
       sponsorName: 'Plan Moja Featured Partner',
       startDate: new Date().toISOString().split('T')[0],
       endDate: '2026-12-31',
@@ -143,6 +196,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     setIsAdvertModalOpen(false);
     setAdTitle('');
     setAdSubtitle('');
+    setAdImage(null);
+    setAdIsPaid(false);
+    setAdPriceAmount('');
     success('Banner advert campaign launched successfully!');
   };
 
@@ -168,6 +224,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="white"
+            size="sm"
+            onClick={() => setActiveTab('adverts')}
+            leftIcon={<Sparkles className="w-4 h-4" />}
+          >
+            Manage Adverts
+          </Button>
           <Button
             variant="bronze"
             size="sm"
@@ -210,7 +274,13 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <div className="text-[11px] text-emerald-600 font-semibold mt-1">100% Free / Direct Deal</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div
+          className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs cursor-pointer hover:border-amber-300 hover:shadow-md transition-all"
+          onClick={() => setActiveTab('adverts')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === 'Enter' && setActiveTab('adverts')}
+        >
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-2">
             <span>Active Adverts</span>
             <Sparkles className="w-4 h-4 text-amber-500" />
@@ -218,7 +288,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <div className="text-2xl font-black text-slate-900">
             {adverts.filter((a) => a.isActive).length}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">Sponsored Promotions</div>
+          <div className="text-[11px] text-amber-600 font-semibold mt-1">Click to manage campaigns →</div>
         </div>
       </div>
 
@@ -234,6 +304,20 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         >
           <TrendingUp className="w-4 h-4" />
           <span>Analytics & Trends</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
+            activeTab === 'pending'
+              ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>
+            Pending Approvals ({pendingProviders.length + pendingListings.length})
+          </span>
         </button>
 
         <button
@@ -352,6 +436,139 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         </div>
       )}
 
+      {/* Tab: Pending Approvals */}
+      {activeTab === 'pending' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">Pending Approvals</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Review new supplier registrations and listing submissions before they go live.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 px-6 pt-4 border-b border-slate-100 text-xs font-bold">
+              <button
+                onClick={() => setPendingSubTab('providers')}
+                className={`pb-3 px-3 border-b-2 transition-colors ${
+                  pendingSubTab === 'providers'
+                    ? 'border-[#1B3A6B] text-[#1B3A6B]'
+                    : 'border-transparent text-slate-500'
+                }`}
+              >
+                Pending Providers ({pendingProviders.length})
+              </button>
+              <button
+                onClick={() => setPendingSubTab('listings')}
+                className={`pb-3 px-3 border-b-2 transition-colors ${
+                  pendingSubTab === 'listings'
+                    ? 'border-[#1B3A6B] text-[#1B3A6B]'
+                    : 'border-transparent text-slate-500'
+                }`}
+              >
+                Pending Listings ({pendingListings.length})
+              </button>
+            </div>
+
+            {pendingSubTab === 'providers' && (
+              <div className="overflow-x-auto">
+                {pendingProviders.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-500">No providers awaiting approval.</div>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Business</th>
+                        <th className="py-3 px-4">Type</th>
+                        <th className="py-3 px-4">Contact</th>
+                        <th className="py-3 px-4">Region</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {pendingProviders.map((p) => (
+                        <tr key={p.id} className="hover:bg-slate-50">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">{p.businessName}</td>
+                          <td className="py-3.5 px-4">
+                            <ProviderTypeBadge type={p.providerType} size="xs" />
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-600">{p.email}</td>
+                          <td className="py-3.5 px-4 text-slate-600">{p.location.region}</td>
+                          <td className="py-3.5 px-4 text-right space-x-2">
+                            <button
+                              onClick={() => handleApproveProvider(p)}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectProvider(p)}
+                              className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold hover:bg-rose-100"
+                            >
+                              Deactivate
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+
+            {pendingSubTab === 'listings' && (
+              <div className="overflow-x-auto">
+                {pendingListings.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-slate-500">No listings awaiting review.</div>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Listing</th>
+                        <th className="py-3 px-4">Supplier</th>
+                        <th className="py-3 px-4">Price</th>
+                        <th className="py-3 px-4">Location</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {pendingListings.map((l) => (
+                        <tr key={l.id} className="hover:bg-slate-50">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">{l.title}</td>
+                          <td className="py-3.5 px-4">{l.providerName}</td>
+                          <td className="py-3.5 px-4 font-bold text-[#1B3A6B]">
+                            {l.price.toLocaleString()} TZS
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-500">
+                            {[l.location.region, l.location.county, l.location.district]
+                              .filter(Boolean)
+                              .join(' › ')}
+                          </td>
+                          <td className="py-3.5 px-4 text-right space-x-2">
+                            <button
+                              onClick={() => handleApproveListing(l)}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectListing(l)}
+                              className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold hover:bg-rose-100"
+                            >
+                              Reject
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Tab 2: Providers Verification */}
       {activeTab === 'providers' && (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
@@ -383,7 +600,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-slate-900 flex items-center gap-3">
                       <img
-                        src={p.logo}
+                        src={logoImageUrl(p.logo)}
                         alt={p.name}
                         className="w-9 h-9 rounded-xl object-cover border border-slate-200"
                       />
@@ -507,7 +724,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
               >
                 <div className="flex items-start gap-4">
                   <img
-                    src={ad.bannerUrl}
+                    src={cardImageUrl(ad.bannerUrl)}
                     alt={ad.title}
                     className="w-24 h-20 rounded-2xl object-cover border border-slate-200 shrink-0"
                   />
@@ -525,6 +742,15 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                           Paused
                         </span>
                       )}
+                      {ad.isPaid ? (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                          Paid
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          Unpaid
+                        </span>
+                      )}
                     </div>
                     <h4 className="text-sm font-bold text-slate-900 mt-1">{ad.title}</h4>
                     <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{ad.subtitle}</p>
@@ -532,7 +758,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                  <span className="text-slate-400">Sponsor: {ad.sponsorName}</span>
+                  <span className="text-slate-400">
+                    Sponsor: {ad.sponsorName}
+                    {ad.priceAmount != null ? ` • ${ad.priceAmount.toLocaleString()} TZS` : ''}
+                  </span>
                   <button
                     onClick={() => handleToggleAdvert(ad)}
                     className="font-bold text-[#2E86D8] hover:text-[#1B3A6B]"
@@ -569,11 +798,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             onChange={(e) => setAdSubtitle(e.target.value)}
           />
 
-          <Input
-            label="Image URL"
-            placeholder="https://..."
-            value={adImageUrl}
-            onChange={(e) => setAdImageUrl(e.target.value)}
+          <ImageUpload
+            label="Banner Image *"
+            folderType="adverts"
+            value={adImage}
+            onChange={(val) => setAdImage(val as UploadedImage | null)}
+            hint="Upload a promotional banner image (1200px max, auto-compressed)."
           />
 
           <div className="grid grid-cols-2 gap-3">
@@ -596,6 +826,26 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
               placeholder="/contact or tel:+255..."
               value={adLinkUrl}
               onChange={(e) => setAdLinkUrl(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={adIsPaid}
+                onChange={(e) => setAdIsPaid(e.target.checked)}
+                className="rounded border-slate-300 text-[#1B3A6B] focus:ring-[#1B3A6B]"
+              />
+              Mark as paid (billing ready)
+            </label>
+            <Input
+              label="Price Amount (TZS)"
+              type="number"
+              min="0"
+              placeholder="e.g. 50000"
+              value={adPriceAmount}
+              onChange={(e) => setAdPriceAmount(e.target.value)}
             />
           </div>
 

@@ -28,6 +28,7 @@ import { getProviders } from '../services/providersService';
 import { getCategories } from '../services/categoriesService';
 import { getAdverts } from '../services/advertsService';
 import { getRegions, getDistrictsByRegion } from '../services/locationsService';
+import { logoImageUrl } from '../utils/imagekit';
 import { ListingCard } from '../components/common/ListingCard';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
@@ -457,7 +458,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <div>
                     <div className="flex items-center gap-3 mb-4">
                       <img
-                        src={provider.logo}
+                        src={logoImageUrl(provider.logo)}
                         alt={provider.name}
                         className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0"
                       />

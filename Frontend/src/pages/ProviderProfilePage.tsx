@@ -24,6 +24,7 @@ import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { Modal } from '../components/common/Modal';
 import { Input, Textarea } from '../components/common/Input';
 import { useToast } from '../context/ToastContext';
+import { logoImageUrl } from '../utils/imagekit';
 
 interface ProviderProfilePageProps {
   providerId: string;
@@ -157,7 +158,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
           <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-6">
             <div className="flex items-end gap-4">
               <img
-                src={provider.logo}
+                src={logoImageUrl(provider.logo)}
                 alt={provider.name}
                 className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-white shadow-xl bg-white shrink-0"
               />

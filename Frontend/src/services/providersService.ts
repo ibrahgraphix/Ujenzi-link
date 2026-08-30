@@ -11,6 +11,7 @@ function mapBackendProvider(p: any): Provider {
     businessName: p.business_name || p.businessName || 'Business Name',
     providerType: (p.provider_type as ProviderType) || p.providerType || 'Retailer/Supplier',
     logo: p.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=200&q=80',
+    logoFileId: p.logo_file_id || p.logoFileId,
     coverImage: p.coverImage || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80',
     phone: user.phone || p.phone || '+255 700 000 000',
     whatsapp: p.whatsapp || user.phone || '255700000000',
@@ -112,6 +113,17 @@ export async function saveProvider(providerData: Partial<Provider> & { id?: stri
 }
 
 export async function verifyProvider(id: string, isVerified: boolean): Promise<boolean> {
+  try {
+    if (isVerified) {
+      await apiClient.post(`/api/admin/providers/${id}/approve`);
+    } else {
+      await apiClient.post(`/api/admin/providers/${id}/deactivate`);
+    }
+    return true;
+  } catch (err) {
+    console.warn(`Failed to verify provider ${id} via API:`, err);
+  }
+
   const providers = await getProviders();
   const idx = providers.findIndex((p) => p.id === id);
   if (idx !== -1) {
@@ -124,4 +136,23 @@ export async function verifyProvider(id: string, isVerified: boolean): Promise<b
     return true;
   }
   return false;
+}
+
+export async function updateProviderLogo(
+  logo: string,
+  logoFileId?: string
+): Promise<Provider | null> {
+  try {
+    const res = await apiClient.put<{ profile: any }>('/api/provider/profile/logo', {
+      logo,
+      logoFileId,
+    });
+    if (res?.profile) {
+      return mapBackendProvider(res.profile);
+    }
+  } catch (err) {
+    console.warn('Failed to update provider logo via API:', err);
+    throw err;
+  }
+  return null;
 }
