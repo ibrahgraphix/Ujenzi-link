@@ -18,9 +18,10 @@ function mapBackendCategory(item: any): Category {
 
 export async function getCategories(): Promise<Category[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/categories');
-    if (res && Array.isArray(res)) {
-      return res.map(mapBackendCategory);
+    const res = await apiClient.get<{ categories?: any[] } | any[]>('/api/categories');
+    const items = Array.isArray(res) ? res : res?.categories;
+    if (items && Array.isArray(items) && items.length > 0) {
+      return items.map(mapBackendCategory);
     }
   } catch (err) {
     console.warn('Failed to fetch categories from API:', err);

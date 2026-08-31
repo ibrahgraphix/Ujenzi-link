@@ -4,9 +4,26 @@ import { asyncHandler, AppError } from '../middleware';
 import { AuthRequest, UserRole } from '../models';
 import { Response } from 'express';
 import { ProviderProfileService } from '../services/providerProfileService';
+import { AdminProviderService } from '../services/adminProviderService';
 
 const router = Router();
 const providerProfileService = new ProviderProfileService();
+const adminProviderService = new AdminProviderService();
+
+// Public route to get all providers (for customer/client view)
+router.get('/all', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { providerType, search, isVerified, page, limit } = req.query;
+
+  const results = await adminProviderService.getAllProviders({
+    providerType: providerType as string,
+    search: search as string,
+    isVerified: isVerified ? isVerified === 'true' : undefined,
+    page: page ? parseInt(page as string) : 1,
+    limit: limit ? parseInt(limit as string) : 20
+  });
+
+  res.json({ status: 'success', data: results });
+}));
 
 router.get('/profile', authenticate, authorize(UserRole.PROVIDER), asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.user) throw new AppError(401, 'Unauthorized');

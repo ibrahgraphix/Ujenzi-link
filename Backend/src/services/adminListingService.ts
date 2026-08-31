@@ -6,11 +6,10 @@ export class AdminListingService {
     status?: ListingStatus;
     categoryId?: string;
     providerId?: string;
-    adminCreated?: boolean;
     page?: number;
     limit?: number;
   }) {
-    const { status, categoryId, providerId, adminCreated, page = 1, limit = 20 } = filters;
+    const { status, categoryId, providerId, page = 1, limit = 20 } = filters;
 
     let query = supabase
       .from('listings')
@@ -38,11 +37,6 @@ export class AdminListingService {
     // Filter by provider
     if (providerId) {
       query = query.eq('provider_id', providerId);
-    }
-
-    // Filter by admin_created
-    if (adminCreated !== undefined) {
-      query = query.eq('admin_created', adminCreated);
     }
 
     // Pagination

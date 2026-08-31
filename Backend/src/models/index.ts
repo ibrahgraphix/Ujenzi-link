@@ -43,7 +43,7 @@ export interface User {
   id: string;
   email: string;
   password_hash: string;
-  name: string;
+  full_name: string;
   phone: string;
   role: UserRole;
   created_at: string;
@@ -103,10 +103,10 @@ export interface Listing {
   title: string;
   description: string;
   price: number;
-  unit?: string;
+  price_unit?: string;
   location_id: string;
   status: ListingStatus;
-  admin_created: boolean;
+  created_by_admin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -116,7 +116,7 @@ export interface ListingImage {
   listing_id: string;
   image_url: string;
   file_id?: string;
-  display_order: number;
+  sort_order: number;
   created_at: string;
 }
 

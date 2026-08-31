@@ -8,6 +8,8 @@ const authService = new AuthService();
 export class AuthController {
   register = async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log('Register request body:', req.body);
+
       const {
         email,
         password,
@@ -26,15 +28,18 @@ export class AuthController {
 
       // Validate required fields
       if (!email || !password || !name || !phone || !role) {
+        console.error('Missing required fields:', { email: !!email, password: !!password, name: !!name, phone: !!phone, role: !!role });
         throw new AppError(400, 'Missing required fields');
       }
 
       // Validate role-specific fields
       if (role === UserRole.BUYER && !buyerType) {
+        console.error('Missing buyerType for buyer registration');
         throw new AppError(400, 'buyerType is required for buyer registration');
       }
 
       if (role === UserRole.PROVIDER && (!providerType || !businessName)) {
+        console.error('Missing providerType or businessName for provider registration:', { providerType, businessName });
         throw new AppError(400, 'providerType and businessName are required for provider registration');
       }
 
@@ -64,7 +69,7 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
-            name: user.name,
+            name: user.full_name,
             phone: user.phone,
             role: user.role
           },

@@ -16,7 +16,9 @@ export class SearchController {
         minPrice,
         maxPrice,
         page,
-        limit
+        limit,
+        status,
+        includeAll
       } = req.query;
 
       const results = await searchService.searchListings({
@@ -28,7 +30,9 @@ export class SearchController {
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
         page: page ? parseInt(page as string) : 1,
-        limit: limit ? parseInt(limit as string) : 20
+        limit: limit ? parseInt(limit as string) : 20,
+        status: status as string,
+        includeAll: includeAll === 'true'
       });
 
       res.status(200).json({

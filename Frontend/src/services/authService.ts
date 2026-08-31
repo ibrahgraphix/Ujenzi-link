@@ -36,9 +36,23 @@ function mapBackendUserToFrontendUser(backendUser: any): User {
         ? 'Customer'
         : backendUser.buyerRole || 'Customer';
 
+  // Map backend provider types to frontend format
+  const providerTypeMap: Record<string, ProviderType> = {
+    'manufacturer_wholesaler': 'Manufacturer/Wholesaler',
+    'retailer_supplier': 'Retailer/Supplier',
+    'contractor': 'Contractor',
+    'consultant': 'Consultant',
+    'freelancer': 'Freelancer',
+    'technician': 'Technician',
+    'casual_labourer': 'Casual Labourer'
+  };
+
+  const backendProviderType = backendUser.providerType || backendUser.provider_type;
+  const mappedProviderType = backendProviderType ? providerTypeMap[backendProviderType] : 'Retailer/Supplier';
+
   return {
     id: backendUser.id || `user-${Date.now()}`,
-    name: backendUser.name || backendUser.email?.split('@')[0] || 'User',
+    name: backendUser.full_name || backendUser.name || backendUser.email?.split('@')[0] || 'User',
     email: backendUser.email || '',
     phone: backendUser.phone || '+255 700 000 000',
     accountType: role,
@@ -47,7 +61,7 @@ function mapBackendUserToFrontendUser(backendUser: any): User {
     institutionName: backendUser.institutionName || backendUser.institution_name,
     projectName: backendUser.projectName || backendUser.project_name,
     projectDescription: backendUser.projectDescription || backendUser.project_description,
-    providerType: (backendUser.providerType || backendUser.provider_type) as ProviderType || 'Retailer/Supplier',
+    providerType: mappedProviderType,
     businessName: backendUser.businessName || backendUser.business_name,
     location: backendUser.location || {
       country: 'Tanzania',
@@ -87,6 +101,17 @@ export async function register(
 ): Promise<{ user: User; token: string }> {
   const buyerType = userData.buyerType || userData.buyerRole?.toLowerCase();
 
+  // Map frontend provider types to backend format
+  const providerTypeMap: Record<string, string> = {
+    'Manufacturer/Wholesaler': 'manufacturer_wholesaler',
+    'Retailer/Supplier': 'retailer_supplier',
+    'Contractor': 'contractor',
+    'Consultant': 'consultant',
+    'Freelancer': 'freelancer',
+    'Technician': 'technician',
+    'Casual Labourer': 'casual_labourer'
+  };
+
   const payload: Record<string, unknown> = {
     email: userData.email,
     password: userData.password || '',
@@ -94,7 +119,7 @@ export async function register(
     phone: userData.phone || '+255 700 000 000',
     role: userData.accountType,
     buyerType,
-    providerType: userData.providerType,
+    providerType: userData.providerType ? providerTypeMap[userData.providerType] : undefined,
     businessName: userData.businessName || userData.name,
   };
 

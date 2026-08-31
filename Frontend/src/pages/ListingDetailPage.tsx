@@ -347,9 +347,6 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                       <ShieldCheck className="w-3 h-3" /> Verified Partner
                     </span>
                     <span className="text-[11px] text-slate-400">•</span>
-                    <span className="text-[11px] text-slate-600 flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> {provider?.rating || 4.9}
-                    </span>
                   </div>
                 </div>
               </div>

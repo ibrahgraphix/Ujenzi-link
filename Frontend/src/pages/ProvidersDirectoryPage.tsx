@@ -202,11 +202,6 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
 
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex items-center gap-1 font-bold text-slate-800">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span>{provider.rating}</span>
-                    <span className="font-normal text-slate-400">({provider.reviewsCount} reviews)</span>
-                  </div>
                   <div className="flex items-center gap-1 text-slate-600 truncate max-w-[150px]">
                     <MapPin className="w-3.5 h-3.5 text-[#2E86D8] shrink-0" />
                     <span className="truncate">{provider.location?.region}</span>

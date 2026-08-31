@@ -21,8 +21,8 @@ function mapBackendProvider(p: any): Provider {
     bio: p.description || p.bio || 'Quality construction material supplier in Tanzania.',
     isVerified: p.is_verified ?? p.isVerified ?? false,
     verificationDate: p.verificationDate || p.updated_at,
-    rating: p.rating ?? 5.0,
-    reviewsCount: p.reviewsCount ?? 0,
+    rating: 0,
+    reviewsCount: 0,
     yearsInBusiness: p.yearsInBusiness || 1,
     specialties: p.specialties || ['Construction Materials'],
     joinedDate: p.created_at || p.joinedDate || new Date().toISOString().split('T')[0],
@@ -32,8 +32,9 @@ function mapBackendProvider(p: any): Provider {
 
 export async function getProviders(type?: string): Promise<Provider[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/admin/providers');
-    const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data || [];
+    // Try public endpoint first for customer/client views
+    const res = await apiClient.get<any>('/api/provider/all');
+    const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
     if (Array.isArray(items)) {
       const mapped = items.map(mapBackendProvider);
       if (type && type !== 'all') {
@@ -42,20 +43,21 @@ export async function getProviders(type?: string): Promise<Provider[]> {
       return mapped;
     }
   } catch (err) {
-    console.warn('Failed to fetch providers from API:', err);
-  }
-
-  try {
-    const item = localStorage.getItem(STORAGE_KEY);
-    if (item) {
-      const stored: Provider[] = JSON.parse(item);
-      if (type && type !== 'all') {
-        return stored.filter((p) => p.providerType === type);
+    console.warn('Failed to fetch providers from public API, trying admin endpoint:', err);
+    try {
+      // Fallback to admin endpoint (requires auth)
+      const res = await apiClient.get<any>('/api/admin/providers');
+      const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
+      if (Array.isArray(items)) {
+        const mapped = items.map(mapBackendProvider);
+        if (type && type !== 'all') {
+          return mapped.filter((p) => p.providerType === type);
+        }
+        return mapped;
       }
-      return stored;
+    } catch (adminErr) {
+      console.error('Failed to fetch providers from admin API:', adminErr);
     }
-  } catch {
-    // fallback
   }
 
   return [];
@@ -95,11 +97,11 @@ export async function saveProvider(providerData: Partial<Provider> & { id?: stri
     phone: providerData.phone || '+255 700 000 000',
     whatsapp: providerData.whatsapp || '+255700000000',
     email: providerData.email || 'info@provider.tz',
-    location: providerData.location || { country: 'Tanzania', region: 'Dar es Salaam' },
+    location: providerData.location || { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
     address: providerData.address || 'Dar es Salaam, Tanzania',
     bio: providerData.bio || 'Quality construction material supplier in Tanzania.',
     isVerified: false,
-    rating: 5.0,
+    rating: 0,
     reviewsCount: 0,
     yearsInBusiness: providerData.yearsInBusiness || 1,
     specialties: providerData.specialties || ['Building Materials'],

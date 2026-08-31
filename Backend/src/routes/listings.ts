@@ -7,6 +7,9 @@ import { asyncHandler } from '../middleware';
 const router = Router();
 const listingController = new ListingController();
 
+// Public listings search (no auth required) - must come before :listingId route
+router.get('/', asyncHandler(listingController.getAllListings));
+
 // Public routes
 router.get('/:listingId', asyncHandler(listingController.getListingById));
 

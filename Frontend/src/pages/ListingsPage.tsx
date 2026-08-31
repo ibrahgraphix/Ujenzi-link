@@ -83,9 +83,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       query: query || undefined,
       category: category !== 'all' ? category : undefined,
       region: location.region || undefined,
-      county: location.county || undefined,
       district: location.district || undefined,
-      ward: location.ward || undefined,
       providerType: providerType !== 'all' ? providerType : undefined,
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
@@ -106,7 +104,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
   const handleResetFilters = () => {
     setQuery('');
     setCategory('all');
-    setLocation({ country: 'Tanzania', region: '', district: '', ward: '', street: '' });
+    setLocation({ country: 'Tanzania', region: '', district: '' });
     setProviderType('all');
     setMinPrice('');
     setMaxPrice('');
@@ -158,7 +156,6 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
                 <option value="newest">Latest Uploads</option>
                 <option value="price_low">Price: Low to High</option>
                 <option value="price_high">Price: High to Low</option>
-                <option value="rating">Top Rated Suppliers</option>
                 <option value="popular">Most Inquired</option>
               </select>
             </div>
@@ -220,7 +217,6 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
               <LocationSelector
                 value={location}
                 onChange={setLocation}
-                showAllLevels={true}
                 compact={true}
               />
             </div>
@@ -252,7 +248,6 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
                     }`}
                   >
                     <span className="truncate">{cat.name}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">{cat.itemCount}</span>
                   </button>
                 ))}
               </div>
@@ -452,7 +447,6 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
             <LocationSelector
               value={location}
               onChange={setLocation}
-              showAllLevels={true}
             />
 
             <div>

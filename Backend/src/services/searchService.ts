@@ -11,6 +11,8 @@ export class SearchService {
     maxPrice?: number;
     page?: number;
     limit?: number;
+    status?: string;
+    includeAll?: boolean;
   }) {
     const {
       keyword,
@@ -21,7 +23,9 @@ export class SearchService {
       minPrice,
       maxPrice,
       page = 1,
-      limit = 20
+      limit = 20,
+      status,
+      includeAll = false
     } = filters;
 
     // Build query
@@ -65,8 +69,15 @@ export class SearchService {
       query = query.lte('price', maxPrice);
     }
 
-    // Only show active listings (public endpoint)
-    query = query.eq('status', 'active');
+    // Only show active listings by default (public endpoint)
+    // Admin can request all statuses or specific status
+    if (!includeAll) {
+      if (status) {
+        query = query.eq('status', status);
+      } else {
+        query = query.eq('status', 'active');
+      }
+    }
 
     // Pagination
     const offset = (page - 1) * limit;

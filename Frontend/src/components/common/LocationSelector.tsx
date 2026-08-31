@@ -3,36 +3,27 @@ import { MapPin, RotateCcw } from 'lucide-react';
 import { LocationHierarchy } from '../../types';
 import {
   getRegions,
-  getCountiesByRegion,
-  getDistrictsByCounty,
-  getWardsByDistrict,
+  getDistrictsByRegion,
 } from '../../services/locationsService';
 
 interface LocationSelectorProps {
   value?: LocationHierarchy;
   onChange: (location: LocationHierarchy) => void;
-  showAllLevels?: boolean;
   compact?: boolean;
   className?: string;
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
-  value = { country: 'Tanzania', region: '', county: '', district: '', ward: '', street: '' },
+  value = { country: 'Tanzania', region: '', district: '' },
   onChange,
-  showAllLevels = true,
   compact = false,
   className = '',
 }) => {
   const [selectedRegion, setSelectedRegion] = useState<string>(value?.region || '');
-  const [selectedCounty, setSelectedCounty] = useState<string>(value?.county || '');
   const [selectedDistrict, setSelectedDistrict] = useState<string>(value?.district || '');
-  const [selectedWard, setSelectedWard] = useState<string>(value?.ward || '');
-  const [selectedStreet, setSelectedStreet] = useState<string>(value?.street || '');
 
   const [regionsList, setRegionsList] = useState<string[]>([]);
-  const [countiesList, setCountiesList] = useState<string[]>([]);
   const [districtsList, setDistrictsList] = useState<string[]>([]);
-  const [wardsList, setWardsList] = useState<string[]>([]);
 
   // Load regions on mount
   useEffect(() => {
@@ -42,106 +33,37 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   // Sync from external value changes
   useEffect(() => {
     setSelectedRegion(value?.region || '');
-    setSelectedCounty(value?.county || '');
     setSelectedDistrict(value?.district || '');
-    setSelectedWard(value?.ward || '');
-    setSelectedStreet(value?.street || '');
-  }, [value?.region, value?.county, value?.district, value?.ward, value?.street]);
+  }, [value?.region, value?.district]);
 
-  // Load counties when region changes
+  // Load districts when region changes
   useEffect(() => {
     if (selectedRegion) {
-      getCountiesByRegion(selectedRegion).then((counties) => setCountiesList(counties || []));
-    } else {
-      setCountiesList([]);
-    }
-  }, [selectedRegion]);
-
-  // Load districts when county changes
-  useEffect(() => {
-    if (selectedRegion && selectedCounty) {
-      getDistrictsByCounty(selectedRegion, selectedCounty).then((dists) =>
-        setDistrictsList(dists || [])
-      );
+      getDistrictsByRegion(selectedRegion).then((dists) => setDistrictsList(dists || []));
     } else {
       setDistrictsList([]);
     }
-  }, [selectedRegion, selectedCounty]);
-
-  // Load wards when district changes
-  useEffect(() => {
-    if (selectedRegion && selectedCounty && selectedDistrict) {
-      getWardsByDistrict(selectedRegion, selectedCounty, selectedDistrict).then((wards) =>
-        setWardsList(wards || [])
-      );
-    } else {
-      setWardsList([]);
-    }
-  }, [selectedRegion, selectedCounty, selectedDistrict]);
+  }, [selectedRegion]);
 
   const handleRegionChange = (newRegion: string) => {
     setSelectedRegion(newRegion);
-    setSelectedCounty('');
     setSelectedDistrict('');
-    setSelectedWard('');
-    setSelectedStreet('');
-    onChange({ country: 'Tanzania', region: newRegion, county: '', district: '', ward: '', street: '' });
-  };
-
-  const handleCountyChange = (newCounty: string) => {
-    setSelectedCounty(newCounty);
-    setSelectedDistrict('');
-    setSelectedWard('');
-    setSelectedStreet('');
-    onChange({ country: 'Tanzania', region: selectedRegion, county: newCounty, district: '', ward: '', street: '' });
+    onChange({ country: 'Tanzania', region: newRegion, district: '' });
   };
 
   const handleDistrictChange = (newDistrict: string) => {
     setSelectedDistrict(newDistrict);
-    setSelectedWard('');
-    setSelectedStreet('');
     onChange({
       country: 'Tanzania',
       region: selectedRegion,
-      county: selectedCounty,
       district: newDistrict,
-      ward: '',
-      street: '',
-    });
-  };
-
-  const handleWardChange = (newWard: string) => {
-    setSelectedWard(newWard);
-    setSelectedStreet('');
-    onChange({
-      country: 'Tanzania',
-      region: selectedRegion,
-      county: selectedCounty,
-      district: selectedDistrict,
-      ward: newWard,
-      street: '',
-    });
-  };
-
-  const handleStreetChange = (newStreet: string) => {
-    setSelectedStreet(newStreet);
-    onChange({
-      country: 'Tanzania',
-      region: selectedRegion,
-      county: selectedCounty,
-      district: selectedDistrict,
-      ward: selectedWard,
-      street: newStreet,
     });
   };
 
   const handleReset = () => {
     setSelectedRegion('');
-    setSelectedCounty('');
     setSelectedDistrict('');
-    setSelectedWard('');
-    setSelectedStreet('');
-    onChange({ country: 'Tanzania', region: '' });
+    onChange({ country: 'Tanzania', region: '', district: '' });
   };
 
   const selectClass =
@@ -167,14 +89,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
       <div
         className={`grid gap-2.5 ${
-          compact ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+          compact ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
         }`}
       >
         {/* Region */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 mb-1">Region</label>
+          <label className="block text-[11px] font-semibold text-slate-500 mb-1">Region *</label>
           <select value={selectedRegion} onChange={(e) => handleRegionChange(e.target.value)} className={selectClass}>
-            <option value="">All Regions</option>
+            <option value="">Select Region</option>
             {regionsList.map((r) => (
               <option key={r} value={r}>
                 {r}
@@ -183,34 +105,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           </select>
         </div>
 
-        {/* County */}
-        <div>
-          <label className="block text-[11px] font-semibold text-slate-500 mb-1">County</label>
-          <select
-            value={selectedCounty}
-            onChange={(e) => handleCountyChange(e.target.value)}
-            disabled={!selectedRegion}
-            className={selectClass}
-          >
-            <option value="">{selectedRegion ? (countiesList.length > 0 ? 'All Counties' : 'No counties listed') : 'Select Region first'}</option>
-            {countiesList.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* District */}
         <div>
-          <label className="block text-[11px] font-semibold text-slate-500 mb-1">District</label>
+          <label className="block text-[11px] font-semibold text-slate-500 mb-1">District *</label>
           <select
             value={selectedDistrict}
             onChange={(e) => handleDistrictChange(e.target.value)}
-            disabled={!selectedCounty && districtsList.length === 0}
+            disabled={!selectedRegion}
             className={selectClass}
           >
-            <option value="">{selectedRegion ? 'All Districts' : 'Select Region first'}</option>
+            <option value="">{selectedRegion ? 'Select District' : 'Select Region first'}</option>
             {districtsList.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -218,50 +122,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             ))}
           </select>
         </div>
-
-        {/* Ward */}
-        {showAllLevels && (
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ward / Area</label>
-            {wardsList.length > 0 ? (
-              <select
-                value={selectedWard}
-                onChange={(e) => handleWardChange(e.target.value)}
-                disabled={!selectedDistrict}
-                className={selectClass}
-              >
-                <option value="">All Wards</option>
-                {wardsList.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                placeholder="e.g. Mikocheni, Kariakoo..."
-                value={selectedWard}
-                onChange={(e) => handleWardChange(e.target.value)}
-                className={selectClass}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Street */}
-        {showAllLevels && (
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">Street / Landmark</label>
-            <input
-              type="text"
-              placeholder="e.g. Old Bagamoyo Rd..."
-              value={selectedStreet}
-              onChange={(e) => handleStreetChange(e.target.value)}
-              className={selectClass}
-            />
-          </div>
-        )}
       </div>
 
       {/* Selected location summary */}
@@ -270,10 +130,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           <span className="font-semibold text-slate-800">Location:</span>
           <span>
             {selectedRegion}
-            {selectedCounty ? ` › ${selectedCounty}` : ''}
             {selectedDistrict ? ` › ${selectedDistrict}` : ''}
-            {selectedWard ? ` › ${selectedWard}` : ''}
-            {selectedStreet ? ` › ${selectedStreet}` : ''}
           </span>
         </div>
       )}

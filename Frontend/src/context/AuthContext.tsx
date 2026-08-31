@@ -66,45 +66,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
-  const loginAs = (role: 'buyer' | 'provider' | 'admin') => {
-    let targetUser: User;
+  const loginAs = async (role: 'buyer' | 'provider' | 'admin') => {
+    let email: string;
+    let password: string;
+    
     if (role === 'provider') {
-      targetUser = {
-        id: 'user-provider-1',
-        name: 'Plan Moja Contractors',
-        email: 'info@planmoja.co.tz',
-        phone: '+255 755 890 123',
-        accountType: 'provider',
-        providerType: 'Contractor',
-        businessName: 'Plan Moja Construction Co. Ltd',
-        location: { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
-        createdAt: new Date().toISOString(),
-      };
+      email = 'provider@demo.co.tz';
+      password = 'demo123';
     } else if (role === 'admin') {
-      targetUser = {
-        id: 'user-admin-1',
-        name: 'Ujenzi Link Admin',
-        email: 'admin@ujenzilink.co.tz',
-        phone: '+255 711 000 999',
-        accountType: 'admin',
-        location: { country: 'Tanzania', region: 'Dar es Salaam' },
-        createdAt: new Date().toISOString(),
-      };
+      email = 'admin@ujenzilink.co.tz';
+      password = 'admin123';
     } else {
-      targetUser = {
-        id: 'user-buyer-1',
-        name: 'Baraka Mwambapa',
-        email: 'baraka@gmail.com',
-        phone: '+255 712 345 678',
-        accountType: 'buyer',
-        buyerRole: 'Developer',
-        location: { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
-        createdAt: new Date().toISOString(),
-      };
+      email = 'buyer@demo.co.tz';
+      password = 'demo123';
     }
-    setUser(targetUser);
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(targetUser));
-    success(`Switched role to ${targetUser.name} (${targetUser.accountType.toUpperCase()})`, 'Profile Activated');
+    
+    const success = await login(email, password);
+    if (!success) {
+      error('Authentication failed. Please check your credentials or register a new account.', 'Login Failed');
+    }
   };
 
   const login = async (email: string, password?: string): Promise<boolean> => {

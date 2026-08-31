@@ -480,11 +480,6 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                   <div>
                     <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100 mb-3">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-bold text-slate-800">{provider.rating}</span>
-                        <span>({provider.reviewsCount})</span>
-                      </div>
                       <div className="flex items-center gap-1 text-slate-600 truncate max-w-[150px]">
                         <MapPin className="w-3 h-3 text-[#2E86D8]" />
                         <span>{provider.location?.region}</span>

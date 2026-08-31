@@ -73,11 +73,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const [isSavingLogo, setIsSavingLogo] = useState(false);
   const [listingLocation, setListingLocation] = useState<LocationHierarchy>({
     country: 'Tanzania',
-    region: user?.location?.region || 'Dar es Salaam',
-    district: user?.location?.district || 'Kinondoni',
-    ward: 'Mikocheni',
-    street: 'Old Bagamoyo Rd',
+    region: '',
+    district: '',
   });
+  const [listingFormKey, setListingFormKey] = useState(0);
 
   const loadProviderData = async () => {
     setIsLoading(true);
@@ -93,8 +92,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       setProviderLogo({ url: prov.logo, fileId: prov.logoFileId || '' });
     }
 
-    const providerListings = prov ? await getProviderListings(prov.id) : [];
-    setMyListings(providerListings.length > 0 ? providerListings : (await getListings()).filter((l) => l.providerId === prov?.id || l.providerName === user?.name));
+    // Use user.id as providerId for backend API calls
+    const providerUserId = user?.id || prov?.id;
+    const providerListings = providerUserId ? await getProviderListings(providerUserId) : [];
+    setMyListings(providerListings.length > 0 ? providerListings : (await getListings()).filter((l) => l.providerId === providerUserId || l.providerName === user?.name));
     setInquiries(allInquiries);
     setCategories(allCats);
     setIsLoading(false);
@@ -130,6 +131,12 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setListingDeliveryAvailable(true);
     setListingDescription('');
     setListingImageItems([]);
+    setListingLocation({
+      country: 'Tanzania',
+      region: user?.location?.region || '',
+      district: user?.location?.district || '',
+    });
+    setListingFormKey((key) => key + 1);
     setIsListingModalOpen(true);
   };
 
@@ -147,6 +154,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         listing.images.map((url) => ({ url, fileId: '' }))
     );
     setListingLocation(listing.location);
+    setListingFormKey((key) => key + 1);
     setIsListingModalOpen(true);
   };
 
@@ -165,6 +173,11 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       return;
     }
 
+    if (!listingLocation.region || !listingLocation.district) {
+      error('Please select both a region and district for your listing.');
+      return;
+    }
+
     const imgs = listingImageItems.filter((img) => img.url);
 
     if (imgs.length === 0) {
@@ -172,45 +185,60 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       return;
     }
 
-    if (editingListingId) {
-      const updated = await updateListing(editingListingId, {
-        title: listingTitle,
-        category: listingCategory,
-        price: Number(listingPrice),
-        unit: listingUnit,
-        minOrderQuantity: listingMinOrder,
-        deliveryAvailable: listingDeliveryAvailable,
-        description: listingDescription,
-        images: imgs.map((img) => img.url),
-        imageItems: imgs,
-        location: listingLocation,
-      });
-      setMyListings((prev) => prev.map((l) => (l.id === editingListingId ? updated : l)));
-      success('Listing updated successfully.');
-    } else {
-      const created = await createListing({
-        title: listingTitle,
-        category: listingCategory,
-        providerId: myProvider?.id || 'prov-1',
-        providerName: myProvider?.name || user?.name || 'Authorized Supplier',
-        providerType: myProvider?.providerType || user?.providerType || 'Retailer/Supplier',
-        price: Number(listingPrice),
-        currency: 'TZS',
-        unit: listingUnit,
-        minOrderQuantity: listingMinOrder,
-        deliveryAvailable: listingDeliveryAvailable,
-        description: listingDescription,
-        location: listingLocation,
-        images: imgs.map((img) => img.url),
-        imageItems: imgs,
-        specifications: { 'Origin': 'Tanzania Standard', 'Condition': 'Brand New Stock' },
-        isVerified: true,
-      });
-      setMyListings((prev) => [created, ...prev]);
-      success('New listing published to Ujenzi Link marketplace!');
-    }
+    // Find category ID from category name
+    const categoryObj = categories.find(c => c.name === listingCategory);
+    const categoryId = categoryObj?.id || categories[0]?.id;
 
-    setIsListingModalOpen(false);
+    console.log('User ID:', user?.id);
+    console.log('Provider ID:', myProvider?.id);
+    console.log('Category ID:', categoryId);
+
+    try {
+      if (editingListingId) {
+        const updated = await updateListing(editingListingId, {
+          title: listingTitle,
+          category: listingCategory,
+          categoryId,
+          price: Number(listingPrice),
+          unit: listingUnit,
+          minOrderQuantity: listingMinOrder,
+          deliveryAvailable: listingDeliveryAvailable,
+          description: listingDescription.trim() || listingTitle,
+          images: imgs.map((img) => img.url),
+          imageItems: imgs,
+          location: listingLocation,
+        });
+        setMyListings((prev) => prev.map((l) => (l.id === editingListingId ? updated : l)));
+        success('Listing updated successfully.');
+      } else {
+        const created = await createListing({
+          title: listingTitle,
+          category: listingCategory,
+          categoryId,
+          providerId: user?.id || myProvider?.id || 'prov-1',
+          providerName: myProvider?.name || user?.name || 'Authorized Supplier',
+          providerType: myProvider?.providerType || user?.providerType || 'Retailer/Supplier',
+          price: Number(listingPrice),
+          currency: 'TZS',
+          unit: listingUnit,
+          minOrderQuantity: listingMinOrder,
+          deliveryAvailable: listingDeliveryAvailable,
+          description: listingDescription.trim() || listingTitle,
+          location: listingLocation,
+          images: imgs.map((img) => img.url),
+          imageItems: imgs,
+          specifications: { 'Origin': 'Tanzania Standard', 'Condition': 'Brand New Stock' },
+          isVerified: true,
+        });
+        setMyListings((prev) => [created, ...prev]);
+        success('New listing published to Ujenzi Link marketplace!');
+      }
+
+      setIsListingModalOpen(false);
+    } catch (err: any) {
+      console.error('Error saving listing:', err);
+      error(`Failed to save listing: ${err?.message || 'Unknown error'}. Please check your connection and try again.`);
+    }
   };
 
   const handleInquiryStatusChange = async (inquiryId: string, newStatus: any) => {
@@ -333,10 +361,6 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-semibold mb-1">Direct Inquiries</div>
           <div className="text-2xl font-extrabold text-[#2E86D8]">{inquiries.length}</div>
-        </div>
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs text-slate-500 font-semibold mb-1">Client Rating</div>
-          <div className="text-2xl font-extrabold text-amber-500">{myProvider?.rating || 4.9} ★</div>
         </div>
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-semibold mb-1">Commission Owed</div>
@@ -617,9 +641,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
           {/* Location Hierarchy */}
           <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
             <LocationSelector
+              key={listingFormKey}
               value={listingLocation}
               onChange={setListingLocation}
-              showAllLevels={true}
               compact={true}
             />
           </div>

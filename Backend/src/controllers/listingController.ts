@@ -1,11 +1,41 @@
 import { Request, Response } from 'express';
 import { ListingService } from '../services/listingService';
+import { LocationService } from '../services/locationService';
 import { AppError } from '../middleware';
 import { ListingStatus, UserRole, AuthRequest } from '../models';
 
 const listingService = new ListingService();
+const locationService = new LocationService();
 
 export class ListingController {
+  getAllListings = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { status, categoryId, providerId, page, limit } = req.query;
+
+      // Use the admin listing service for consistent fetching
+      const { AdminListingService } = await import('../services/adminListingService');
+      const adminListingService = new AdminListingService();
+
+      const results = await adminListingService.getAllListings({
+        status: status as ListingStatus,
+        categoryId: categoryId as string,
+        providerId: providerId as string,
+        page: page ? parseInt(page as string) : 1,
+        limit: limit ? parseInt(limit as string) : 20
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: results
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(500, error.message);
+      }
+      throw error;
+    }
+  };
+
   getListingById = async (req: Request, res: Response): Promise<void> => {
     try {
       const { listingId } = req.params;
@@ -43,17 +73,23 @@ export class ListingController {
         price,
         unit,
         locationId,
+        location,
         images,
         imageUrls,
       } = req.body;
 
-      if (!categoryId || !title || !description || !price || !locationId) {
-        throw new AppError(400, 'Missing required fields: categoryId, title, description, price, locationId');
+      if (!categoryId || !title || !description || !price) {
+        throw new AppError(400, 'Missing required fields: categoryId, title, description, price');
+      }
+
+      let finalLocationId = locationId;
+      if (!finalLocationId) {
+        finalLocationId = await locationService.resolveLocationId(location);
       }
 
       // Determine providerId based on role
       let finalProviderId = providerId;
-      let adminCreated = false;
+      let createdByAdmin = false;
 
       if (req.user?.role === UserRole.PROVIDER) {
         // Providers create listings for themselves
@@ -63,7 +99,7 @@ export class ListingController {
         if (!providerId) {
           throw new AppError(400, 'providerId is required for admin-created listings');
         }
-        adminCreated = true;
+        createdByAdmin = true;
       } else {
         throw new AppError(403, 'Only providers and admins can create listings');
       }
@@ -75,8 +111,8 @@ export class ListingController {
         description,
         price,
         unit,
-        locationId,
-        adminCreated,
+        locationId: finalLocationId,
+        createdByAdmin,
         images,
         imageUrls,
       });
@@ -104,6 +140,7 @@ export class ListingController {
         price,
         unit,
         locationId,
+        location,
         status,
         images,
         imageUrls,
@@ -117,6 +154,11 @@ export class ListingController {
         throw new AppError(401, 'User not authenticated');
       }
 
+      let finalLocationId = locationId;
+      if (!finalLocationId && location) {
+        finalLocationId = await locationService.resolveLocationId(location);
+      }
+
       const listing = await listingService.updateListing(
         listingId,
         req.user.userId,
@@ -127,7 +169,7 @@ export class ListingController {
           description,
           price,
           unit,
-          locationId,
+          locationId: finalLocationId,
           status,
           images,
           imageUrls,

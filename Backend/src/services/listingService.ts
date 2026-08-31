@@ -60,7 +60,7 @@ export class ListingService {
     price: number;
     unit?: string;
     locationId: string;
-    adminCreated?: boolean;
+    createdByAdmin?: boolean;
     images?: ImagePayload[];
     imageUrls?: string[];
   }) {
@@ -72,7 +72,7 @@ export class ListingService {
       price,
       unit,
       locationId,
-      adminCreated = false,
+      createdByAdmin = false,
       images,
       imageUrls,
     } = data;
@@ -81,9 +81,9 @@ export class ListingService {
 
     const { data: provider, error: providerError } = await supabase
       .from('provider_profiles')
-      .select('id')
-      .eq('id', providerId)
-      .single();
+      .select('user_id')
+      .eq('user_id', providerId)
+      .maybeSingle();
 
     if (providerError || !provider) {
       throw new Error('Provider not found');
@@ -98,10 +98,10 @@ export class ListingService {
         title,
         description,
         price,
-        unit,
+        price_unit: unit || null,
         location_id: locationId,
-        status: ListingStatus.PENDING_REVIEW,
-        admin_created: adminCreated,
+        status: ListingStatus.ACTIVE,
+        created_by_admin: createdByAdmin,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -118,7 +118,7 @@ export class ListingService {
         listing_id: listing.id,
         image_url: img.url,
         file_id: img.fileId || null,
-        display_order: index + 1,
+        sort_order: index + 1,
         created_at: new Date().toISOString(),
       }));
 
@@ -171,7 +171,7 @@ export class ListingService {
         title,
         description,
         price,
-        unit,
+        price_unit: unit,
         location_id: locationId,
         status,
         updated_at: new Date().toISOString(),
@@ -196,7 +196,7 @@ export class ListingService {
           listing_id: listingId,
           image_url: img.url,
           file_id: img.fileId || null,
-          display_order: index + 1,
+          sort_order: index + 1,
           created_at: new Date().toISOString(),
         }));
 

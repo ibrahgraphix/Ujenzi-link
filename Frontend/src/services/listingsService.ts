@@ -45,7 +45,7 @@ export function mapBackendListing(item: any): Listing {
     category: categoryName,
     price: typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'),
     currency: item.currency || 'TZS',
-    unit: item.unit || 'Unit',
+    unit: item.price_unit || item.unit || 'Unit',
     description: item.description || '',
     images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80'],
     imageItems: imageItems.length > 0 ? imageItems : undefined,
@@ -71,7 +71,7 @@ export function mapBackendListing(item: any): Listing {
     reviewsCount: item.reviewsCount ?? 0,
     createdAt: item.created_at || item.createdAt || new Date().toISOString(),
     status: item.status || 'active',
-    isFeatured: item.isFeatured ?? item.admin_created ?? false,
+    isFeatured: item.isFeatured ?? item.created_by_admin ?? item.admin_created ?? false,
     tags: item.tags || [],
     minOrderQuantity: item.minOrderQuantity || '1 Unit',
     deliveryAvailable: item.deliveryAvailable ?? true,
@@ -101,12 +101,6 @@ function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFi
 
   if (params.region && params.region !== 'all') {
     result = result.filter((l) => l.location.region.toLowerCase() === params.region!.toLowerCase());
-  }
-
-  if (params.county && params.county !== 'all') {
-    result = result.filter(
-      (l) => l.location.county && l.location.county.toLowerCase() === params.county!.toLowerCase()
-    );
   }
 
   if (params.district && params.district !== 'all') {
@@ -174,10 +168,10 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
     if (params?.query) queryParams.set('keyword', params.query);
     if (params?.category && params.category !== 'all') queryParams.set('categoryId', params.category);
     if (params?.region && params.region !== 'all') queryParams.set('region', params.region);
-    if (params?.county && params.county !== 'all') queryParams.set('county', params.county);
     if (params?.district && params.district !== 'all') queryParams.set('district', params.district);
     if (params?.minPrice) queryParams.set('minPrice', params.minPrice.toString());
     if (params?.maxPrice) queryParams.set('maxPrice', params.maxPrice.toString());
+    if (params?.verifiedOnly) queryParams.set('verifiedOnly', 'true');
 
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/api/search/listings?${queryString}` : '/api/search/listings';
@@ -189,17 +183,7 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
       return filterAndSortListingsLocally(mapped, params);
     }
   } catch (err) {
-    console.warn('Failed to fetch listings from API:', err);
-  }
-
-  try {
-    const item = localStorage.getItem(STORAGE_KEY);
-    if (item) {
-      const stored = JSON.parse(item);
-      return filterAndSortListingsLocally(stored, params);
-    }
-  } catch {
-    // fallback
+    console.error('Failed to fetch listings from API:', err);
   }
 
   return [];
@@ -233,14 +217,21 @@ export async function saveListing(
 
     const payload = {
       title: listingData.title,
-      description: listingData.description,
+      description: listingData.description?.trim() || listingData.title || 'No description provided',
       price: listingData.price,
       unit: listingData.unit,
-      categoryId: listingData.category,
+      categoryId: listingData.categoryId || listingData.category,
       providerId: listingData.providerId,
+      location: listingData.location,
       images,
       imageUrls: images.map((img) => img.url),
     };
+
+    if (!payload.location?.region || !payload.location?.district) {
+      throw new Error('Please select both a region and district for your listing.');
+    }
+
+    console.log('Saving listing to API:', payload);
 
     let res: any;
     if (listingData.id && !listingData.id.startsWith('list-demo-')) {
@@ -248,9 +239,13 @@ export async function saveListing(
     } else {
       res = await apiClient.post('/api/listings', payload);
     }
+
+    console.log('API response:', res);
+
     if (res) return mapBackendListing(res.listing || res);
   } catch (err) {
-    console.warn('Failed to save listing via API, operating locally:', err);
+    console.error('Failed to save listing via API:', err);
+    throw err; // Re-throw to prevent silent fallback
   }
 
   const all = await getListings();

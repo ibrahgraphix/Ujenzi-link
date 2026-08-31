@@ -56,14 +56,7 @@ interface AdminDashboardPageProps {
   onSelectProvider: (provider: Provider) => void;
 }
 
-const MONTHLY_DATA = [
-  { month: 'Jan', inquiries: 140, listings: 45 },
-  { month: 'Feb', inquiries: 210, listings: 68 },
-  { month: 'Mar', inquiries: 350, listings: 92 },
-  { month: 'Apr', inquiries: 480, listings: 120 },
-  { month: 'May', inquiries: 620, listings: 165 },
-  { month: 'Jun', inquiries: 890, listings: 210 },
-];
+const MONTHLY_DATA: { month: string; inquiries: number; listings: number }[] = [];
 
 const COLORS = ['#1B3A6B', '#2E86D8', '#8B5E3C', '#10B981', '#F59E0B', '#6366F1'];
 
@@ -590,7 +583,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <th className="py-3 px-4">Provider / Business</th>
                   <th className="py-3 px-4">Role Type</th>
                   <th className="py-3 px-4">Region</th>
-                  <th className="py-3 px-4">Rating</th>
                   <th className="py-3 px-4">Verification Status</th>
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
@@ -613,7 +605,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       <ProviderTypeBadge type={p.providerType} size="xs" />
                     </td>
                     <td className="py-3.5 px-4 text-slate-600">{p.location.region}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-800">★ {p.rating}</td>
                     <td className="py-3.5 px-4">
                       {p.isVerified ? (
                         <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">

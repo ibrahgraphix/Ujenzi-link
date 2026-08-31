@@ -72,10 +72,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         error('Please provide your name.');
         return;
       }
+      if (!phone) {
+        error('Please provide your phone number.');
+        return;
+      }
+      if (accountType === 'provider' && !businessName) {
+        error('Please provide your business name.');
+        return;
+      }
       const ok = await signup({
         name,
         email,
         phone,
+        password,
         accountType,
         buyerType: accountType === 'buyer' ? buyerType : undefined,
         businessName: accountType === 'provider' ? businessName || name : undefined,
@@ -329,6 +338,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 placeholder="+255 7XX XXX XXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                required
               />
             </>
           )}

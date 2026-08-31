@@ -14,10 +14,7 @@ export type ProviderType =
 export interface LocationHierarchy {
   country: string;
   region: string;
-  county?: string;
-  district?: string;
-  ward?: string;
-  street?: string;
+  district: string;
 }
 
 export interface User {
@@ -48,6 +45,7 @@ export interface Listing {
   id: string;
   title: string;
   category: string;
+  categoryId?: string;
   price: number;
   currency: string;
   unit: string;

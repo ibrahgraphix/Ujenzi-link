@@ -219,15 +219,6 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
               </div>
             </div>
 
-            <div className="flex items-start gap-2.5">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-slate-900">Client Rating</div>
-                <div className="text-slate-500 mt-0.5">
-                  {provider.rating} / 5.0 ({provider.reviewsCount} verified reviews)
-                </div>
-              </div>
-            </div>
 
             <div className="flex items-start gap-2.5">
               <Mail className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
