@@ -63,8 +63,7 @@ export class AuthService {
       const buyerInsertData: Record<string, any> = {
         user_id: userId,
         buyer_type: buyerType,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
 
       // Add client-specific fields if buyer_type is 'client'
@@ -80,8 +79,7 @@ export class AuthService {
 
       if (profileError) {
         console.error('Buyer profile error:', profileError);
-        // Don't throw error - allow registration to continue even if profile creation fails
-        // User can update profile later
+        throw new Error(`Failed to create buyer profile: ${profileError.message}`);
       }
     } else if (role === UserRole.PROVIDER && providerType && businessName) {
       console.log('Creating provider profile for user:', userId, 'with data:', { providerType, businessName, description, locationId });

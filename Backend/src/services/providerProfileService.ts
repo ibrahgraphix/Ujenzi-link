@@ -26,7 +26,7 @@ export class ProviderProfileService {
   async updateProviderLogo(userId: string, logo: string, logoFileId?: string) {
     const { data: existing, error: fetchError } = await supabase
       .from('provider_profiles')
-      .select('id, logo_file_id')
+      .select('user_id, logo_file_id')
       .eq('user_id', userId)
       .single();
 
@@ -40,6 +40,7 @@ export class ProviderProfileService {
       .from('provider_profiles')
       .update({
         logo,
+        logo_url: logo,
         logo_file_id: logoFileId || null,
         updated_at: new Date().toISOString(),
       })

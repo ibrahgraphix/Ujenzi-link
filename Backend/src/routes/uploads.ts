@@ -19,4 +19,10 @@ router.post(
   asyncHandler(uploadController.uploadImage)
 );
 
+router.delete(
+  '/image/:fileId',
+  authenticate,
+  asyncHandler(uploadController.deleteImage)
+);
+
 export default router;

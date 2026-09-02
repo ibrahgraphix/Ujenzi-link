@@ -6,14 +6,10 @@ const imageKitService = new ImageKitService();
 
 export class AdvertService {
   async getActiveAdverts() {
-    const now = new Date().toISOString();
-
     const { data: adverts, error } = await supabase
       .from('adverts')
       .select('*')
       .eq('is_active', true)
-      .lte('starts_at', now)
-      .gte('ends_at', now)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -97,8 +93,7 @@ export class AdvertService {
         starts_at: startsAt,
         ends_at: endsAt,
         provider_id: providerId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
       .select()
       .single();
@@ -137,9 +132,7 @@ export class AdvertService {
       throw new Error('Advert not found');
     }
 
-    const updatePayload: Record<string, unknown> = {
-      updated_at: new Date().toISOString()
-    };
+    const updatePayload: Record<string, unknown> = {};
 
     if (title !== undefined) updatePayload.title = title;
     if (imageUrl !== undefined) updatePayload.image_url = imageUrl;

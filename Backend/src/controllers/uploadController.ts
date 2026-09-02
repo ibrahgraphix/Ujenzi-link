@@ -56,4 +56,29 @@ export class UploadController {
       throw error;
     }
   };
+
+  deleteImage = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      const { fileId } = req.params;
+      if (!fileId) {
+        throw new AppError(400, 'fileId is required');
+      }
+
+      await imageKitService.deleteFile(fileId);
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Image deleted from ImageKit successfully',
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  };
 }

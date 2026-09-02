@@ -25,6 +25,7 @@ export class SearchService {
     region?: string;
     county?: string;
     district?: string;
+    providerType?: string;
     minPrice?: number;
     maxPrice?: number;
     page?: number;
@@ -39,6 +40,7 @@ export class SearchService {
       region,
       county,
       district,
+      providerType,
       minPrice,
       maxPrice,
       page = 1,
@@ -69,6 +71,11 @@ export class SearchService {
     // Filter by category
     if (categoryId) {
       query = query.eq('category_id', categoryId);
+    }
+
+    // Filter by provider type
+    if (providerType) {
+      query = query.eq('provider_profiles.provider_type', providerType);
     }
 
     // Filter by location hierarchy

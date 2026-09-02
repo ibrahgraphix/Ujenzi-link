@@ -12,7 +12,8 @@ export const supabase: SupabaseClient = createClient(config.supabaseUrl, config.
   },
   global: {
     headers: {
-      'apikey': config.supabaseSecretKey
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`
     }
   }
 });

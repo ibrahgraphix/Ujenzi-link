@@ -1,8 +1,27 @@
 import { Request, Response } from 'express';
 import { SearchService } from '../services/searchService';
 import { AppError } from '../middleware';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config';
 
 const searchService = new SearchService();
+
+// Create a dedicated service role client for public queries that bypasses RLS
+const serviceRoleClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`
+    }
+  }
+});
 
 export class SearchController {
   searchListings = async (req: Request, res: Response): Promise<void> => {
@@ -13,6 +32,7 @@ export class SearchController {
         region,
         county,
         district,
+        providerType,
         minPrice,
         maxPrice,
         page,
@@ -27,6 +47,7 @@ export class SearchController {
         region: region as string,
         county: county as string,
         district: district as string,
+        providerType: providerType as string,
         minPrice: minPrice ? parseFloat(minPrice as string) : undefined,
         maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
         page: page ? parseInt(page as string) : 1,
@@ -93,7 +114,7 @@ export class SearchController {
         throw new AppError(400, 'Region and county are required');
       }
 
-      const districts = await searchService.getDistrictsByCounty(region, county);
+      const districts = await searchService.getDistrictsByRegion(region);
 
       res.status(200).json({
         status: 'success',
@@ -132,13 +153,25 @@ export class SearchController {
 
   getWardsByDistrict = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { region, county, district } = req.params;
+      const { region, district } = req.params;
 
-      if (!region || !county || !district) {
-        throw new AppError(400, 'Region, county, and district are required');
+      if (!region || !district) {
+        throw new AppError(400, 'Region and district are required');
       }
 
-      const wards = await searchService.getWardsByDistrict(region, county, district);
+      const { data: locations, error } = await serviceRoleClient
+        .from('locations')
+        .select('ward')
+        .eq('region', region)
+        .eq('district', district)
+        .not('ward', 'is', null)
+        .order('ward');
+
+      if (error) {
+        throw new Error(`Failed to fetch wards: ${error.message}`);
+      }
+
+      const wards = [...new Set(locations.map((loc: any) => loc.ward))];
 
       res.status(200).json({
         status: 'success',
@@ -154,13 +187,26 @@ export class SearchController {
 
   getStreetsByWard = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { region, county, district, ward } = req.params;
+      const { region, district, ward } = req.params;
 
-      if (!region || !county || !district || !ward) {
-        throw new AppError(400, 'Region, county, district, and ward are required');
+      if (!region || !district || !ward) {
+        throw new AppError(400, 'Region, district, and ward are required');
       }
 
-      const streets = await searchService.getStreetsByWard(region, county, district, ward);
+      const { data: locations, error } = await serviceRoleClient
+        .from('locations')
+        .select('street')
+        .eq('region', region)
+        .eq('district', district)
+        .eq('ward', ward)
+        .not('street', 'is', null)
+        .order('street');
+
+      if (error) {
+        throw new Error(`Failed to fetch streets: ${error.message}`);
+      }
+
+      const streets = [...new Set(locations.map((loc: any) => loc.street))];
 
       res.status(200).json({
         status: 'success',

@@ -1,4 +1,22 @@
-import { supabase } from '../config';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config';
+
+// Create a dedicated service role client for public queries that bypasses RLS
+const serviceRoleClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`
+    }
+  }
+});
 
 export interface LocationInput {
   country?: string;
@@ -20,7 +38,7 @@ export class LocationService {
 
     const country = location?.country?.trim() || 'Tanzania';
 
-    let query = supabase
+    let query = serviceRoleClient
       .from('locations')
       .select('id')
       .eq('country', country)
@@ -42,7 +60,7 @@ export class LocationService {
     }
 
     // Try to insert with service role bypass
-    const { data: created, error: insertError } = await supabase
+    const { data: created, error: insertError } = await serviceRoleClient
       .from('locations')
       .insert({
         id: crypto.randomUUID(),
@@ -62,7 +80,7 @@ export class LocationService {
       console.log('Attempting to find existing location as fallback...');
       
       // Fallback: Try to find ANY location in the same region/district
-      const { data: fallbackLocation, error: fallbackError } = await supabase
+      const { data: fallbackLocation, error: fallbackError } = await serviceRoleClient
         .from('locations')
         .select('id')
         .eq('country', country)
@@ -74,7 +92,7 @@ export class LocationService {
       if (fallbackError || !fallbackLocation?.id) {
         console.error('Fallback location lookup also failed:', fallbackError);
         // Final fallback: Try to find ANY location in the database
-        const { data: anyLocation, error: anyError } = await supabase
+        const { data: anyLocation, error: anyError } = await serviceRoleClient
           .from('locations')
           .select('id')
           .limit(1)

@@ -10,8 +10,8 @@ export class InquiryController {
     try {
       const { listingId, providerId, message } = req.body;
 
-      if (!listingId || !providerId || !message) {
-        throw new AppError(400, 'Missing required fields: listingId, providerId, message');
+      if (!providerId || !message) {
+        throw new AppError(400, 'Missing required fields: providerId, message');
       }
 
       if (!req.user) {
@@ -26,7 +26,7 @@ export class InquiryController {
       const inquiry = await inquiryService.createInquiry({
         buyerId: req.user.userId,
         providerId,
-        listingId,
+        listingId: listingId || null,
         message
       });
 

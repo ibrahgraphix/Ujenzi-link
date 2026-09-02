@@ -30,4 +30,28 @@ export class DashboardController {
       throw error;
     }
   };
+
+  getAdminAnalytics = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can view analytics');
+      }
+
+      const analytics = await dashboardService.getAdminAnalytics();
+
+      res.status(200).json({
+        status: 'success',
+        data: analytics
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(500, error.message);
+      }
+      throw error;
+    }
+  };
 }

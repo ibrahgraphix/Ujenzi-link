@@ -7,7 +7,8 @@ import { asyncHandler } from '../middleware';
 const router = Router();
 const dashboardController = new DashboardController();
 
-// Admin-only route for dashboard overview
+// Admin-only routes for dashboard
 router.get('/overview', authenticate, authorize(UserRole.ADMIN), asyncHandler(dashboardController.getDashboardOverview));
+router.get('/analytics', authenticate, authorize(UserRole.ADMIN), asyncHandler(dashboardController.getAdminAnalytics));
 
 export default router;

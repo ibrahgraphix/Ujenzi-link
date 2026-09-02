@@ -5,31 +5,36 @@ export class InquiryService {
   async createInquiry(data: {
     buyerId: string;
     providerId: string;
-    listingId: string;
+    listingId: string | null;
     message: string;
   }) {
     const { buyerId, providerId, listingId, message } = data;
+    console.log('Creating inquiry with data:', { buyerId, providerId, listingId, message });
 
-    // Verify listing exists and belongs to the provider
-    const { data: listing, error: listingError } = await supabase
-      .from('listings')
-      .select('id, provider_id, status')
-      .eq('id', listingId)
-      .single();
+    // If listingId is provided, verify listing exists and belongs to the provider
+    if (listingId) {
+      const { data: listing, error: listingError } = await supabase
+        .from('listings')
+        .select('id, provider_id, status')
+        .eq('id', listingId)
+        .single();
 
-    if (listingError || !listing) {
-      throw new Error('Listing not found');
+      console.log('Listing check:', { listing, listingError });
+
+      if (listingError || !listing) {
+        throw new Error('Listing not found');
+      }
+
+      if (listing.provider_id !== providerId) {
+        throw new Error('Listing does not belong to the specified provider');
+      }
+
+      if (listing.status !== 'active') {
+        throw new Error('Cannot inquire on inactive listings');
+      }
     }
 
-    if (listing.provider_id !== providerId) {
-      throw new Error('Listing does not belong to the specified provider');
-    }
-
-    if (listing.status !== 'active') {
-      throw new Error('Cannot inquire on inactive listings');
-    }
-
-    // Create inquiry
+    // Create inquiry - don't require buyer_profiles in initial insert
     const { data: inquiry, error } = await supabase
       .from('inquiries')
       .insert({
@@ -39,8 +44,7 @@ export class InquiryService {
         listing_id: listingId,
         message,
         status: InquiryStatus.NEW,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
       .select(`
         *,
@@ -48,13 +52,11 @@ export class InquiryService {
         provider_profiles (
           *,
           users (*)
-        ),
-        buyer_profiles (
-          *,
-          users (*)
         )
       `)
       .single();
+
+    console.log('Inquiry creation result:', { inquiry, error });
 
     if (error || !inquiry) {
       throw new Error(`Failed to create inquiry: ${error?.message}`);
@@ -72,7 +74,7 @@ export class InquiryService {
       .select(`
         *,
         listings (*),
-        buyer_profiles (
+        provider_profiles (
           *,
           users (*)
         )
@@ -94,7 +96,36 @@ export class InquiryService {
       throw new Error(`Failed to fetch inquiries: ${error.message}`);
     }
 
-    return inquiries || [];
+    if (!inquiries || inquiries.length === 0) {
+      return [];
+    }
+
+    // Enrich inquiries with buyer user & profile info
+    const buyerIds = [...new Set(inquiries.map(i => i.buyer_id))];
+    const { data: buyers } = await supabase
+      .from('users')
+      .select('id, full_name, email, phone, role')
+      .in('id', buyerIds);
+
+    const { data: buyerProfiles } = await supabase
+      .from('buyer_profiles')
+      .select('user_id, buyer_type, institution_name, project_name, project_description')
+      .in('user_id', buyerIds);
+
+    const buyerMap = new Map(buyers?.map(b => [b.id, b]) || []);
+    const profileMap = new Map(buyerProfiles?.map(bp => [bp.user_id, bp]) || []);
+
+    return inquiries.map(inq => {
+      const user = buyerMap.get(inq.buyer_id);
+      const profile = profileMap.get(inq.buyer_id);
+      return {
+        ...inq,
+        buyer_profiles: {
+          ...profile,
+          users: user
+        }
+      };
+    });
   }
 
   async getBuyerInquiries(buyerId: string) {
@@ -127,10 +158,6 @@ export class InquiryService {
         provider_profiles (
           *,
           users (*)
-        ),
-        buyer_profiles (
-          *,
-          users (*)
         )
       `)
       .eq('id', inquiryId)
@@ -140,7 +167,25 @@ export class InquiryService {
       throw new Error('Inquiry not found');
     }
 
-    return inquiry;
+    const { data: buyerUser } = await supabase
+      .from('users')
+      .select('id, full_name, email, phone, role')
+      .eq('id', inquiry.buyer_id)
+      .single();
+
+    const { data: buyerProfile } = await supabase
+      .from('buyer_profiles')
+      .select('user_id, buyer_type, institution_name, project_name, project_description')
+      .eq('user_id', inquiry.buyer_id)
+      .maybeSingle();
+
+    return {
+      ...inquiry,
+      buyer_profiles: {
+        ...buyerProfile,
+        users: buyerUser
+      }
+    };
   }
 
   async updateInquiryStatus(inquiryId: string, providerId: string, status: InquiryStatus) {
@@ -159,18 +204,17 @@ export class InquiryService {
       throw new Error('You can only update inquiries for your listings');
     }
 
-    // Update inquiry status
+    // Update inquiry status without updated_at column
     const { data: inquiry, error: updateError } = await supabase
       .from('inquiries')
       .update({
-        status,
-        updated_at: new Date().toISOString()
+        status
       })
       .eq('id', inquiryId)
       .select(`
         *,
         listings (*),
-        buyer_profiles (
+        provider_profiles (
           *,
           users (*)
         )
