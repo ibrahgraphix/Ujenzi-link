@@ -84,6 +84,7 @@ export class AuthService {
         // User can update profile later
       }
     } else if (role === UserRole.PROVIDER && providerType && businessName) {
+      console.log('Creating provider profile for user:', userId, 'with data:', { providerType, businessName, description, locationId });
       const { error: profileError } = await supabase
         .from('provider_profiles')
         .insert({
@@ -99,9 +100,9 @@ export class AuthService {
 
       if (profileError) {
         console.error('Provider profile error:', profileError);
-        // Don't throw error - allow registration to continue even if profile creation fails
-        // User can update profile later
+        throw new Error(`Failed to create provider profile: ${profileError.message}`);
       }
+      console.log('Provider profile created successfully for user:', userId);
     }
 
     return user;

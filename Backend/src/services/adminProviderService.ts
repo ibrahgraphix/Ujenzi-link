@@ -1,4 +1,22 @@
-import { supabase } from '../config';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config';
+
+// Create a dedicated service role client for public queries that bypasses RLS
+const serviceRoleClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`
+    }
+  }
+});
 
 export class AdminProviderService {
   async getAllProviders(filters: {
@@ -11,7 +29,7 @@ export class AdminProviderService {
     const { providerType, search, isVerified, page = 1, limit = 20 } = filters;
 
     // Build query with listing counts
-    let query = supabase
+    let query = serviceRoleClient
       .from('provider_profiles')
       .select(`
         *,
@@ -60,7 +78,7 @@ export class AdminProviderService {
   }
 
   async getPendingProviders() {
-    const { data: providers, error } = await supabase
+    const { data: providers, error } = await serviceRoleClient
       .from('provider_profiles')
       .select(`
         *,
@@ -79,7 +97,7 @@ export class AdminProviderService {
   }
 
   async approveProvider(providerId: string, adminId: string) {
-    const { data: provider, error: fetchError } = await supabase
+    const { data: provider, error: fetchError } = await serviceRoleClient
       .from('provider_profiles')
       .select('id, business_name')
       .eq('id', providerId)
@@ -89,7 +107,7 @@ export class AdminProviderService {
       throw new Error('Provider not found');
     }
 
-    const { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await serviceRoleClient
       .from('provider_profiles')
       .update({ is_verified: true, updated_at: new Date().toISOString() })
       .eq('id', providerId)
@@ -106,7 +124,7 @@ export class AdminProviderService {
   }
 
   async deactivateProvider(providerId: string, adminId: string) {
-    const { data: provider, error: fetchError } = await supabase
+    const { data: provider, error: fetchError } = await serviceRoleClient
       .from('provider_profiles')
       .select('id, business_name, user_id')
       .eq('id', providerId)
@@ -116,7 +134,7 @@ export class AdminProviderService {
       throw new Error('Provider not found');
     }
 
-    const { data: updated, error: updateError } = await supabase
+    const { data: updated, error: updateError } = await serviceRoleClient
       .from('provider_profiles')
       .update({ is_verified: false, updated_at: new Date().toISOString() })
       .eq('id', providerId)
@@ -127,9 +145,8 @@ export class AdminProviderService {
       throw new Error(`Failed to deactivate provider: ${updateError?.message}`);
     }
 
-    // Deactivate the linked user account
     if (provider.user_id) {
-      await supabase
+      await serviceRoleClient
         .from('users')
         .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq('id', provider.user_id);
@@ -141,7 +158,7 @@ export class AdminProviderService {
   }
 
   async getProviderById(providerId: string) {
-    const { data: provider, error } = await supabase
+    const { data: provider, error } = await serviceRoleClient
       .from('provider_profiles')
       .select(`
         *,
@@ -159,7 +176,7 @@ export class AdminProviderService {
   }
 
   async getProviderListings(providerId: string) {
-    const { data: listings, error } = await supabase
+    const { data: listings, error } = await serviceRoleClient
       .from('listings')
       .select(`
         *,
@@ -194,7 +211,7 @@ export class AdminProviderService {
   }
 
   private async logAdminAction(adminId: string, action: string, targetTable: string, targetId: string, details?: string) {
-    const { error } = await supabase
+    const { error } = await serviceRoleClient
       .from('admin_logs')
       .insert({
         id: crypto.randomUUID(),

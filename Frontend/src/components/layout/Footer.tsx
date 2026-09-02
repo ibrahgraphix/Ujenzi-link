@@ -1,20 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
+import { getCategories } from '../../services/categoriesService';
+import { Category } from '../../types';
 
 interface FooterProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
 }
 
-const FEATURED_CATEGORIES = [
-  'Cement & Aggregates',
-  'Steel Rebar & Metal',
-  'Roofing & Iron Sheets',
-  'Plumbing & Drainage',
-  'Electrical & Solar',
-  'Tiling & Finishing',
-];
-
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    getCategories().then(setCategories).catch(console.error);
+  }, []);
   return (
     <footer className="bg-[#12284C] text-slate-300 border-t border-slate-800">
       {/* Top Banner highlight */}
@@ -87,16 +85,19 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               Popular Materials
             </h4>
             <ul className="space-y-2 text-xs">
-              {FEATURED_CATEGORIES.map((catName) => (
-                <li key={catName}>
+              {categories.slice(0, 6).map((category) => (
+                <li key={category.id}>
                   <button
-                    onClick={() => onNavigate('listings', { category: catName })}
+                    onClick={() => onNavigate('listings', { category: category.id })}
                     className="hover:text-[#2E86D8] transition-colors text-left"
                   >
-                    {catName}
+                    {category.name}
                   </button>
                 </li>
               ))}
+              {categories.length === 0 && (
+                <li className="text-slate-500">Loading categories...</li>
+              )}
             </ul>
           </div>
 

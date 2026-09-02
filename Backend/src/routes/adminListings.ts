@@ -13,5 +13,6 @@ router.get('/pending', authenticate, authorize(UserRole.ADMIN), asyncHandler(adm
 router.post('/:listingId/approve', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminListingController.approveListing));
 router.post('/:listingId/reject', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminListingController.rejectListing));
 router.put('/:listingId/status', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminListingController.changeListingStatus));
+router.post('/activate-all', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminListingController.activateAllListings));
 
 export default router;

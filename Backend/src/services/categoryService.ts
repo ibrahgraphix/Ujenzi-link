@@ -1,9 +1,27 @@
-import { supabase } from '../config';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config';
 import { Category } from '../models';
+
+// Create a dedicated service role client for public queries that bypasses RLS
+const serviceRoleClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`
+    }
+  }
+});
 
 export class CategoryService {
   async getAllCategories() {
-    const { data: categories, error } = await supabase
+    const { data: categories, error } = await serviceRoleClient
       .from('categories')
       .select('*')
       .order('name');
@@ -16,7 +34,7 @@ export class CategoryService {
   }
 
   async getCategoryById(categoryId: string) {
-    const { data: category, error } = await supabase
+    const { data: category, error } = await serviceRoleClient
       .from('categories')
       .select('*')
       .eq('id', categoryId)
@@ -30,7 +48,7 @@ export class CategoryService {
   }
 
   async getCategoriesWithSubcategories() {
-    const { data: categories, error } = await supabase
+    const { data: categories, error } = await serviceRoleClient
       .from('categories')
       .select('*')
       .order('name');
@@ -44,12 +62,12 @@ export class CategoryService {
     const rootCategories: (Category & { subcategories?: Category[] })[] = [];
 
     // First pass: create map
-    categories.forEach(cat => {
+    categories.forEach((cat: any) => {
       categoryMap.set(cat.id, { ...cat, subcategories: [] });
     });
 
     // Second pass: build hierarchy
-    categories.forEach(cat => {
+    categories.forEach((cat: any) => {
       const categoryWithSubs = categoryMap.get(cat.id)!;
       if (cat.parent_id) {
         const parent = categoryMap.get(cat.parent_id);
@@ -78,7 +96,7 @@ export class CategoryService {
   }) {
     const { name, description, parentId } = data;
 
-    const { data: category, error } = await supabase
+    const { data: category, error } = await serviceRoleClient
       .from('categories')
       .insert({
         id: crypto.randomUUID(),
@@ -105,7 +123,7 @@ export class CategoryService {
   }) {
     const { name, description, parentId } = data;
 
-    const { data: category, error } = await supabase
+    const { data: category, error } = await serviceRoleClient
       .from('categories')
       .update({
         name,
@@ -125,7 +143,7 @@ export class CategoryService {
   }
 
   async deleteCategory(categoryId: string) {
-    const { error } = await supabase
+    const { error } = await serviceRoleClient
       .from('categories')
       .delete()
       .eq('id', categoryId);

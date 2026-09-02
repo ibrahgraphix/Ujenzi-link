@@ -1,8 +1,6 @@
 import { Category } from '../types';
 import apiClient from './apiClient';
 
-const STORAGE_KEY = 'ujenzi_categories_v1';
-
 function mapBackendCategory(item: any): Category {
   return {
     id: item.id || `cat-${Date.now()}`,
@@ -18,22 +16,23 @@ function mapBackendCategory(item: any): Category {
 
 export async function getCategories(): Promise<Category[]> {
   try {
+    console.log('Fetching categories from API...');
     const res = await apiClient.get<{ categories?: any[] } | any[]>('/api/categories');
+    console.log('Categories API response:', res);
+    
     const items = Array.isArray(res) ? res : res?.categories;
     if (items && Array.isArray(items) && items.length > 0) {
-      return items.map(mapBackendCategory);
+      const mapped = items.map(mapBackendCategory);
+      console.log('Mapped categories:', mapped);
+      return mapped;
+    } else {
+      console.log('No categories found in API response');
     }
   } catch (err) {
-    console.warn('Failed to fetch categories from API:', err);
+    console.error('Failed to fetch categories from API:', err);
   }
 
-  try {
-    const item = localStorage.getItem(STORAGE_KEY);
-    if (item) return JSON.parse(item);
-  } catch {
-    // fallback
-  }
-
+  console.log('Returning empty categories array');
   return [];
 }
 
@@ -53,17 +52,10 @@ export async function saveCategory(category: Category): Promise<Category> {
     }
     if (res) return mapBackendCategory(res);
   } catch (err) {
-    console.warn('Failed to save category via API, operating locally:', err);
+    console.warn('Failed to save category via API:', err);
+    throw err;
   }
 
-  const categories = await getCategories();
-  const idx = categories.findIndex((c) => c.id === category.id);
-  if (idx !== -1) {
-    categories[idx] = category;
-  } else {
-    categories.push(category);
-  }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
   return category;
 }
 
@@ -73,10 +65,6 @@ export async function deleteCategory(id: string): Promise<boolean> {
     return true;
   } catch (err) {
     console.warn(`Failed to delete category ${id} via API:`, err);
+    throw err;
   }
-
-  const categories = await getCategories();
-  const filtered = categories.filter((c) => c.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
-  return true;
 }

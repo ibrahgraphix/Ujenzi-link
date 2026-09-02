@@ -22,7 +22,6 @@ export class AdminListingController {
         status: status as ListingStatus,
         categoryId: categoryId as string,
         providerId: providerId as string,
-        adminCreated: adminCreated ? adminCreated === 'true' : undefined,
         page: page ? parseInt(page as string) : 1,
         limit: limit ? parseInt(limit as string) : 20
       });
@@ -160,6 +159,30 @@ export class AdminListingController {
         status: 'success',
         message: 'Listing status updated successfully',
         data: { listing }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  };
+
+  activateAllListings = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can activate all listings');
+      }
+
+      const result = await adminListingService.activateAllListings();
+
+      res.status(200).json({
+        status: 'success',
+        message: result.message
       });
     } catch (error) {
       if (error instanceof Error) {

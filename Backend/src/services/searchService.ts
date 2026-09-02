@@ -1,7 +1,25 @@
-import { supabase } from '../config';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config';
+
+// Create a dedicated service role client for public queries that bypasses RLS
+const serviceRoleClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`
+    }
+  }
+});
 
 export class SearchService {
-  async searchListings(filters: {
+  async searchListings(params: {
     keyword?: string;
     categoryId?: string;
     region?: string;
@@ -14,6 +32,7 @@ export class SearchService {
     status?: string;
     includeAll?: boolean;
   }) {
+    console.log('searchListings called with params:', params);
     const {
       keyword,
       categoryId,
@@ -26,10 +45,10 @@ export class SearchService {
       limit = 20,
       status,
       includeAll = false
-    } = filters;
+    } = params;
 
     // Build query
-    let query = supabase
+    let query = serviceRoleClient
       .from('listings')
       .select(`
         *,
@@ -88,11 +107,14 @@ export class SearchService {
 
     const { data: listings, error, count } = await query;
 
+    console.log('Search query results:', { listingsCount: listings?.length, count, error });
+
     if (error) {
+      console.error('Search query error:', error);
       throw new Error(`Failed to search listings: ${error.message}`);
     }
 
-    return {
+    const result = {
       listings: listings || [],
       pagination: {
         page,
@@ -101,10 +123,13 @@ export class SearchService {
         totalPages: Math.ceil((count || 0) / limit)
       }
     };
+
+    console.log('Returning search results:', result);
+    return result;
   }
 
   async getRegions() {
-    const { data: locations, error } = await supabase
+    const { data: locations, error } = await serviceRoleClient
       .from('locations')
       .select('region')
       .order('region');
@@ -113,44 +138,12 @@ export class SearchService {
       throw new Error(`Failed to fetch regions: ${error.message}`);
     }
 
-    const regions = [...new Set(locations.map(loc => loc.region).filter(Boolean))];
+    const regions = [...new Set(locations.map((loc: any) => loc.region))];
     return regions;
   }
 
-  async getCountiesByRegion(region: string) {
-    const { data: locations, error } = await supabase
-      .from('locations')
-      .select('county')
-      .eq('region', region)
-      .order('county');
-
-    if (error) {
-      throw new Error(`Failed to fetch counties: ${error.message}`);
-    }
-
-    const counties = [...new Set(locations.map(loc => loc.county).filter(Boolean))];
-    return counties;
-  }
-
-  async getDistrictsByCounty(region: string, county: string) {
-    const { data: locations, error } = await supabase
-      .from('locations')
-      .select('district')
-      .eq('region', region)
-      .eq('county', county)
-      .order('district');
-
-    if (error) {
-      throw new Error(`Failed to fetch districts by county: ${error.message}`);
-    }
-
-    const districts = [...new Set(locations.map(loc => loc.district).filter(Boolean))];
-    return districts;
-  }
-
-  /** Legacy: districts by region only (no county). Used as fallback. */
   async getDistrictsByRegion(region: string) {
-    const { data: locations, error } = await supabase
+    const { data: locations, error } = await serviceRoleClient
       .from('locations')
       .select('district')
       .eq('region', region)
@@ -160,47 +153,76 @@ export class SearchService {
       throw new Error(`Failed to fetch districts: ${error.message}`);
     }
 
-    const districts = [...new Set(locations.map(loc => loc.district).filter(Boolean))];
+    const districts = [...new Set(locations.map((loc: any) => loc.district))];
     return districts;
   }
 
-  async getWardsByDistrict(region: string, county: string, district: string) {
-    const { data: locations, error } = await supabase
+  async getCountiesByRegion(region: string) {
+    const { data: locations, error } = await serviceRoleClient
+      .from('locations')
+      .select('county')
+      .eq('region', region)
+      .not('county', 'is', null)
+      .order('county');
+
+    if (error) {
+      throw new Error(`Failed to fetch counties: ${error.message}`);
+    }
+
+    const counties = [...new Set(locations.map((loc: any) => loc.county))];
+    return counties;
+  }
+
+  async getWardsByCounty(region: string, county: string) {
+    const { data: locations, error } = await serviceRoleClient
       .from('locations')
       .select('ward')
       .eq('region', region)
       .eq('county', county)
-      .eq('district', district)
+      .not('ward', 'is', null)
       .order('ward');
 
     if (error) {
       throw new Error(`Failed to fetch wards: ${error.message}`);
     }
 
-    const wards = [...new Set(locations.map(loc => loc.ward).filter(Boolean))];
+    const wards = [...new Set(locations.map((loc: any) => loc.ward))];
     return wards;
   }
 
-  async getStreetsByWard(region: string, county: string, district: string, ward: string) {
-    const { data: locations, error } = await supabase
+  async getStreetsByWard(region: string, county: string, ward: string) {
+    const { data: locations, error } = await serviceRoleClient
       .from('locations')
       .select('street')
       .eq('region', region)
       .eq('county', county)
-      .eq('district', district)
       .eq('ward', ward)
+      .not('street', 'is', null)
       .order('street');
 
     if (error) {
       throw new Error(`Failed to fetch streets: ${error.message}`);
     }
 
-    const streets = [...new Set(locations.map(loc => loc.street).filter(Boolean))];
+    const streets = [...new Set(locations.map((loc: any) => loc.street))];
     return streets;
   }
 
+  async getAllLocations() {
+    const { data: locations, error } = await serviceRoleClient
+      .from('locations')
+      .select('*')
+      .order('region');
+
+    if (error) {
+      throw new Error(`Failed to fetch locations: ${error.message}`);
+    }
+
+    return locations || [];
+  }
+
   async getLocationHierarchy() {
-    const { data: locations, error } = await supabase
+    const { data: locations, error } = await serviceRoleClient
       .from('locations')
       .select('*')
       .order('region, county, district, ward, street');

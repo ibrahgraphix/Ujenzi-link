@@ -127,6 +127,33 @@ export class AdminListingService {
     return updatedListing;
   }
 
+  async activateAllListings() {
+    const { data: listings, error: fetchError } = await supabase
+      .from('listings')
+      .select('id')
+      .neq('status', 'active');
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch listings: ${fetchError.message}`);
+    }
+
+    if (!listings || listings.length === 0) {
+      return { message: 'No listings to activate' };
+    }
+
+    const listingIds = listings.map((l: any) => l.id);
+    const { error: updateError } = await supabase
+      .from('listings')
+      .update({ status: ListingStatus.ACTIVE, updated_at: new Date().toISOString() })
+      .in('id', listingIds);
+
+    if (updateError) {
+      throw new Error(`Failed to activate listings: ${updateError.message}`);
+    }
+
+    return { message: `Activated ${listingIds.length} listings` };
+  }
+
   private async logAdminAction(adminId: string, action: string, targetTable: string, targetId: string, details?: string) {
     const { error } = await supabase
       .from('admin_logs')

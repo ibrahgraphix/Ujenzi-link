@@ -12,6 +12,9 @@ export class ListingController {
     try {
       const { status, categoryId, providerId, page, limit } = req.query;
 
+      console.log('getAllListings called with query:', req.query);
+      console.log('User auth:', (req as any).user);
+
       // Use the admin listing service for consistent fetching
       const { AdminListingService } = await import('../services/adminListingService');
       const adminListingService = new AdminListingService();
@@ -23,6 +26,8 @@ export class ListingController {
         page: page ? parseInt(page as string) : 1,
         limit: limit ? parseInt(limit as string) : 20
       });
+
+      console.log('getAllListings results:', results);
 
       res.status(200).json({
         status: 'success',

@@ -153,8 +153,11 @@ function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFi
 
 export async function getProviderListings(providerId: string): Promise<Listing[]> {
   try {
-    const res = await apiClient.get<{ listings: any[] }>(`/api/listings/provider/${providerId}`);
-    const items = res?.listings || [];
+    console.log('Fetching provider listings for:', providerId);
+    const res = await apiClient.get<any>(`/api/listings/provider/${providerId}`);
+    console.log('Provider listings API response:', res);
+    const items = res?.listings || res?.data?.listings || [];
+    console.log('Extracted provider listings items:', items);
     return items.map(mapBackendListing);
   } catch (err) {
     console.warn(`Failed to fetch provider listings for ${providerId}:`, err);
@@ -175,12 +178,34 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
 
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/api/search/listings?${queryString}` : '/api/search/listings';
+    console.log('Fetching listings from:', endpoint);
     const res = await apiClient.get<any>(endpoint);
+    console.log('API response:', res);
+    console.log('API response structure:', JSON.stringify(res, null, 2));
 
-    const items = Array.isArray(res) ? res : res?.listings || res?.data || [];
-    if (Array.isArray(items)) {
+    // Handle different response structures
+    let items: any[] = [];
+    if (Array.isArray(res)) {
+      items = res;
+    } else if (res?.listings && Array.isArray(res.listings)) {
+      items = res.listings;
+    } else if (res?.data?.listings && Array.isArray(res.data.listings)) {
+      items = res.data.listings;
+    } else if (res?.data && Array.isArray(res.data)) {
+      items = res.data;
+    } else if (res?.providers && Array.isArray(res.providers)) {
+      items = res.providers;
+    } else if (res?.data?.providers && Array.isArray(res.data.providers)) {
+      items = res.data.providers;
+    }
+
+    console.log('Extracted items:', items);
+    if (Array.isArray(items) && items.length > 0) {
       const mapped = items.map(mapBackendListing);
+      console.log('Mapped listings:', mapped);
       return filterAndSortListingsLocally(mapped, params);
+    } else {
+      console.log('No listings found or invalid response structure');
     }
   } catch (err) {
     console.error('Failed to fetch listings from API:', err);

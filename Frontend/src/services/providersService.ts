@@ -32,11 +32,15 @@ function mapBackendProvider(p: any): Provider {
 
 export async function getProviders(type?: string): Promise<Provider[]> {
   try {
+    console.log('Fetching providers from public endpoint');
     // Try public endpoint first for customer/client views
     const res = await apiClient.get<any>('/api/provider/all');
+    console.log('Provider API response:', res);
     const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
+    console.log('Extracted provider items:', items);
     if (Array.isArray(items)) {
       const mapped = items.map(mapBackendProvider);
+      console.log('Mapped providers:', mapped);
       if (type && type !== 'all') {
         return mapped.filter((p) => p.providerType === type);
       }
@@ -47,9 +51,12 @@ export async function getProviders(type?: string): Promise<Provider[]> {
     try {
       // Fallback to admin endpoint (requires auth)
       const res = await apiClient.get<any>('/api/admin/providers');
+      console.log('Admin provider API response:', res);
       const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
+      console.log('Extracted admin provider items:', items);
       if (Array.isArray(items)) {
         const mapped = items.map(mapBackendProvider);
+        console.log('Mapped admin providers:', mapped);
         if (type && type !== 'all') {
           return mapped.filter((p) => p.providerType === type);
         }
