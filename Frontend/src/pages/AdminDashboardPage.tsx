@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ShieldCheck,
-  Building2,
   Users,
   Package,
   MessageSquare,
   TrendingUp,
   CheckCircle2,
-  XCircle,
   PlusCircle,
   Trash2,
-  Edit2,
   Sparkles,
   ToggleLeft,
   ToggleRight,
+  Clock,
+  Activity,
+  RefreshCw,
+  Building2,
 } from 'lucide-react';
 import {
   BarChart,
@@ -25,22 +26,13 @@ import {
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from 'recharts';
-import { Provider, Listing, Advert, Category } from '../types';
+import { Provider, Listing, Advert } from '../types';
 import { getProviders, verifyProvider } from '../services/providersService';
 import { getListings, deleteListing } from '../services/listingsService';
 import { getAllAdvertsAdmin, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
-import {
-  getPendingProviders,
-  getPendingListings,
-  approveProvider,
-  deactivateProvider,
-  approveListing,
-  rejectListing,
-} from '../services/adminService';
-import { getCategories, saveCategory, deleteCategory } from '../services/categoriesService';
-import { getUsers } from '../services/usersService';
-import { getTrafficStats } from '../services/trafficService';
+import { getAdminAnalytics, AdminAnalytics } from '../services/adminAnalyticsService';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -56,9 +48,23 @@ interface AdminDashboardPageProps {
   onSelectProvider: (provider: Provider) => void;
 }
 
-const MONTHLY_DATA: { month: string; inquiries: number; listings: number }[] = [];
-
 const COLORS = ['#1B3A6B', '#2E86D8', '#8B5E3C', '#10B981', '#F59E0B', '#6366F1'];
+
+function formatRelativeTime(ts: string): string {
+  const diff = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function activityIcon(type: string) {
+  if (type === 'inquiry') return <MessageSquare className="w-3.5 h-3.5 text-[#2E86D8]" />;
+  if (type === 'listing') return <Package className="w-3.5 h-3.5 text-emerald-500" />;
+  return <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />;
+}
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   onNavigate,
@@ -67,15 +73,13 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 }) => {
   const { success, error } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'analytics' | 'pending' | 'providers' | 'listings' | 'adverts'>('analytics');
-  const [pendingSubTab, setPendingSubTab] = useState<'providers' | 'listings'>('providers');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'providers' | 'listings' | 'adverts'>('analytics');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
-  const [pendingProviders, setPendingProviders] = useState<Provider[]>([]);
-  const [pendingListings, setPendingListings] = useState<Listing[]>([]);
   const [adverts, setAdverts] = useState<Advert[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // New Advert Modal State
   const [isAdvertModalOpen, setIsAdvertModalOpen] = useState(false);
@@ -83,58 +87,37 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [adSubtitle, setAdSubtitle] = useState('');
   const [adImage, setAdImage] = useState<UploadedImage | null>(null);
   const [adLinkUrl, setAdLinkUrl] = useState('');
-  const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'featured_section' | 'banner'>('hero');
+  const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'footer'>('hero');
   const [adIsPaid, setAdIsPaid] = useState(false);
   const [adPriceAmount, setAdPriceAmount] = useState('');
+  const [adStartDate, setAdStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [adEndDate, setAdEndDate] = useState('2026-12-31');
 
-  const loadAdminData = async () => {
+  const loadAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    const data = await getAdminAnalytics();
+    setAnalytics(data);
+    setAnalyticsLoading(false);
+  }, []);
+
+  const loadAdminData = useCallback(async () => {
     setIsLoading(true);
-    const [allProv, allListings, allAds, allCats, pendingProv, pendingList] = await Promise.all([
+    const [allProv, allListings, allAds] = await Promise.all([
       getProviders(),
       getListings(),
       getAllAdvertsAdmin(),
-      getCategories(),
-      getPendingProviders(),
-      getPendingListings(),
     ]);
     setProviders(allProv);
     setListings(allListings);
     setAdverts(allAds);
-    setCategories(allCats);
-    setPendingProviders(pendingProv);
-    setPendingListings(pendingList);
     setIsLoading(false);
-  };
+    // Load analytics in parallel
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   useEffect(() => {
     loadAdminData();
   }, []);
-
-  const handleApproveProvider = async (provider: Provider) => {
-    await approveProvider(provider.id);
-    await loadAdminData();
-    success(`${provider.businessName} has been approved.`);
-  };
-
-  const handleRejectProvider = async (provider: Provider) => {
-    if (!window.confirm(`Deactivate provider account for ${provider.businessName}?`)) return;
-    await deactivateProvider(provider.id);
-    await loadAdminData();
-    success(`${provider.businessName} has been deactivated.`);
-  };
-
-  const handleApproveListing = async (listing: Listing) => {
-    await approveListing(listing.id);
-    await loadAdminData();
-    success(`"${listing.title}" is now live on the marketplace.`);
-  };
-
-  const handleRejectListing = async (listing: Listing) => {
-    if (!window.confirm(`Reject listing "${listing.title}"?`)) return;
-    await rejectListing(listing.id);
-    await loadAdminData();
-    success(`"${listing.title}" has been rejected.`);
-  };
 
   const handleToggleVerification = async (provider: Provider) => {
     const newStatus = !provider.isVerified;
@@ -143,6 +126,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       prev.map((p) => (p.id === provider.id ? { ...p, isVerified: newStatus } : p))
     );
     success(`${provider.name} verification status is now ${newStatus ? 'VERIFIED' : 'UNVERIFIED'}.`);
+    loadAnalytics();
   };
 
   const handleDeleteListing = async (id: string) => {
@@ -150,6 +134,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       await deleteListing(id);
       setListings((prev) => prev.filter((l) => l.id !== id));
       success('Listing removed.');
+      loadAnalytics();
     }
   };
 
@@ -157,6 +142,13 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     const updated = await updateAdvert(ad.id, { isActive: !ad.isActive });
     setAdverts((prev) => prev.map((a) => (a.id === ad.id ? updated : a)));
     success(`Advert "${ad.title}" is now ${!ad.isActive ? 'Active' : 'Paused'}.`);
+  };
+
+  const handleDeleteAdvert = async (id: string) => {
+    if (!window.confirm('Delete this advert campaign?')) return;
+    await deleteAdvert(id);
+    setAdverts((prev) => prev.filter((a) => a.id !== id));
+    success('Advert campaign deleted.');
   };
 
   const handleCreateAdvert = async (e: React.FormEvent) => {
@@ -169,36 +161,44 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       error('Please upload a banner image.');
       return;
     }
-    const newAd = await createAdvert({
-      title: adTitle,
-      subtitle: adSubtitle,
-      bannerUrl: adImage.url,
-      bannerFileId: adImage.fileId,
-      targetUrl: adLinkUrl || '/contact',
-      position: adPosition,
-      isActive: true,
-      isPaid: adIsPaid,
-      priceAmount: adPriceAmount ? Number(adPriceAmount) : undefined,
-      sponsorName: 'Plan Moja Featured Partner',
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: '2026-12-31',
-      impressions: 0,
-      clicks: 0,
-    });
-    setAdverts((prev) => [newAd, ...prev]);
-    setIsAdvertModalOpen(false);
-    setAdTitle('');
-    setAdSubtitle('');
-    setAdImage(null);
-    setAdIsPaid(false);
-    setAdPriceAmount('');
-    success('Banner advert campaign launched successfully!');
+    try {
+      const newAd = await createAdvert({
+        title: adTitle,
+        subtitle: adSubtitle,
+        bannerUrl: adImage.url,
+        bannerFileId: adImage.fileId,
+        targetUrl: adLinkUrl || '/contact',
+        position: adPosition,
+        isActive: true,
+        isPaid: adIsPaid,
+        priceAmount: adPriceAmount ? Number(adPriceAmount) : undefined,
+        sponsorName: 'Plan Moja Featured Partner',
+        startDate: adStartDate,
+        endDate: adEndDate,
+        impressions: 0,
+        clicks: 0,
+      });
+      setAdverts((prev) => [newAd, ...prev]);
+      setIsAdvertModalOpen(false);
+      setAdTitle('');
+      setAdSubtitle('');
+      setAdImage(null);
+      setAdLinkUrl('');
+      setAdIsPaid(false);
+      setAdPriceAmount('');
+      setAdStartDate(new Date().toISOString().split('T')[0]);
+      setAdEndDate('2026-12-31');
+      success('Banner advert campaign launched successfully!');
+    } catch (err: any) {
+      error(`Failed to create advert: ${err?.message || 'Unknown error'}`);
+    }
   };
 
-  const categoryDistribution = categories.map((c) => ({
-    name: c.name,
-    value: c.itemCount,
-  }));
+  // Derived analytics values with fallbacks
+  const kpis = analytics?.kpis;
+  const monthlyData = analytics?.monthlyData || [];
+  const categoryDistribution = analytics?.categoryDistribution || [];
+  const recentActivity = analytics?.recentActivity || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -214,9 +214,23 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <h1 className="text-2xl sm:text-3xl font-black text-white font-heading mt-1">
             Ujenzi Link Platform Administration
           </h1>
+          {analytics?.generatedAt && (
+            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Data refreshed {formatRelativeTime(analytics.generatedAt)}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="white"
+            size="sm"
+            onClick={() => loadAnalytics()}
+            leftIcon={<RefreshCw className={`w-4 h-4 ${analyticsLoading ? 'animate-spin' : ''}`} />}
+          >
+            Refresh Data
+          </Button>
           <Button
             variant="white"
             size="sm"
@@ -236,34 +250,42 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         </div>
       </div>
 
-      {/* KPI Metrics */}
+      {/* KPI Metrics — from real DB */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-2">
             <span>Total Suppliers</span>
             <Users className="w-4 h-4 text-[#2E86D8]" />
           </div>
-          <div className="text-2xl font-black text-slate-900">{providers.length}</div>
+          <div className="text-2xl font-black text-slate-900">
+            {kpis?.totalProviders ?? providers.length}
+          </div>
           <div className="text-[11px] text-emerald-600 font-semibold mt-1">
-            {providers.filter((p) => p.isVerified).length} Verified by Plan Moja
+            {kpis?.verifiedProviders ?? providers.filter((p) => p.isVerified).length} Verified by Plan Moja
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-2">
-            <span>Marketplace Listings</span>
+            <span>Active Listings</span>
             <Package className="w-4 h-4 text-[#1B3A6B]" />
           </div>
-          <div className="text-2xl font-black text-slate-900">{listings.length}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Across 11 Building Categories</div>
+          <div className="text-2xl font-black text-slate-900">
+            {kpis?.totalListings ?? listings.length}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">
+            Across {categoryDistribution.length || '—'} categories
+          </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-2">
-            <span>Direct Inquiries Generated</span>
+            <span>Total Inquiries</span>
             <MessageSquare className="w-4 h-4 text-[#8B5E3C]" />
           </div>
-          <div className="text-2xl font-black text-[#1B3A6B]">2,690+</div>
+          <div className="text-2xl font-black text-[#1B3A6B]">
+            {kpis?.totalInquiries ?? '—'}
+          </div>
           <div className="text-[11px] text-emerald-600 font-semibold mt-1">100% Free / Direct Deal</div>
         </div>
 
@@ -279,17 +301,17 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             <Sparkles className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-2xl font-black text-slate-900">
-            {adverts.filter((a) => a.isActive).length}
+            {kpis?.totalActiveAdverts ?? adverts.filter((a) => a.isActive).length}
           </div>
           <div className="text-[11px] text-amber-600 font-semibold mt-1">Click to manage campaigns →</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 text-xs font-bold">
+      <div className="flex items-center gap-2 border-b border-slate-200 text-xs font-bold overflow-x-auto">
         <button
           onClick={() => setActiveTab('analytics')}
-          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
+          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'analytics'
               ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -300,22 +322,8 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('pending')}
-          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
-            activeTab === 'pending'
-              ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>
-            Pending Approvals ({pendingProviders.length + pendingListings.length})
-          </span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('providers')}
-          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
+          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'providers'
               ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -327,7 +335,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
         <button
           onClick={() => setActiveTab('listings')}
-          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
+          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'listings'
               ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -339,7 +347,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
         <button
           onClick={() => setActiveTab('adverts')}
-          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
+          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'adverts'
               ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -350,212 +358,145 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         </button>
       </div>
 
-      {/* Tab 1: Analytics */}
+      {/* Tab 1: Real Analytics */}
       {activeTab === 'analytics' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Monthly Inquiries vs Listings Chart */}
-          <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Monthly Buyer Inquiries & Listing Growth
-              </h3>
-              <p className="text-xs text-slate-500">
-                Direct connections facilitated across Tanzania regions.
-              </p>
-            </div>
-
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={MONTHLY_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-                  <YAxis stroke="#94a3b8" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1E293B',
-                      borderRadius: '12px',
-                      color: '#FFF',
-                      border: 'none',
-                      fontSize: '12px',
-                    }}
-                  />
-                  <Bar dataKey="inquiries" fill="#1B3A6B" radius={[6, 6, 0, 0]} name="Inquiries" />
-                  <Bar dataKey="listings" fill="#2E86D8" radius={[6, 6, 0, 0]} name="New Listings" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Categories distribution pie chart */}
-          <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Top Building Categories</h3>
-              <p className="text-xs text-slate-500">Catalog inventory distribution.</p>
-            </div>
-
-            <div className="h-56 w-full flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryDistribution.slice(0, 6)}
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {categoryDistribution.slice(0, 6).map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="space-y-1.5 pt-2">
-              {categoryDistribution.slice(0, 4).map((c, i) => (
-                <div key={c.name} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 text-slate-600">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: COLORS[i % COLORS.length] }}
-                    />
-                    {c.name}
-                  </span>
-                  <span className="font-bold text-slate-900">{c.value} items</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab: Pending Approvals */}
-      {activeTab === 'pending' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-6 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Pending Approvals</h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Review new supplier registrations and listing submissions before they go live.
-              </p>
+          {analyticsLoading && (
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Refreshing analytics from database...
             </div>
+          )}
 
-            <div className="flex items-center gap-2 px-6 pt-4 border-b border-slate-100 text-xs font-bold">
-              <button
-                onClick={() => setPendingSubTab('providers')}
-                className={`pb-3 px-3 border-b-2 transition-colors ${
-                  pendingSubTab === 'providers'
-                    ? 'border-[#1B3A6B] text-[#1B3A6B]'
-                    : 'border-transparent text-slate-500'
-                }`}
-              >
-                Pending Providers ({pendingProviders.length})
-              </button>
-              <button
-                onClick={() => setPendingSubTab('listings')}
-                className={`pb-3 px-3 border-b-2 transition-colors ${
-                  pendingSubTab === 'listings'
-                    ? 'border-[#1B3A6B] text-[#1B3A6B]'
-                    : 'border-transparent text-slate-500'
-                }`}
-              >
-                Pending Listings ({pendingListings.length})
-              </button>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Monthly Chart */}
+            <div className="lg:col-span-8 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Monthly Inquiries & Listing Growth
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Direct connections facilitated across Tanzania — last 6 months.
+                </p>
+              </div>
 
-            {pendingSubTab === 'providers' && (
-              <div className="overflow-x-auto">
-                {pendingProviders.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-500">No providers awaiting approval.</div>
+              <div className="h-72 w-full">
+                {monthlyData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-xs text-slate-400">
+                    {analyticsLoading ? 'Loading...' : 'No data yet — activity will appear here as users engage.'}
+                  </div>
                 ) : (
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                      <tr>
-                        <th className="py-3 px-4">Business</th>
-                        <th className="py-3 px-4">Type</th>
-                        <th className="py-3 px-4">Contact</th>
-                        <th className="py-3 px-4">Region</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {pendingProviders.map((p) => (
-                        <tr key={p.id} className="hover:bg-slate-50">
-                          <td className="py-3.5 px-4 font-bold text-slate-900">{p.businessName}</td>
-                          <td className="py-3.5 px-4">
-                            <ProviderTypeBadge type={p.providerType} size="xs" />
-                          </td>
-                          <td className="py-3.5 px-4 text-slate-600">{p.email}</td>
-                          <td className="py-3.5 px-4 text-slate-600">{p.location.region}</td>
-                          <td className="py-3.5 px-4 text-right space-x-2">
-                            <button
-                              onClick={() => handleApproveProvider(p)}
-                              className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectProvider(p)}
-                              className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold hover:bg-rose-100"
-                            >
-                              Deactivate
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                      <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+                      <YAxis stroke="#94a3b8" fontSize={12} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#1E293B',
+                          borderRadius: '12px',
+                          color: '#FFF',
+                          border: 'none',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Bar dataKey="inquiries" fill="#1B3A6B" radius={[6, 6, 0, 0]} name="Inquiries" />
+                      <Bar dataKey="listings" fill="#2E86D8" radius={[6, 6, 0, 0]} name="New Listings" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 )}
               </div>
-            )}
+            </div>
 
-            {pendingSubTab === 'listings' && (
-              <div className="overflow-x-auto">
-                {pendingListings.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-slate-500">No listings awaiting review.</div>
+            {/* Categories Pie Chart */}
+            <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Listings by Category</h3>
+                <p className="text-xs text-slate-500">Active catalog distribution from DB.</p>
+              </div>
+
+              <div className="h-52 w-full flex items-center justify-center">
+                {categoryDistribution.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center">
+                    {analyticsLoading ? 'Loading...' : 'No category data yet.'}
+                  </p>
                 ) : (
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                      <tr>
-                        <th className="py-3 px-4">Listing</th>
-                        <th className="py-3 px-4">Supplier</th>
-                        <th className="py-3 px-4">Price</th>
-                        <th className="py-3 px-4">Location</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {pendingListings.map((l) => (
-                        <tr key={l.id} className="hover:bg-slate-50">
-                          <td className="py-3.5 px-4 font-bold text-slate-900">{l.title}</td>
-                          <td className="py-3.5 px-4">{l.providerName}</td>
-                          <td className="py-3.5 px-4 font-bold text-[#1B3A6B]">
-                            {l.price.toLocaleString()} TZS
-                          </td>
-                          <td className="py-3.5 px-4 text-slate-500">
-                            {[l.location.region, l.location.county, l.location.district]
-                              .filter(Boolean)
-                              .join(' › ')}
-                          </td>
-                          <td className="py-3.5 px-4 text-right space-x-2">
-                            <button
-                              onClick={() => handleApproveListing(l)}
-                              className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRejectListing(l)}
-                              className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-bold hover:bg-rose-100"
-                            >
-                              Reject
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryDistribution.slice(0, 6)}
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={4}
+                        dataKey="value"
+                      >
+                        {categoryDistribution.slice(0, 6).map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
                 )}
+              </div>
+
+              <div className="space-y-1.5 pt-2">
+                {categoryDistribution.slice(0, 5).map((c, i) => (
+                  <div key={c.name} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-2 text-slate-600">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                      />
+                      <span className="truncate max-w-[120px]">{c.name}</span>
+                    </span>
+                    <span className="font-bold text-slate-900">{c.value} items</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity Feed */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#1B3A6B]" />
+                  Recent Platform Activity
+                </h3>
+                <p className="text-xs text-slate-500">Live feed from admin actions, inquiries, and new listings.</p>
+              </div>
+            </div>
+
+            {recentActivity.length === 0 ? (
+              <div className="text-xs text-slate-400 text-center py-8">
+                {analyticsLoading ? 'Loading activity...' : 'No recent activity recorded yet.'}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentActivity.map((act, idx) => (
+                  <div key={idx} className="flex items-start gap-3 py-2 border-b border-slate-50 last:border-0">
+                    <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+                      {activityIcon(act.type)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-slate-700 font-medium truncate">{act.description}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatRelativeTime(act.timestamp)}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize shrink-0 ${
+                      act.type === 'inquiry'
+                        ? 'bg-blue-50 text-[#1B3A6B]'
+                        : act.type === 'listing'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      {act.type}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -707,62 +648,83 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {adverts.map((ad) => (
-              <div
-                key={ad.id}
-                className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4"
+          {adverts.length === 0 ? (
+            <div className="bg-white rounded-3xl p-10 border border-slate-200 text-center">
+              <Sparkles className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+              <p className="text-sm font-bold text-slate-700">No advert campaigns yet.</p>
+              <p className="text-xs text-slate-500 mt-1">Create your first promotional banner to get started.</p>
+              <Button
+                variant="primary"
+                size="sm"
+                className="mt-4"
+                onClick={() => setIsAdvertModalOpen(true)}
+                leftIcon={<PlusCircle className="w-4 h-4" />}
               >
-                <div className="flex items-start gap-4">
-                  <img
-                    src={cardImageUrl(ad.bannerUrl)}
-                    alt={ad.title}
-                    className="w-24 h-20 rounded-2xl object-cover border border-slate-200 shrink-0"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase bg-blue-50 text-[#1B3A6B] px-2 py-0.5 rounded-full">
-                        Position: {ad.position}
-                      </span>
-                      {ad.isActive ? (
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          Live
+                Create Banner
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {adverts.map((ad) => (
+                <div
+                  key={ad.id}
+                  className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between space-y-4"
+                >
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={cardImageUrl(ad.bannerUrl)}
+                      alt={ad.title}
+                      className="w-24 h-20 rounded-2xl object-cover border border-slate-200 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase bg-blue-50 text-[#1B3A6B] px-2 py-0.5 rounded-full">
+                          {ad.position}
                         </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                          Paused
-                        </span>
-                      )}
-                      {ad.isPaid ? (
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                          Paid
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                          Unpaid
-                        </span>
-                      )}
+                        {ad.isActive ? (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            Live
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                            Paused
+                          </span>
+                        )}
+                        {ad.isPaid && (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                            Paid
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-1">{ad.title}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{ad.subtitle}</p>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-1">{ad.title}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{ad.subtitle}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                    <span className="text-slate-400">
+                      Sponsor: {ad.sponsorName}
+                      {ad.priceAmount != null ? ` • ${ad.priceAmount.toLocaleString()} TZS` : ''}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleToggleAdvert(ad)}
+                        className="font-bold text-[#2E86D8] hover:text-[#1B3A6B]"
+                      >
+                        {ad.isActive ? 'Pause' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAdvert(ad.id)}
+                        className="font-bold text-rose-400 hover:text-rose-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                  <span className="text-slate-400">
-                    Sponsor: {ad.sponsorName}
-                    {ad.priceAmount != null ? ` • ${ad.priceAmount.toLocaleString()} TZS` : ''}
-                  </span>
-                  <button
-                    onClick={() => handleToggleAdvert(ad)}
-                    className="font-bold text-[#2E86D8] hover:text-[#1B3A6B]"
-                  >
-                    {ad.isActive ? 'Pause Campaign' : 'Activate Campaign'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -814,9 +776,24 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             </div>
             <Input
               label="Target Link"
-              placeholder="/contact or tel:+255..."
+              placeholder="/contact or https://..."
               value={adLinkUrl}
               onChange={(e) => setAdLinkUrl(e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Start Date"
+              type="date"
+              value={adStartDate}
+              onChange={(e) => setAdStartDate(e.target.value)}
+            />
+            <Input
+              label="End Date"
+              type="date"
+              value={adEndDate}
+              onChange={(e) => setAdEndDate(e.target.value)}
             />
           </div>
 

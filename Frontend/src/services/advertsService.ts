@@ -29,67 +29,53 @@ function mapBackendAdvert(ad: any): Advert {
 
 export async function getAdverts(): Promise<Advert[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/adverts/active');
-    if (res && Array.isArray(res)) {
-      return res.map(mapBackendAdvert);
-    }
+    // Backend returns { status, data: { adverts: [...] } } — apiClient unwraps to { adverts: [...] }
+    const res = await apiClient.get<any>('/api/adverts/active');
+    const items = Array.isArray(res) ? res : (res as any)?.adverts || [];
+    return items.map(mapBackendAdvert);
   } catch (err) {
     console.warn('Failed to fetch active adverts from API:', err);
+    return [];
   }
-
-  try {
-    const item = localStorage.getItem(STORAGE_KEY);
-    if (item) return JSON.parse(item);
-  } catch {
-    // fallback
-  }
-
-  return [];
 }
 
 export async function getAllAdvertsAdmin(): Promise<Advert[]> {
   try {
-    const res = await apiClient.get<{ adverts: any[] }>('/api/adverts');
-    const items = Array.isArray(res) ? res : res?.adverts || [];
-    if (Array.isArray(items)) {
-      return items.map(mapBackendAdvert);
-    }
+    // Backend returns { status, data: { adverts: [...] } } — apiClient unwraps to { adverts: [...] }
+    const res = await apiClient.get<any>('/api/adverts');
+    const items = Array.isArray(res) ? res : (res as any)?.adverts || [];
+    return items.map(mapBackendAdvert);
   } catch (err) {
     console.warn('Failed to fetch all adverts via admin API:', err);
+    return [];
   }
-  return getAdverts();
 }
 
 export async function createAdvert(
   advertData: Omit<Advert, 'id'> & { bannerFileId?: string }
 ): Promise<Advert> {
-  try {
-    const payload = {
-      title: advertData.title,
-      imageUrl: advertData.bannerUrl,
-      imageFileId: advertData.bannerFileId,
-      linkUrl: advertData.targetUrl || '#',
-      isActive: advertData.isActive ?? true,
-      isPaid: advertData.isPaid ?? false,
-      priceAmount: advertData.priceAmount,
-      startsAt: advertData.startDate || new Date().toISOString(),
-      endsAt: advertData.endDate || new Date(Date.now() + 30 * 86400000).toISOString(),
-    };
-    const res = await apiClient.post('/api/adverts', payload);
-    if (res) return mapBackendAdvert(res.advert || res);
-  } catch (err) {
-    console.warn('Failed to create advert via API, updating locally:', err);
-  }
-
-  const newAd: Advert = {
-    ...advertData,
-    id: `ad-${Date.now()}`,
+  // Convert date-only strings (YYYY-MM-DD) to full ISO timestamps for the backend
+  const toISO = (d?: string) => {
+    if (!d) return new Date().toISOString();
+    if (d.includes('T')) return d;
+    return new Date(d + 'T00:00:00.000Z').toISOString();
   };
 
-  const adverts = await getAdverts();
-  adverts.unshift(newAd);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(adverts));
-  return newAd;
+  const payload = {
+    title: advertData.title,
+    imageUrl: advertData.bannerUrl,
+    imageFileId: advertData.bannerFileId,
+    linkUrl: advertData.targetUrl || '/contact',
+    isActive: advertData.isActive ?? true,
+    isPaid: advertData.isPaid ?? false,
+    priceAmount: advertData.priceAmount,
+    startsAt: toISO(advertData.startDate),
+    endsAt: toISO(advertData.endDate) || new Date(Date.now() + 90 * 86400000).toISOString(),
+  };
+
+  // Always try API first — no silent localStorage fallback
+  const res = await apiClient.post('/api/adverts', payload);
+  return mapBackendAdvert((res as any)?.advert || res);
 }
 
 export async function updateAdvert(id: string, advertData: Partial<Advert> & { bannerFileId?: string }): Promise<Advert> {

@@ -57,22 +57,35 @@ export const VerifiedBadge: React.FC<{ size?: 'sm' | 'md'; showText?: boolean }>
   );
 };
 
-export const ProviderTypeBadge: React.FC<{ type: ProviderType; size?: 'xs' | 'sm' | 'md' }> = ({
+export const ProviderTypeBadge: React.FC<{ type: ProviderType | string; size?: 'xs' | 'sm' | 'md' }> = ({
   type,
   size = 'sm',
 }) => {
+  const displayLabels: Record<string, string> = {
+    manufacturer_wholesaler: 'Manufacturer / Wholesaler',
+    retailer_supplier: 'Retailer / Supplier',
+    contractor: 'Contractor',
+    consultant: 'Consultant',
+    freelancer: 'Freelancer',
+    technician: 'Technician',
+    casual_labourer: 'Casual Labourer',
+  };
+
+  const displayText = displayLabels[type] || type;
+
   let variant: 'navy' | 'blue' | 'bronze' | 'green' | 'amber' | 'slate' = 'navy';
 
-  if (type === 'Manufacturer/Wholesaler') variant = 'navy';
-  else if (type === 'Contractor') variant = 'bronze';
-  else if (type === 'Consultant') variant = 'blue';
-  else if (type === 'Retailer/Supplier') variant = 'green';
-  else if (type === 'Technician' || type === 'Freelancer') variant = 'amber';
+  const normalized = (type || '').toLowerCase();
+  if (normalized.includes('manufacturer') || normalized.includes('wholesaler')) variant = 'navy';
+  else if (normalized.includes('contractor')) variant = 'bronze';
+  else if (normalized.includes('consultant')) variant = 'blue';
+  else if (normalized.includes('retailer') || normalized.includes('supplier')) variant = 'green';
+  else if (normalized.includes('technician') || normalized.includes('freelancer')) variant = 'amber';
   else variant = 'slate';
 
   return (
     <Badge variant={variant} size={size}>
-      {type}
+      {displayText}
     </Badge>
   );
 };

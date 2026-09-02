@@ -37,8 +37,8 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const targetProviderName = listing?.providerName || provider?.name || 'Supplier';
-  const targetProviderPhone = provider?.phone || '+255 755 890 123';
-  const targetProviderWhatsapp = provider?.whatsapp || '255755890123';
+  const targetProviderPhone = provider?.phone || listing?.providerPhone || '+255 755 890 123';
+  const targetProviderWhatsapp = (provider?.whatsapp || provider?.phone || listing?.providerPhone || '255755890123').replace(/[^0-9]/g, '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,13 +47,18 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
       return;
     }
 
+    if (!listing?.id && !provider?.id) {
+      error('Please select a listing or provider to send an inquiry.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await createInquiry({
+      const inquiryData = {
         listingId: listing?.id,
         listingTitle: listing?.title,
         listingImage: listing?.images?.[0],
-        providerId: listing?.providerId || provider?.id || 'prov-plan-moja-contractors',
+        providerId: listing?.providerId || provider?.id,
         providerName: targetProviderName,
         buyerId: user?.id || `buyer-guest-${Date.now()}`,
         buyerName: name,
@@ -61,12 +66,19 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
         buyerEmail: email || 'guest@ujenzilink.co.tz',
         message,
         quantity: quantity || undefined,
-      });
+      };
+      console.log('Submitting inquiry with data:', inquiryData);
+      console.log('Listing object:', listing);
+      console.log('Provider object:', provider);
+      console.log('User object:', user);
+
+      await createInquiry(inquiryData);
 
       setIsSubmitted(true);
       success('Inquiry sent! The supplier will contact you directly via phone or WhatsApp.', 'Request Dispatched');
-    } catch {
-      error('Could not submit inquiry. Please try again.');
+    } catch (err: any) {
+      console.error('Inquiry submission error:', err);
+      error(`Could not submit inquiry: ${err.message || 'Please try again.'}`);
     } finally {
       setIsSubmitting(false);
     }

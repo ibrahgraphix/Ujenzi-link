@@ -6,7 +6,7 @@ const STORAGE_KEY = 'ujenzi_providers_v1';
 function mapBackendProvider(p: any): Provider {
   const user = p.users || {};
   return {
-    id: p.id || `prov-${Date.now()}`,
+    id: p.user_id || p.id || user.id || `prov-${Date.now()}`,
     name: user.name || p.name || p.business_name || 'Supplier',
     businessName: p.business_name || p.businessName || 'Business Name',
     providerType: (p.provider_type as ProviderType) || p.providerType || 'Retailer/Supplier',
@@ -25,7 +25,7 @@ function mapBackendProvider(p: any): Provider {
     reviewsCount: 0,
     yearsInBusiness: p.yearsInBusiness || 1,
     specialties: p.specialties || ['Construction Materials'],
-    joinedDate: p.created_at || p.joinedDate || new Date().toISOString().split('T')[0],
+    joinedDate: (p.created_at || p.joinedDate || new Date().toISOString()).split('T')[0],
     status: p.is_verified ? 'active' : p.status || 'pending',
   };
 }

@@ -62,7 +62,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const [isListingModalOpen, setIsListingModalOpen] = useState(initialAction === 'add-listing');
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
   const [listingTitle, setListingTitle] = useState('');
-  const [listingCategory, setListingCategory] = useState('Cement & Aggregates');
+  const [listingCategory, setListingCategory] = useState<string>('');
   const [listingPrice, setListingPrice] = useState('');
   const [listingUnit, setListingUnit] = useState('50kg Bag');
   const [listingMinOrder, setListingMinOrder] = useState('10 Bags');
@@ -81,7 +81,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const loadProviderData = async () => {
     setIsLoading(true);
     const [allInquiries, allCats, allProviders] = await Promise.all([
-      getInquiries(),
+      getInquiries(user?.id, 'provider'),
       getCategories(),
       getProviders(),
     ]);
@@ -99,6 +99,11 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setInquiries(allInquiries);
     setCategories(allCats);
     setIsLoading(false);
+  };
+
+  const loadInquiries = async () => {
+    const allInquiries = await getInquiries(user?.id, 'provider');
+    setInquiries(allInquiries);
   };
 
   const getListingStatusLabel = (status: Listing['status']) => {
@@ -121,10 +126,19 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     loadProviderData();
   }, [user]);
 
+  // Refetch inquiries when switching to inquiries tab or periodically
+  useEffect(() => {
+    if (activeTab === 'inquiries') {
+      loadInquiries();
+      const interval = setInterval(loadInquiries, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
   const handleOpenAdd = () => {
     setEditingListingId(null);
     setListingTitle('');
-    setListingCategory(categories[0]?.name || 'Cement & Aggregates');
+    setListingCategory(categories[0]?.id || '');
     setListingPrice('');
     setListingUnit('50kg Bag');
     setListingMinOrder('1 Unit');
@@ -143,7 +157,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const handleOpenEdit = (listing: Listing) => {
     setEditingListingId(listing.id);
     setListingTitle(listing.title);
-    setListingCategory(listing.category);
+    setListingCategory(listing.categoryId || '');
     setListingPrice(String(listing.price));
     setListingUnit(listing.unit);
     setListingMinOrder(listing.minOrderQuantity || '1 Unit');
@@ -185,9 +199,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       return;
     }
 
-    // Find category ID from category name
-    const categoryObj = categories.find(c => c.name === listingCategory);
-    const categoryId = categoryObj?.id || categories[0]?.id;
+    // Get category name from ID for display
+    const categoryObj = categories.find(c => c.id === listingCategory);
+    const categoryName = categoryObj?.name || listingCategory;
+    const categoryId = listingCategory || categories[0]?.id;
 
     console.log('User ID:', user?.id);
     console.log('Provider ID:', myProvider?.id);
@@ -197,7 +212,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       if (editingListingId) {
         const updated = await updateListing(editingListingId, {
           title: listingTitle,
-          category: listingCategory,
+          category: categoryName,
           categoryId,
           price: Number(listingPrice),
           unit: listingUnit,
@@ -213,7 +228,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       } else {
         const created = await createListing({
           title: listingTitle,
-          category: listingCategory,
+          category: categoryName,
           categoryId,
           providerId: user?.id || myProvider?.id || 'prov-1',
           providerName: myProvider?.name || user?.name || 'Authorized Supplier',
@@ -242,11 +257,16 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   };
 
   const handleInquiryStatusChange = async (inquiryId: string, newStatus: any) => {
-    await updateInquiryStatus(inquiryId, newStatus);
-    setInquiries((prev) =>
-      prev.map((inq) => (inq.id === inquiryId ? { ...inq, status: newStatus } : inq))
-    );
-    success(`Inquiry status updated to ${newStatus}`);
+    try {
+      await updateInquiryStatus(inquiryId, newStatus);
+      setInquiries((prev) =>
+        prev.map((inq) => (inq.id === inquiryId ? { ...inq, status: newStatus } : inq))
+      );
+      success(`Inquiry status updated to ${newStatus}`);
+    } catch (err: any) {
+      console.error('Error updating inquiry status:', err);
+      error(`Failed to update status: ${err?.message || 'Unknown error'}`);
+    }
   };
 
   const handleSaveLogo = async () => {
@@ -518,9 +538,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
                         onChange={(e) => handleInquiryStatusChange(inq.id, e.target.value)}
                         className="text-xs font-semibold rounded-lg px-2.5 py-1 border border-slate-200 bg-slate-50"
                       >
-                        <option value="Pending">Pending</option>
-                        <option value="Responded">Responded</option>
-                        <option value="Closed">Closed</option>
+                        <option value="new">New</option>
+                        <option value="responded">Responded</option>
+                        <option value="closed">Closed</option>
                       </select>
                       <span className="text-[11px] text-slate-400">{inq.createdAt}</span>
                     </div>
@@ -591,7 +611,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
               >
                 {categories.map((c) => (
-                  <option key={c.id} value={c.name}>
+                  <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}

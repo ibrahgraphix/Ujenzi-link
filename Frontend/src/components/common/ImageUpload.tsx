@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import imageCompression from 'browser-image-compression';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
-import { uploadImage, UploadedImage, UploadFolderType } from '../../services/uploadService';
+import { uploadImage, deleteUploadedImage, UploadedImage, UploadFolderType } from '../../services/uploadService';
 import { thumbnailUrl } from '../../utils/imagekit';
 
 interface ImageUploadProps {
@@ -86,7 +86,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     [entityId, folderType, images, maxFiles, multiple, onChange]
   );
 
-  const handleRemove = (index: number) => {
+  const handleRemove = async (index: number) => {
+    const target = images[index];
+    if (target?.fileId) {
+      deleteUploadedImage(target.fileId).catch(() => {});
+    }
+
     if (multiple) {
       const next = images.filter((_, i) => i !== index);
       onChange(next.length > 0 ? next : []);

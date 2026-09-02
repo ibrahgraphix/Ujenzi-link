@@ -10,11 +10,13 @@ import {
   Filter,
   ExternalLink,
 } from 'lucide-react';
-import { Provider, ProviderType } from '../types';
+import { Provider, ProviderType, Advert } from '../types';
 import { getProviders } from '../services/providersService';
 import { getRegions } from '../services/locationsService';
+import { getAdverts } from '../services/advertsService';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
+import { AdvertBanner } from '../components/common/AdvertBanner';
 import { logoImageUrl } from '../utils/imagekit';
 
 interface ProvidersDirectoryPageProps {
@@ -23,14 +25,23 @@ interface ProvidersDirectoryPageProps {
   onOpenInquiry: (listing?: any, provider?: Provider) => void;
 }
 
+function normalizeProviderType(type?: string): string {
+  if (!type) return '';
+  return type
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/\//g, '_')
+    .replace(/&/g, '_');
+}
+
 const PROVIDER_ROLES: { label: string; value: ProviderType | 'all' }[] = [
-  { label: 'All Trades & Suppliers', value: 'all' },
-  { label: 'Manufacturers / Mills', value: 'Manufacturer/Wholesaler' },
-  { label: 'Retailers / Depots', value: 'Retailer/Supplier' },
-  { label: 'Civil & Building Contractors', value: 'Contractor' },
-  { label: 'Consultants & Engineers', value: 'Consultant' },
+  { label: 'All Suppliers & Trades', value: 'all' },
+  { label: 'Manufacturers & Mills', value: 'Manufacturer/Wholesaler' },
+  { label: 'Retailers & Hardware Stores', value: 'Retailer/Supplier' },
+  { label: 'Building Contractors', value: 'Contractor' },
+  { label: 'Engineers & Consultants', value: 'Consultant' },
   { label: 'Electricians & Technicians', value: 'Technician' },
-  { label: 'Masons & Site Artisans', value: 'Casual Labourer' },
+  { label: 'Masons & Site Labour', value: 'Casual Labourer' },
 ];
 
 export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
@@ -40,6 +51,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
 }) => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [regionsList, setRegionsList] = useState<string[]>([]);
+  const [activeAdvert, setActiveAdvert] = useState<Advert | null>(null);
   const [selectedType, setSelectedType] = useState<string>(initialType);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [query, setQuery] = useState<string>('');
@@ -48,19 +60,26 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const [allProviders, regs] = await Promise.all([
+      const [allProviders, regs, ads] = await Promise.all([
         getProviders(),
         getRegions(),
+        getAdverts(),
       ]);
       setProviders(allProviders);
       setRegionsList(regs);
+      if (ads && ads.length > 0) setActiveAdvert(ads[0]);
       setIsLoading(false);
     };
     load();
   }, []);
 
   const filteredProviders = providers.filter((p) => {
-    if (selectedType !== 'all' && p.providerType !== selectedType) return false;
+    if (
+      selectedType !== 'all' &&
+      normalizeProviderType(p.providerType) !== normalizeProviderType(selectedType)
+    ) {
+      return false;
+    }
     if (selectedRegion && p.location?.region?.toLowerCase() !== selectedRegion.toLowerCase()) return false;
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -133,6 +152,13 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
           </div>
         </div>
       </div>
+
+      {activeAdvert && (
+        <AdvertBanner
+          advert={activeAdvert}
+          onNavigate={() => {}}
+        />
+      )}
 
       {/* Provider Cards Grid */}
       {isLoading ? (
@@ -208,24 +234,15 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenInquiry(undefined, provider);
-                    }}
-                    className="py-2 px-3 bg-[#1B3A6B] hover:bg-[#12284C] text-white text-xs font-semibold rounded-xl text-center transition-colors"
-                  >
-                    Inquire
-                  </button>
+                <div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelectProvider(provider);
                     }}
-                    className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl text-center transition-colors"
+                    className="w-full py-2.5 px-3 bg-[#1B3A6B] hover:bg-[#12284C] text-white text-xs font-semibold rounded-xl text-center transition-colors"
                   >
-                    View Catalog
+                    View Catalog & Shopfront
                   </button>
                 </div>
               </div>

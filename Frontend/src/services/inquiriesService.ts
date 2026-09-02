@@ -4,11 +4,20 @@ import apiClient from './apiClient';
 const STORAGE_KEY = 'ujenzi_inquiries_v1';
 
 function mapBackendInquiry(item: any): Inquiry {
-  let mappedStatus: Inquiry['status'] = 'pending';
-  if (item.status === 'responded' || item.status === 'contacted') mappedStatus = 'contacted';
-  else if (item.status === 'closed' || item.status === 'completed') mappedStatus = 'completed';
-  else if (item.status === 'cancelled') mappedStatus = 'cancelled';
-  else mappedStatus = 'pending';
+  let mappedStatus: Inquiry['status'] = 'new';
+  if (item.status === 'responded') mappedStatus = 'responded';
+  else if (item.status === 'closed') mappedStatus = 'closed';
+  else if (item.status === 'pending') mappedStatus = 'pending';
+  else mappedStatus = 'new';
+
+  const buyerUser = item.buyer_profiles?.users || item.buyerUser || {};
+  const buyerName = buyerUser.full_name || buyerUser.name || item.buyerName || 'Buyer';
+  const buyerPhone = buyerUser.phone || item.buyerPhone || '+255 700 000 000';
+  const buyerEmail = buyerUser.email || item.buyerEmail || 'buyer@ujenzilink.co.tz';
+
+  const providerUser = item.provider_profiles?.users || item.providerUser || {};
+  const providerPhone = providerUser.phone || item.providerPhone || '+255 700 000 000';
+  const providerWhatsapp = providerPhone.replace(/[^0-9]/g, '');
 
   return {
     id: item.id || `inq-${Date.now()}`,
@@ -17,10 +26,12 @@ function mapBackendInquiry(item: any): Inquiry {
     listingImage: item.listings?.listing_images?.[0]?.image_url || item.listingImage,
     providerId: item.provider_id || item.providerId || 'prov-demo',
     providerName: item.provider_profiles?.business_name || item.providerName || 'Supplier',
+    providerPhone: providerPhone,
+    providerWhatsapp: providerWhatsapp,
     buyerId: item.buyer_id || item.buyerId || 'buyer-demo',
-    buyerName: item.buyers?.users?.name || item.buyerName || 'Buyer Name',
-    buyerPhone: item.buyers?.users?.phone || item.buyerPhone || '+255 700 000 000',
-    buyerEmail: item.buyers?.users?.email || item.buyerEmail || 'buyer@ujenzilink.co.tz',
+    buyerName: buyerName,
+    buyerPhone: buyerPhone,
+    buyerEmail: buyerEmail,
     message: item.message || '',
     quantity: item.quantity || '1 Unit',
     createdAt: item.created_at || item.createdAt || new Date().toISOString(),
@@ -41,51 +52,37 @@ export async function getInquiries(userId?: string, role?: 'buyer' | 'provider' 
     if (Array.isArray(items)) {
       return items.map(mapBackendInquiry);
     }
+    return [];
   } catch (err) {
-    console.warn(`Failed to fetch inquiries for role ${role} from API:`, err);
+    console.error(`Failed to fetch inquiries for role ${role} from API:`, err);
+    return [];
   }
-
-  try {
-    const item = localStorage.getItem(STORAGE_KEY);
-    if (item) {
-      const stored: Inquiry[] = JSON.parse(item);
-      if (!userId || role === 'admin') return stored;
-      if (role === 'buyer') return stored.filter((i) => i.buyerId === userId);
-      if (role === 'provider') return stored.filter((i) => i.providerId === userId);
-      return stored;
-    }
-  } catch {
-    // fallback
-  }
-
-  return [];
 }
 
 export async function createInquiry(data: Omit<Inquiry, 'id' | 'createdAt' | 'status'>): Promise<Inquiry> {
+  const payload = {
+    providerId: data.providerId,
+    listingId: data.listingId,
+    message: data.message,
+  };
+  console.log('Sending inquiry payload:', payload);
+  console.log('Full data received:', data);
+
   try {
-    const payload = {
-      providerId: data.providerId,
-      listingId: data.listingId,
-      message: data.message,
-    };
     const res = await apiClient.post('/api/inquiries', payload);
-    if (res) {
+    console.log('Inquiry API response:', res);
+    if (res && res.data && res.data.inquiry) {
+      return mapBackendInquiry(res.data.inquiry);
+    } else if (res && res.inquiry) {
+      return mapBackendInquiry(res.inquiry);
+    } else if (res) {
       return mapBackendInquiry(res);
     }
+    throw new Error('Unexpected API response format');
   } catch (err) {
-    console.warn('Failed to submit inquiry via API, updating locally:', err);
+    console.error('Failed to submit inquiry via API:', err);
+    throw err;
   }
-
-  const all = await getInquiries();
-  const newInquiry: Inquiry = {
-    ...data,
-    id: `inq-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    status: 'pending',
-  };
-  all.unshift(newInquiry);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  return newInquiry;
 }
 
 export async function updateInquiryStatus(
@@ -94,28 +91,13 @@ export async function updateInquiryStatus(
   replyNotes?: string
 ): Promise<boolean> {
   try {
-    let backendStatus = 'new';
-    if (status === 'contacted') backendStatus = 'responded';
-    else if (status === 'completed') backendStatus = 'closed';
-
     await apiClient.put(`/api/inquiries/${id}/status`, {
-      status: backendStatus,
+      status,
       replyNotes,
     });
     return true;
   } catch (err) {
-    console.warn(`Failed to update inquiry status ${id} via API, updating locally:`, err);
+    console.error(`Failed to update inquiry status ${id} via API:`, err);
+    throw err;
   }
-
-  const all = await getInquiries();
-  const idx = all.findIndex((i) => i.id === id);
-  if (idx !== -1) {
-    all[idx].status = status;
-    if (replyNotes !== undefined) {
-      all[idx].replyNotes = replyNotes;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-    return true;
-  }
-  return false;
 }

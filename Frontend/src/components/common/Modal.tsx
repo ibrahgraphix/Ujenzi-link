@@ -8,7 +8,7 @@ interface ModalProps {
   title?: React.ReactNode;
   subtitle?: string;
   children: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -30,18 +30,24 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
-  const maxWidthClasses = {
+  const maxWidthClasses: Record<string, string> = {
     sm: 'max-w-sm',
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
   };
+
+  const resolvedMaxWidth = maxWidth.startsWith('max-w-')
+    ? maxWidth
+    : maxWidthClasses[maxWidth] || 'max-w-md';
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-hidden">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -51,16 +57,16 @@ export const Modal: React.FC<ModalProps> = ({
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
           />
 
-          {/* Modal Content */}
+          {/* Modal Content Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`relative w-full ${maxWidthClasses[maxWidth]} rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 z-10 my-8`}
+            className={`relative w-full ${resolvedMaxWidth} max-h-[90vh] flex flex-col rounded-2xl bg-white p-5 sm:p-6 shadow-2xl border border-slate-200 z-10 my-auto overflow-hidden`}
           >
             {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-slate-100 mb-5">
+            <div className="flex items-start justify-between pb-3.5 border-b border-slate-100 mb-4 shrink-0">
               <div>
                 {title && (
                   <h3 className="text-lg font-bold text-slate-900 leading-snug">
@@ -73,15 +79,15 @@ export const Modal: React.FC<ModalProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors ml-2"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div>{children}</div>
+            {/* Body - Scrollable */}
+            <div className="overflow-y-auto flex-1 pr-1.5 space-y-4">{children}</div>
           </motion.div>
         </div>
       )}

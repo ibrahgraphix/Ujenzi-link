@@ -148,52 +148,49 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
         <div className="h-40 sm:h-52 bg-gradient-to-r from-[#12284C] via-[#1B3A6B] to-[#2E86D8] relative p-6">
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <span className="bg-black/30 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-full border border-white/20">
-              Member since {provider.joinedDate}
+              Member since {provider.joinedDate ? provider.joinedDate.split('T')[0] : ''}
             </span>
           </div>
         </div>
 
         {/* Profile Content Details */}
         <div className="px-6 sm:px-10 pb-8 pt-0 relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-6">
-            <div className="flex items-end gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <img
                 src={logoImageUrl(provider.logo)}
                 alt={provider.name}
-                className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover border-4 border-white shadow-xl bg-white shrink-0"
+                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-white shadow-xl bg-white shrink-0 -mt-12 sm:-mt-14"
               />
-              <div className="pb-1">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="pt-2 sm:pt-4">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
                   <ProviderTypeBadge type={provider.providerType} size="sm" />
                   {provider.isVerified && <VerifiedBadge size="sm" />}
                 </div>
-                <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 font-heading mt-1">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
                   {provider.name}
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium">{provider.businessName}</p>
+                {provider.businessName &&
+                  provider.businessName.trim().toLowerCase() !== provider.name.trim().toLowerCase() && (
+                    <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                      {provider.businessName}
+                    </p>
+                  )}
               </div>
             </div>
 
             {/* Direct Connect Action Buttons */}
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => onOpenInquiry(undefined, provider)}
-                leftIcon={<MessageSquare className="w-4 h-4" />}
-              >
-                Send Request
-              </Button>
+            <div className="flex items-center gap-2.5 w-full sm:w-auto pt-2 sm:pt-4">
               <button
                 onClick={handleWhatsApp}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors shadow-xs"
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs"
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>WhatsApp</span>
               </button>
               <button
                 onClick={handleCall}
-                className="px-4 py-2.5 bg-white border border-slate-300 hover:border-[#1B3A6B] text-slate-800 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-colors"
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-slate-300 hover:border-[#1B3A6B] text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Phone className="w-4 h-4 text-[#1B3A6B]" />
                 <span>Call</span>
@@ -202,7 +199,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
           </div>
 
           {/* Quick Info Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
             <div className="flex items-start gap-2.5">
               <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
               <div>
@@ -210,15 +207,6 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
                 <div className="text-slate-500 mt-0.5">{provider.address}</div>
               </div>
             </div>
-
-            <div className="flex items-start gap-2.5">
-              <Clock className="w-4 h-4 text-[#8B5E3C] shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-slate-900">Industry Experience</div>
-                <div className="text-slate-500 mt-0.5">{provider.yearsInBusiness} Years in Construction</div>
-              </div>
-            </div>
-
 
             <div className="flex items-start gap-2.5">
               <Mail className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />

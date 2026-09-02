@@ -43,6 +43,7 @@ export function mapBackendListing(item: any): Listing {
     id: item.id || `list-${Date.now()}`,
     title: item.title || 'Untitled Material/Service',
     category: categoryName,
+    categoryId: item.category_id || item.categoryId || item.categories?.id,
     price: typeof item.price === 'number' ? item.price : parseFloat(item.price || '0'),
     currency: item.currency || 'TZS',
     unit: item.price_unit || item.unit || 'Unit',
@@ -63,8 +64,9 @@ export function mapBackendListing(item: any): Listing {
           region: item.region || 'Dar es Salaam',
           district: item.district || 'Kinondoni',
         },
-    providerId: item.provider_id || item.providerId || providerProfile.id || 'prov-demo',
+    providerId: item.provider_id || providerProfile.user_id || providerUser.id || item.providerId || providerProfile.id || 'prov-demo',
     providerName: providerProfile.business_name || providerUser.name || item.providerName || 'Local Supplier',
+    providerPhone: providerUser.phone || item.providerPhone || '+255 700 000 000',
     providerType: (providerProfile.provider_type as ProviderType) || item.providerType || 'Retailer/Supplier',
     isVerified: providerProfile.is_verified ?? item.isVerified ?? false,
     rating: item.rating ?? 5.0,
@@ -77,6 +79,11 @@ export function mapBackendListing(item: any): Listing {
     deliveryAvailable: item.deliveryAvailable ?? true,
     specifications: item.specifications || {},
   };
+}
+
+function normalizeType(str?: string): string {
+  if (!str) return '';
+  return str.toLowerCase().trim().replace(/\s+/g, '_').replace(/\//g, '_').replace(/&/g, '_');
 }
 
 function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFilterParams): Listing[] {
@@ -96,7 +103,12 @@ function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFi
   }
 
   if (params.category && params.category !== 'all') {
-    result = result.filter((l) => l.category.toLowerCase() === params.category!.toLowerCase());
+    const catSearch = params.category.toLowerCase().trim();
+    result = result.filter(
+      (l) =>
+        (l.categoryId && l.categoryId.toLowerCase().trim() === catSearch) ||
+        (l.category && l.category.toLowerCase().trim() === catSearch)
+    );
   }
 
   if (params.region && params.region !== 'all') {
@@ -110,7 +122,8 @@ function filterAndSortListingsLocally(allListings: Listing[], params?: ListingFi
   }
 
   if (params.providerType && params.providerType !== 'all') {
-    result = result.filter((l) => l.providerType === params.providerType);
+    const ptSearch = normalizeType(params.providerType);
+    result = result.filter((l) => normalizeType(l.providerType) === ptSearch);
   }
 
   if (params.providerId) {
@@ -172,6 +185,7 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
     if (params?.category && params.category !== 'all') queryParams.set('categoryId', params.category);
     if (params?.region && params.region !== 'all') queryParams.set('region', params.region);
     if (params?.district && params.district !== 'all') queryParams.set('district', params.district);
+    if (params?.providerType && params.providerType !== 'all') queryParams.set('providerType', params.providerType);
     if (params?.minPrice) queryParams.set('minPrice', params.minPrice.toString());
     if (params?.maxPrice) queryParams.set('maxPrice', params.maxPrice.toString());
     if (params?.verifiedOnly) queryParams.set('verifiedOnly', 'true');

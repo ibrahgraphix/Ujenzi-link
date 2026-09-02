@@ -12,13 +12,15 @@ import {
   ChevronDown,
   Building,
 } from 'lucide-react';
-import { Listing, Category, ProviderType, LocationHierarchy } from '../types';
+import { Listing, Category, ProviderType, LocationHierarchy, Advert } from '../types';
 import { getListings, ListingFilterParams } from '../services/listingsService';
 import { getCategories } from '../services/categoriesService';
+import { getAdverts } from '../services/advertsService';
 import { ListingCard } from '../components/common/ListingCard';
 import { LocationSelector } from '../components/common/LocationSelector';
 import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
+import { AdvertBanner } from '../components/common/AdvertBanner';
 
 interface ListingsPageProps {
   initialQuery?: string;
@@ -40,6 +42,20 @@ const PROVIDER_TYPES: { label: string; value: ProviderType | 'all' }[] = [
   { label: 'Masons & Site Labour', value: 'Casual Labourer' },
 ];
 
+// Convert frontend provider type format to database format
+function convertProviderTypeToDB(providerType: string): string {
+  const typeMap: Record<string, string> = {
+    'Manufacturer/Wholesaler': 'manufacturer_wholesaler',
+    'Retailer/Supplier': 'retailer_supplier',
+    'Contractor': 'contractor',
+    'Consultant': 'consultant',
+    'Freelancer': 'freelancer',
+    'Technician': 'technician',
+    'Casual Labourer': 'casual_labourer',
+  };
+  return typeMap[providerType] || providerType.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
+}
+
 export const ListingsPage: React.FC<ListingsPageProps> = ({
   initialQuery = '',
   initialCategory = 'all',
@@ -51,6 +67,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
 }) => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeAdvert, setActiveAdvert] = useState<Advert | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters
@@ -75,6 +92,9 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
 
   useEffect(() => {
     getCategories().then(setCategories);
+    getAdverts().then((ads) => {
+      if (ads && ads.length > 0) setActiveAdvert(ads[0]);
+    });
   }, []);
 
   const fetchFilteredListings = async () => {
@@ -84,7 +104,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
       category: category !== 'all' ? category : undefined,
       region: location.region || undefined,
       district: location.district || undefined,
-      providerType: providerType !== 'all' ? providerType : undefined,
+      providerType: providerType !== 'all' ? convertProviderTypeToDB(providerType) : undefined,
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
       verifiedOnly: verifiedOnly || undefined,
@@ -240,9 +260,9 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
-                    onClick={() => setCategory(cat.name)}
+                    onClick={() => setCategory(cat.id)}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between ${
-                      category === cat.name
+                      category === cat.id
                         ? 'bg-blue-50 text-[#1B3A6B] font-bold'
                         : 'text-slate-600 hover:bg-slate-50'
                     }`}
@@ -320,6 +340,13 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
 
         {/* Listings Display Column */}
         <main className="lg:col-span-9 space-y-6">
+          {activeAdvert && (
+            <AdvertBanner
+              advert={activeAdvert}
+              onNavigate={(url) => onNavigate('contact')}
+            />
+          )}
+
           {/* Active Filter Chips */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="text-xs text-slate-500 font-medium">
@@ -329,7 +356,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
             <div className="flex items-center gap-1.5 flex-wrap">
               {category !== 'all' && (
                 <span className="inline-flex items-center gap-1 bg-blue-50 text-[#1B3A6B] text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-200">
-                  Category: {category}
+                  Category: {categories.find((c) => c.id === category || c.name.toLowerCase() === category.toLowerCase())?.name || category}
                   <button onClick={() => setCategory('all')}>
                     <X className="w-3 h-3 text-slate-400 hover:text-slate-700" />
                   </button>
@@ -460,8 +487,8 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
               >
                 <option value="all">All Categories</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name} ({c.itemCount})
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>

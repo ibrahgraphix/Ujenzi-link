@@ -55,6 +55,7 @@ export interface Listing {
   location: LocationHierarchy;
   providerId: string;
   providerName: string;
+  providerPhone?: string;
   providerType: ProviderType;
   isVerified: boolean;
   rating: number;
@@ -99,6 +100,8 @@ export interface Inquiry {
   listingImage?: string;
   providerId: string;
   providerName: string;
+  providerPhone?: string;
+  providerWhatsapp?: string;
   buyerId: string;
   buyerName: string;
   buyerPhone: string;
@@ -106,7 +109,7 @@ export interface Inquiry {
   message: string;
   quantity?: string;
   createdAt: string;
-  status: 'pending' | 'contacted' | 'completed' | 'cancelled';
+  status: 'new' | 'pending' | 'responded' | 'closed';
   replyNotes?: string;
 }
 

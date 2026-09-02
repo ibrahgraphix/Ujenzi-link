@@ -46,6 +46,11 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadInquiries = async () => {
+    const allInquiries = await getInquiries(user?.id, 'buyer');
+    setInquiries(allInquiries);
+  };
+
   // Client project edit state
   const [isEditingProject, setIsEditingProject] = useState(false);
   const [editInstitution, setEditInstitution] = useState(user?.institutionName || '');
@@ -58,7 +63,7 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
       setIsLoading(true);
       const [allListings, allInquiries] = await Promise.all([
         getListings(),
-        getInquiries(),
+        getInquiries(user?.id, 'buyer'),
       ]);
 
       setFavoriteListings(allListings.filter((l) => favorites.includes(l.id)));
@@ -66,7 +71,16 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
       setIsLoading(false);
     };
     load();
-  }, [favorites]);
+  }, [favorites, user?.id]);
+
+  // Refetch inquiries when switching to inquiries tab or periodically
+  useEffect(() => {
+    if (activeTab === 'inquiries') {
+      loadInquiries();
+      const interval = setInterval(loadInquiries, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   const handleRemoveFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -229,8 +243,10 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
                       <span className="text-[11px] text-slate-400">{inquiry.createdAt}</span>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          inquiry.status === 'contacted'
+                          inquiry.status === 'responded'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : inquiry.status === 'closed'
+                            ? 'bg-slate-50 text-slate-700 border border-slate-200'
                             : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}
                       >
@@ -246,13 +262,13 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => {
-                        const clean = (inquiry.buyerPhone || '255755890123').replace(/[^0-9]/g, '');
-                        window.open(`https://wa.me/${clean}?text=Following up on my Ujenzi Link inquiry`, '_blank');
+                        const clean = (inquiry.providerWhatsapp || inquiry.providerPhone || '255755890123').replace(/[^0-9]/g, '');
+                        window.open(`https://wa.me/${clean}?text=Following up on my Ujenzi Link inquiry about ${inquiry.listingTitle}`, '_blank');
                       }}
                       className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
-                      <span>WhatsApp Follow-up</span>
+                      <span>WhatsApp Supplier</span>
                     </button>
                   </div>
                 </div>

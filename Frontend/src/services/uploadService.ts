@@ -1,4 +1,4 @@
-import { getStoredToken } from './apiClient';
+import { getStoredToken, apiClient } from './apiClient';
 
 const API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'http://localhost:3001';
 
@@ -53,4 +53,15 @@ export async function uploadImage(
     xhr.onerror = () => reject(new Error('Network error during upload'));
     xhr.send(formData);
   });
+}
+
+export async function deleteUploadedImage(fileId: string): Promise<boolean> {
+  if (!fileId) return true;
+  try {
+    await apiClient.delete(`/api/uploads/image/${fileId}`);
+    return true;
+  } catch (err) {
+    console.warn(`Failed to delete ImageKit file ${fileId}:`, err);
+    return false;
+  }
 }
