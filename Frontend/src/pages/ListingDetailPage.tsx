@@ -106,7 +106,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
   };
 
   const handleWhatsApp = () => {
-    const rawNum = provider?.whatsapp || '255755890123';
+    const rawNum = provider?.whatsapp || '255767856452';
     const cleanNum = rawNum.replace(/[^0-9]/g, '');
     const message = encodeURIComponent(
       `Habari ${listing.providerName},\nI found your listing on *Ujenzi Link* (Plan Moja Company Ltd):\n\n*Item:* ${listing.title}\n*Price:* ${formatPrice(listing.price)} / ${listing.unit}\n\nI would like to inquire about delivery to my site and availability.`
@@ -115,7 +115,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
   };
 
   const handleCall = () => {
-    const phone = provider?.phone || '+255755890123';
+    const phone = provider?.phone || '+255767856452';
     window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
   };
 

@@ -74,7 +74,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-slate-900">5. Contact and Disputes</h2>
           <p>
-            For inquiries regarding terms, moderation reports, or partner grievances, contact Plan Moja Company Ltd at <a href="mailto:safety@planmoja.com" className="text-[#2E86D8] underline">safety@planmoja.com</a> or visit our Mikocheni offices in Dar es Salaam.
+            For inquiries regarding terms, moderation reports, or partner grievances, contact Plan Moja Company Ltd at <a href="mailto:kwisa077@gmail.com" className="text-[#2E86D8] underline">kwisa077@gmail.com</a> or visit our Mwenge offices in Kinondoni, Dar es Salaam.
           </p>
         </section>
       </div>

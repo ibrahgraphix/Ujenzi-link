@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   ShieldCheck,
   ArrowRight,
-  Sparkles,
   Briefcase,
   Home,
 } from 'lucide-react';
@@ -30,7 +29,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   initialType = 'buyer',
   onSuccess,
 }) => {
-  const { login, signup, loginAs } = useAuth();
+  const { login, signup } = useAuth();
   const { success, error } = useToast();
 
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
@@ -65,7 +64,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         success('Welcome back to Ujenzi Link!');
         onSuccess();
       } else {
-        error('Invalid login credentials. Try using one of the demo logins below.');
+        error('Invalid login credentials. Please check your email and password and try again.');
       }
     } else {
       if (!name) {
@@ -102,12 +101,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     }
   };
 
-  const handleDemoClick = (role: 'buyer' | 'provider' | 'admin') => {
-    loginAs(role);
-    success(`Signed in as Demo ${role.toUpperCase()}`);
-    onSuccess();
-  };
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
@@ -120,38 +113,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             {mode === 'login' ? 'Sign In to Ujenzi Link' : 'Join Plan Moja Construction Portal'}
           </h2>
           <p className="text-xs text-blue-200 mt-1">
-            "Build Quality For Less" — Direct Tanzanian Marketplace
+            "We connect, we care!" — Direct Tanzanian Marketplace
           </p>
-
-          {/* Quick Demo Switcher Strip */}
-          <div className="mt-4 pt-4 border-t border-white/10 text-center">
-            <div className="text-[11px] font-bold text-amber-300 uppercase tracking-wider mb-2 flex items-center justify-center gap-1">
-              <Sparkles className="w-3 h-3" /> Quick Demo 1-Click Login:
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleDemoClick('buyer')}
-                className="py-1.5 px-2 rounded-lg bg-white/15 hover:bg-white/30 text-white font-semibold transition-colors"
-              >
-                Buyer (Amina)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoClick('provider')}
-                className="py-1.5 px-2 rounded-lg bg-white/15 hover:bg-white/30 text-white font-semibold transition-colors"
-              >
-                Supplier (David)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoClick('admin')}
-                className="py-1.5 px-2 rounded-lg bg-white/15 hover:bg-white/30 text-white font-semibold transition-colors"
-              >
-                Admin (CMS)
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Tab switch */}

@@ -9,6 +9,7 @@ import {
   Building2,
   CheckCircle2,
   HelpCircle,
+  User,
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
@@ -30,8 +31,16 @@ export const ContactPage: React.FC = () => {
       error('Please complete all required fields.');
       return;
     }
+    
+    // Send inquiry via WhatsApp
+    const whatsappNumber = '255767856452';
+    const textMsg = encodeURIComponent(
+      `Habari Plan Moja Company Ltd,\n\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone || 'Not provided'}\n*Subject:* ${subject}\n\n*Message:*\n${message}`
+    );
+    window.open(`https://wa.me/${whatsappNumber}?text=${textMsg}`, '_blank');
+    
     setIsSubmitted(true);
-    success('Your message has been sent to Plan Moja Company Ltd. We will respond promptly.');
+    success('Your message has been sent to Plan Moja Company Ltd via WhatsApp. We will respond promptly.');
   };
 
   const FAQS = [
@@ -169,17 +178,28 @@ export const ContactPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-extrabold text-base font-heading">Plan Moja Company Ltd</h3>
-                <p className="text-xs text-blue-200">"Build Quality For Less"</p>
+                <p className="text-xs text-blue-200">"We connect, we care!"</p>
               </div>
             </div>
 
             <div className="space-y-3.5 text-xs text-slate-300 pt-2 border-t border-blue-900/60">
               <div className="flex items-start gap-3">
+                <Building2 className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-white">Directors</div>
+                  <div className="text-slate-400 mt-0.5">
+                    Director 1: Isakwisa G. Ambokile (+255 767 856 452, kwisa077@gmail.com)<br />
+                    Director 2: Salome J. Machimu (+255 657 899 440, machimusalome@yahoo.com)
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
                 <div>
                   <div className="font-bold text-white">Dar es Salaam Office</div>
                   <div className="text-slate-400 mt-0.5">
-                    Plot 42, Old Bagamoyo Road, TPDC Area, Mikocheni B, Dar es Salaam, Tanzania
+                    Mwenge, Kinondoni, Dar es Salaam, Box 33165
                   </div>
                 </div>
               </div>
@@ -188,8 +208,8 @@ export const ContactPage: React.FC = () => {
                 <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
                 <div>
                   <div className="font-bold text-white">Telephone Support</div>
-                  <a href="tel:+255755890123" className="text-slate-300 hover:text-white">
-                    +255 755 890 123 / +255 784 123 456
+                  <a href="tel:+255767856452" className="text-slate-300 hover:text-white">
+                    +255 767 856 452 / +255 657 899 440
                   </a>
                 </div>
               </div>
@@ -199,12 +219,12 @@ export const ContactPage: React.FC = () => {
                 <div>
                   <div className="font-bold text-white">Direct WhatsApp Desk</div>
                   <a
-                    href="https://wa.me/255755890123"
+                    href="https://wa.me/255767856452"
                     target="_blank"
                     rel="noreferrer"
                     className="text-emerald-300 hover:underline"
                   >
-                    +255 755 890 123 (Click to chat)
+                    +255 767 856 452 (Click to chat)
                   </a>
                 </div>
               </div>
@@ -213,7 +233,7 @@ export const ContactPage: React.FC = () => {
                 <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
                 <div>
                   <div className="font-bold text-white">Email Addresses</div>
-                  <div className="text-slate-400">info@planmoja.com • support@planmoja.com</div>
+                  <div className="text-slate-400">kwisa077@gmail.com • machimusalome@yahoo.com</div>
                 </div>
               </div>
 
@@ -221,7 +241,7 @@ export const ContactPage: React.FC = () => {
                 <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                 <div>
                   <div className="font-bold text-white">Operating Hours (EAT)</div>
-                  <div className="text-slate-400">Mon – Fri: 08:00 – 17:30 | Sat: 08:30 – 13:00</div>
+                  <div className="text-slate-400">Daily: 7:00 AM – 6:00 PM</div>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, ShieldCheck, User } from 'lucide-react';
 import { getCategories } from '../../services/categoriesService';
 import { Category } from '../../types';
 
@@ -23,7 +23,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               Plan Moja Company Ltd
             </span>
             <h3 className="text-xl sm:text-2xl font-extrabold text-white font-heading">
-              "Build Quality For Less"
+              "We connect, we care!"
             </h3>
             <p className="text-sm text-slate-300 mt-1 max-w-xl">
               Connecting contractors, developers, and homeowners with trusted direct manufacturers and certified artisans across Tanzania.
@@ -165,21 +165,35 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </h4>
             <div className="space-y-3 text-xs text-slate-300">
               <div className="flex items-start gap-2.5">
+                <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-white">Director 1: Isakwisa G. Ambokile</div>
+                  <div className="text-slate-400">+255 767 856 452 • kwisa077@gmail.com</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-white">Director 2: Salome J. Machimu</div>
+                  <div className="text-slate-400">+255 657 899 440 • machimusalome@yahoo.com</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
                 <span>
-                  Plot 42, Old Bagamoyo Road, TPDC Area, Mikocheni B, Dar es Salaam
+                  Mwenge, Kinondoni, Dar es Salaam, Box 33165
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                <a href="tel:+255755890123" className="hover:text-white transition-colors">
-                  +255 755 890 123
+                <a href="tel:+255767856452" className="hover:text-white transition-colors">
+                  +255 767 856 452 / +255 657 899 440
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                <a href="mailto:info@planmoja.com" className="hover:text-white transition-colors">
-                  info@planmoja.com
+                <a href="mailto:kwisa077@gmail.com" className="hover:text-white transition-colors">
+                  kwisa077@gmail.com • machimusalome@yahoo.com
                 </a>
               </div>
             </div>

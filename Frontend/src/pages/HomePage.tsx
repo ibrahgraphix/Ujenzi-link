@@ -131,7 +131,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-1.5 rounded-full backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide text-blue-200">
-              Plan Moja Company Ltd • <strong className="text-amber-300">"Build Quality For Less"</strong>
+              Plan Moja Company Ltd • <strong className="text-amber-300">"We connect, we care!"</strong>
             </span>
           </div>
 
@@ -323,7 +323,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="w-12 h-12 rounded-xl bg-emerald-700 text-white font-black text-lg flex items-center justify-center mb-4 shadow-sm">
               04
             </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1.5">Build Quality For Less</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-1.5">We Connect, We Care!</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
               Receive direct site delivery, negotiate wholesale discounts, and achieve superior construction.
             </p>

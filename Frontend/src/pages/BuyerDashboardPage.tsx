@@ -262,7 +262,7 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => {
-                        const clean = (inquiry.providerWhatsapp || inquiry.providerPhone || '255755890123').replace(/[^0-9]/g, '');
+                        const clean = (inquiry.providerWhatsapp || inquiry.providerPhone || '255767856452').replace(/[^0-9]/g, '');
                         window.open(`https://wa.me/${clean}?text=Following up on my Ujenzi Link inquiry about ${inquiry.listingTitle}`, '_blank');
                       }}
                       className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"

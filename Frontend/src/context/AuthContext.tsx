@@ -7,7 +7,6 @@ import { useToast } from './ToastContext';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  loginAs: (role: 'buyer' | 'provider' | 'admin') => void;
   login: (email: string, password?: string) => Promise<boolean>;
   signUp: (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<boolean>;
   signup: (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<boolean>;
@@ -65,27 +64,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setFavorites([]);
     }
   }, [user]);
-
-  const loginAs = async (role: 'buyer' | 'provider' | 'admin') => {
-    let email: string;
-    let password: string;
-    
-    if (role === 'provider') {
-      email = 'provider@demo.co.tz';
-      password = 'demo123';
-    } else if (role === 'admin') {
-      email = 'admin@ujenzilink.co.tz';
-      password = 'admin123';
-    } else {
-      email = 'buyer@demo.co.tz';
-      password = 'demo123';
-    }
-    
-    const success = await login(email, password);
-    if (!success) {
-      error('Authentication failed. Please check your credentials or register a new account.', 'Login Failed');
-    }
-  };
 
   const login = async (email: string, password?: string): Promise<boolean> => {
     try {
@@ -145,7 +123,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         user,
         isAuthenticated: !!user,
-        loginAs,
         login,
         signUp,
         signup: signUp,

@@ -11,6 +11,7 @@ import {
   Phone,
   Mail,
   HeartHandshake,
+  User,
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 
@@ -28,7 +29,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             About Plan Moja Company Ltd
           </span>
           <h1 className="text-3xl sm:text-5xl font-black font-heading text-white max-w-3xl mx-auto leading-tight">
-            "Build Quality For Less"
+            "We connect, we care!"
           </h1>
           <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto leading-relaxed">
             Pioneering digital transformation and transparency across the Tanzanian construction sector by connecting material manufacturers, certified contractors, and property builders directly.
@@ -143,7 +144,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               </div>
               <h3 className="text-base font-bold text-slate-900">Affordable Construction</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                By enabling direct contact between buyers and suppliers, we reduce material markups so everyone can "Build Quality For Less".
+                By enabling direct contact between buyers and suppliers, we reduce material markups so everyone can benefit from our commitment: "We connect, we care!".
               </p>
             </div>
 
@@ -175,22 +176,38 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
                 Visit our offices for corporate partnership inquiries, supplier verification audits, or advertising sponsorships.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-2">
-                <div className="flex items-center gap-2 text-slate-700">
-                  <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                  <span>Mikocheni B, Old Bagamoyo Rd, Dar es Salaam</span>
+              <div className="space-y-2 text-xs pt-2">
+                <div className="flex items-start gap-2 text-slate-700">
+                  <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold">Director 1: Isakwisa G. Ambokile</div>
+                    <div className="text-slate-500">+255 767 856 452 • kwisa077@gmail.com</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Phone className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                  <span>+255 755 890 123</span>
+                <div className="flex items-start gap-2 text-slate-700">
+                  <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold">Director 2: Salome J. Machimu</div>
+                    <div className="text-slate-500">+255 657 899 440 • machimusalome@yahoo.com</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                  <span>info@planmoja.com</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Building2 className="w-4 h-4 text-[#8B5E3C] shrink-0" />
-                  <span>Registered in the United Republic of Tanzania</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0" />
+                    <span>Mwenge, Kinondoni, Dar es Salaam, Box 33165</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Phone className="w-4 h-4 text-[#2E86D8] shrink-0" />
+                    <span>+255 767 856 452 / +255 657 899 440</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
+                    <span>kwisa077@gmail.com • machimusalome@yahoo.com</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-700">
+                    <Building2 className="w-4 h-4 text-[#8B5E3C] shrink-0" />
+                    <span>Registered in the United Republic of Tanzania</span>
+                  </div>
                 </div>
               </div>
             </div>

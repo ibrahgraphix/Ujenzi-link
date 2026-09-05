@@ -13,7 +13,6 @@ import {
   ChevronDown,
   Heart,
   Store,
-  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../common/Button';
@@ -29,10 +28,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigate,
   onOpenSearch,
 }) => {
-  const { user, isAuthenticated, logout, loginAs, favorites } = useAuth();
+  const { user, isAuthenticated, logout, favorites } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [demoRoleDropdownOpen, setDemoRoleDropdownOpen] = useState(false);
 
   const handleNav = (page: string, params?: Record<string, any>) => {
     onNavigate(page, params);
@@ -54,67 +52,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-amber-300">Plan Moja Company Ltd:</span>
-            <span className="hidden sm:inline text-slate-200">"Build Quality For Less"</span>
+            <span className="hidden sm:inline text-slate-200">"We connect, we care!"</span>
             <span className="text-slate-300">| Direct Construction Marketplace</span>
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Quick Demo Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setDemoRoleDropdownOpen(!demoRoleDropdownOpen)}
-                className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full transition-colors"
-                title="Switch demo persona to test any view"
-              >
-                <Sparkles className="w-3 h-3 text-amber-300" />
-                <span>Demo Persona: <strong className="text-amber-200 uppercase">{user?.accountType || 'Guest'}</strong></span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {demoRoleDropdownOpen && (
-                <div
-                  className="absolute right-0 mt-1 w-52 bg-white text-slate-800 rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 text-xs"
-                  onClick={() => setDemoRoleDropdownOpen(false)}
-                >
-                  <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Quick Role Switcher
-                  </div>
-                  <button
-                    onClick={() => loginAs('buyer')}
-                    className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                      user?.accountType === 'buyer' ? 'font-bold text-[#1B3A6B] bg-blue-50/60' : ''
-                    }`}
-                  >
-                    <span>Buyer / Developer</span>
-                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">Amina</span>
-                  </button>
-                  <button
-                    onClick={() => loginAs('provider')}
-                    className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                      user?.accountType === 'provider' ? 'font-bold text-[#1B3A6B] bg-blue-50/60' : ''
-                    }`}
-                  >
-                    <span>Contractor / Supplier</span>
-                    <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">Eng. David</span>
-                  </button>
-                  <button
-                    onClick={() => loginAs('admin')}
-                    className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center justify-between ${
-                      user?.accountType === 'admin' ? 'font-bold text-[#1B3A6B] bg-blue-50/60' : ''
-                    }`}
-                  >
-                    <span>Administrator</span>
-                    <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Full CMS</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
             <button
               onClick={() => handleNav('contact')}
               className="text-slate-300 hover:text-white transition-colors hidden md:inline text-[11px]"
             >
-              Need Help? Call +255 755 890 123
+              Need Help? Call +255 767 856 452
             </button>
           </div>
         </div>
@@ -122,13 +69,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Main navigation container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
+        <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
           {/* Brand Logo */}
           <div
             onClick={() => handleNav('home')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform">
               <img
                 src="/logo.jpg"
                 alt="Ujenzi Link Logo"
@@ -140,12 +87,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="text-xl sm:text-2xl font-black tracking-tight text-[#1B3A6B] font-heading">
                   Ujenzi<span className="text-[#2E86D8]">Link</span>
                 </span>
-                <span className="hidden sm:inline-block bg-[#8B5E3C]/10 text-[#8B5E3C] text-[10px] font-bold px-2 py-0.5 rounded border border-[#8B5E3C]/20">
-                  TZ
-                </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide">
-                by Plan Moja • <span className="text-[#8B5E3C] font-semibold">Build Quality For Less</span>
+                by Plan Moja • <span className="text-[#8B5E3C] font-semibold">We connect, we care!</span>
               </p>
             </div>
           </div>
@@ -268,11 +212,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors"
                 >
-                  <img
-                    src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                  />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B3A6B] to-[#2E86D8] text-white font-bold text-sm flex items-center justify-center border border-slate-200">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
                   <div className="text-left hidden md:block">
                     <div className="text-xs font-bold text-slate-900 leading-tight truncate max-w-[100px]">
                       {user.name.split(' ')[0]}
@@ -289,13 +231,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                     className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50"
                     onClick={() => setUserDropdownOpen(false)}
                   >
-                    <div className="px-4 py-2 border-b border-slate-100">
-                      <div className="text-xs font-bold text-slate-900">{user.name}</div>
-                      <div className="text-[11px] text-slate-500 truncate">{user.email}</div>
-                      <div className="mt-1">
-                        <span className="text-[10px] font-semibold bg-blue-50 text-[#1B3A6B] px-2 py-0.5 rounded-full border border-blue-200">
-                          {user.accountType === 'provider' ? user.providerType : user.accountType === 'admin' ? 'System Admin' : user.buyerRole}
-                        </span>
+                    <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1B3A6B] to-[#2E86D8] text-white font-bold text-lg flex items-center justify-center shrink-0">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-slate-900 truncate">{user.name}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{user.email}</div>
+                        <div className="mt-1">
+                          <span className="text-[10px] font-semibold bg-blue-50 text-[#1B3A6B] px-2 py-0.5 rounded-full border border-blue-200">
+                            {user.accountType === 'provider' ? user.providerType : user.accountType === 'admin' ? 'System Admin' : user.buyerRole}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -388,11 +335,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {user ? (
             <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-200">
               <div className="flex items-center gap-3">
-                <img
-                  src={user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}
-                  alt={user.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1B3A6B] to-[#2E86D8] text-white font-bold text-lg flex items-center justify-center">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
                 <div>
                   <div className="text-sm font-bold text-slate-900">{user.name}</div>
                   <div className="text-xs text-[#2E86D8] font-semibold uppercase">{user.accountType}</div>
@@ -482,31 +427,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Register as Supplier / Contractor
               </Button>
             )}
-          </div>
-
-          {/* Demo switcher helper */}
-          <div className="pt-3 border-t border-slate-100">
-            <div className="text-[11px] font-bold text-slate-400 uppercase mb-2">Switch Demo Profile:</div>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                onClick={() => { loginAs('buyer'); setMobileMenuOpen(false); }}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-medium text-center"
-              >
-                Buyer
-              </button>
-              <button
-                onClick={() => { loginAs('provider'); setMobileMenuOpen(false); }}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-medium text-center"
-              >
-                Provider
-              </button>
-              <button
-                onClick={() => { loginAs('admin'); setMobileMenuOpen(false); }}
-                className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-medium text-center"
-              >
-                Admin
-              </button>
-            </div>
           </div>
 
           {isAuthenticated && (

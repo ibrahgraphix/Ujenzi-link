@@ -37,8 +37,8 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const targetProviderName = listing?.providerName || provider?.name || 'Supplier';
-  const targetProviderPhone = provider?.phone || listing?.providerPhone || '+255 755 890 123';
-  const targetProviderWhatsapp = (provider?.whatsapp || provider?.phone || listing?.providerPhone || '255755890123').replace(/[^0-9]/g, '');
+  const targetProviderPhone = provider?.phone || listing?.providerPhone || '+255 767 856 452';
+  const targetProviderWhatsapp = (provider?.whatsapp || provider?.phone || listing?.providerPhone || '255767856452').replace(/[^0-9]/g, '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
