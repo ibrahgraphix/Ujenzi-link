@@ -16,6 +16,7 @@ import dashboardRoutes from './routes/dashboard';
 import buyerProfileRoutes from './routes/buyerProfile';
 import uploadRoutes from './routes/uploads';
 import providerProfileRoutes from './routes/providerProfile';
+import trafficRoutes from './routes/traffic';
 import { config } from './config';
 
 const app = express();
@@ -25,6 +26,9 @@ const PORT = config.port;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Trust proxy for accurate IP addresses
+app.set('trust proxy', true);
 
 // Routes
 app.use('/health', healthRoutes);
@@ -42,6 +46,7 @@ app.use('/api/admin/dashboard', dashboardRoutes);
 app.use('/api/buyer', buyerProfileRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/provider', providerProfileRoutes);
+app.use('/api/traffic', trafficRoutes);
 
 // Error handling
 app.use(errorHandler);

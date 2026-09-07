@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import {
   MapPin,
-  Phone,
   Mail,
   Clock,
   Send,
-  MessageSquare,
   Building2,
   CheckCircle2,
   HelpCircle,
-  User,
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
@@ -20,7 +17,6 @@ export const ContactPage: React.FC = () => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [subject, setSubject] = useState('Supplier Verification');
   const [message, setMessage] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -32,33 +28,32 @@ export const ContactPage: React.FC = () => {
       return;
     }
     
-    // Send inquiry via WhatsApp
-    const whatsappNumber = '255767856452';
-    const textMsg = encodeURIComponent(
-      `Habari Plan Moja Company Ltd,\n\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone || 'Not provided'}\n*Subject:* ${subject}\n\n*Message:*\n${message}`
-    );
-    window.open(`https://wa.me/${whatsappNumber}?text=${textMsg}`, '_blank');
+    // Send inquiry via email
+    const mailtoLink = `mailto:planmoja2026@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+      `Habari Ujenzi Link,\n\n*Name:* ${name}\n*Email:* ${email}\n*Subject:* ${subject}\n\n*Message:*\n${message}`
+    )}`;
+    window.location.href = mailtoLink;
     
     setIsSubmitted(true);
-    success('Your message has been sent to Plan Moja Company Ltd via WhatsApp. We will respond promptly.');
+    success('Your message has been sent to Ujenzi Link via email. We will respond promptly.');
   };
 
   const FAQS = [
     {
       q: 'Does Ujenzi Link process payments or hold escrow?',
-      a: 'No. Ujenzi Link is a pure directory and direct connection marketplace by Plan Moja Company Ltd. You contact suppliers directly via Phone or WhatsApp and agree on payment upon delivery/inspection.',
+      a: 'No. Ujenzi Link is a pure directory and direct connection marketplace. You contact suppliers directly via Phone or WhatsApp and agree on payment upon delivery/inspection.',
     },
     {
       q: 'How do suppliers get the "Verified" badge?',
-      a: 'Plan Moja audits provider credentials including physical yard/shopfront visits, business registration certificates (BRELA), and regulatory licenses (CRB / TBS compliance).',
+      a: 'Ujenzi Link audits provider credentials including physical yard/shopfront visits, business registration certificates (BRELA), and regulatory licenses (CRB / TBS compliance).',
     },
     {
       q: 'Is it free to list building materials and artisan profiles?',
-      a: 'Yes! Standard listings and supplier profiles are free. Plan Moja also offers premium banner sponsorship for high-volume manufacturers seeking homepage placement.',
+      a: 'Yes! Standard listings and supplier profiles are free. Ujenzi Link also offers premium banner sponsorship for high-volume manufacturers seeking homepage placement.',
     },
     {
       q: 'How do I report an inaccurate listing or unresponsive contractor?',
-      a: 'Use the contact form on this page or email safety@planmoja.com with details so our moderation team can review and audit the listing.',
+      a: 'Use the contact form on this page or email planmoja2026@gmail.com with details so our moderation team can review and audit the listing.',
     },
   ];
 
@@ -67,7 +62,7 @@ export const ContactPage: React.FC = () => {
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <span className="text-xs font-bold uppercase tracking-widest text-[#2E86D8] block">
-          Get in Touch with Plan Moja
+          Get in Touch with Ujenzi Link
         </span>
         <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 font-heading">
           Contact Ujenzi Link Support
@@ -88,7 +83,7 @@ export const ContactPage: React.FC = () => {
               </div>
               <h3 className="text-xl font-bold text-slate-900">Message Received!</h3>
               <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                Thank you for contacting Plan Moja Company Ltd. One of our marketplace specialists will reach out via email or WhatsApp within 24 hours.
+                Thank you for contacting Ujenzi Link. One of our marketplace specialists will reach out via email within 24 hours.
               </p>
               <Button
                 variant="primary"
@@ -123,28 +118,20 @@ export const ContactPage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input
-                  label="Phone / WhatsApp Number"
-                  placeholder="+255 7XX XXX XXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Subject / Topic
-                  </label>
-                  <select
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-medium"
-                  >
-                    <option value="Supplier Verification">Supplier Verification & Onboarding</option>
-                    <option value="Corporate Material Sourcing">Corporate / Bulk Material Sourcing</option>
-                    <option value="Advertising Banner Inquiries">Advertising & Banner Sponsorships</option>
-                    <option value="General Support">General Support & Feedback</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Subject / Topic
+                </label>
+                <select
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-medium"
+                >
+                  <option value="Supplier Verification">Supplier Verification & Onboarding</option>
+                  <option value="Corporate Material Sourcing">Corporate / Bulk Material Sourcing</option>
+                  <option value="Advertising Banner Inquiries">Advertising & Banner Sponsorships</option>
+                  <option value="General Support">General Support & Feedback</option>
+                </select>
               </div>
 
               <Textarea
@@ -177,63 +164,29 @@ export const ContactPage: React.FC = () => {
                 <Building2 className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base font-heading">Plan Moja Company Ltd</h3>
+                <h3 className="font-extrabold text-base font-heading">Ujenzi Link</h3>
                 <p className="text-xs text-blue-200">"We connect, we care!"</p>
               </div>
             </div>
 
             <div className="space-y-3.5 text-xs text-slate-300 pt-2 border-t border-blue-900/60">
               <div className="flex items-start gap-3">
-                <Building2 className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-white">Directors</div>
-                  <div className="text-slate-400 mt-0.5">
-                    Director 1: Isakwisa G. Ambokile (+255 767 856 452, kwisa077@gmail.com)<br />
-                    Director 2: Salome J. Machimu (+255 657 899 440, machimusalome@yahoo.com)
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-bold text-white">Dar es Salaam Office</div>
+                  <div className="font-bold text-white">Tanzania Headquarters</div>
                   <div className="text-slate-400 mt-0.5">
-                    Mwenge, Kinondoni, Dar es Salaam, Box 33165
+                    Mwenge, Kinondoni, Dar es Salaam, P.O. Box 33165
                   </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                <div>
-                  <div className="font-bold text-white">Telephone Support</div>
-                  <a href="tel:+255767856452" className="text-slate-300 hover:text-white">
-                    +255 767 856 452 / +255 657 899 440
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0" />
-                <div>
-                  <div className="font-bold text-white">Direct WhatsApp Desk</div>
-                  <a
-                    href="https://wa.me/255767856452"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-emerald-300 hover:underline"
-                  >
-                    +255 767 856 452 (Click to chat)
-                  </a>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
                 <div>
-                  <div className="font-bold text-white">Email Addresses</div>
-                  <div className="text-slate-400">kwisa077@gmail.com • machimusalome@yahoo.com</div>
+                  <div className="font-bold text-white">Email Address</div>
+                  <a href="mailto:planmoja2026@gmail.com" className="text-slate-300 hover:text-white">
+                    planmoja2026@gmail.com
+                  </a>
                 </div>
               </div>
 

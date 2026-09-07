@@ -85,6 +85,47 @@ export async function createInquiry(data: Omit<Inquiry, 'id' | 'createdAt' | 'st
   }
 }
 
+export async function createGuestInquiry(data: {
+  providerId: string;
+  listingId?: string;
+  listingTitle?: string;
+  listingImage?: string;
+  buyerName: string;
+  buyerPhone: string;
+  buyerEmail?: string;
+  message: string;
+  quantity?: string;
+}): Promise<Inquiry> {
+  const payload = {
+    providerId: data.providerId,
+    listingId: data.listingId || null,
+    listingTitle: data.listingTitle || null,
+    listingImage: data.listingImage || null,
+    buyerName: data.buyerName,
+    buyerPhone: data.buyerPhone,
+    buyerEmail: data.buyerEmail || null,
+    message: data.message,
+    quantity: data.quantity || null,
+  };
+  console.log('Sending guest inquiry payload:', payload);
+
+  try {
+    const res = await apiClient.post('/api/inquiries/guest', payload);
+    console.log('Guest inquiry API response:', res);
+    if (res && res.data && res.data.inquiry) {
+      return mapBackendInquiry(res.data.inquiry);
+    } else if (res && res.inquiry) {
+      return mapBackendInquiry(res.inquiry);
+    } else if (res) {
+      return mapBackendInquiry(res);
+    }
+    throw new Error('Unexpected API response format');
+  } catch (err) {
+    console.error('Failed to submit guest inquiry via API:', err);
+    throw err;
+  }
+}
+
 export async function updateInquiryStatus(
   id: string,
   status: Inquiry['status'],

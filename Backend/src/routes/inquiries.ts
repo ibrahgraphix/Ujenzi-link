@@ -7,6 +7,9 @@ import { asyncHandler } from '../middleware';
 const router = Router();
 const inquiryController = new InquiryController();
 
+// Public route for guest inquiries (no authentication required)
+router.post('/guest', asyncHandler(inquiryController.createGuestInquiry));
+
 // Buyer routes
 router.post('/', authenticate, authorize(UserRole.BUYER), asyncHandler(inquiryController.createInquiry));
 router.get('/my-inquiries', authenticate, authorize(UserRole.BUYER), asyncHandler(inquiryController.getBuyerInquiries));

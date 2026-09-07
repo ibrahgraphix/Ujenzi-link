@@ -43,6 +43,43 @@ export class InquiryController {
     }
   };
 
+  createGuestInquiry = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { listingId, providerId, buyerName, buyerPhone, buyerEmail, message, quantity, listingTitle, listingImage } = req.body;
+
+      if (!providerId || !message || !buyerName || !buyerPhone) {
+        throw new AppError(400, 'Missing required fields: providerId, message, buyerName, buyerPhone');
+      }
+
+      // Generate a guest buyer ID
+      const guestBuyerId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const inquiry = await inquiryService.createGuestInquiry({
+        buyerId: guestBuyerId,
+        buyerName,
+        buyerPhone,
+        buyerEmail: buyerEmail || null,
+        providerId,
+        listingId: listingId || null,
+        listingTitle: listingTitle || null,
+        listingImage: listingImage || null,
+        message,
+        quantity: quantity || null
+      });
+
+      res.status(201).json({
+        status: 'success',
+        message: 'Inquiry submitted successfully',
+        data: { inquiry }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(400, error.message);
+      }
+      throw error;
+    }
+  };
+
   getProviderInquiries = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { status, listingId } = req.query;

@@ -131,18 +131,23 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-1.5 rounded-full backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-xs sm:text-sm font-semibold tracking-wide text-blue-200">
-              Plan Moja Company Ltd • <strong className="text-amber-300">"We connect, we care!"</strong>
+              Ujenzi Link • <strong className="text-amber-300">"We connect, we care!"</strong>
             </span>
           </div>
 
           {/* Headline */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black font-heading tracking-tight text-white leading-tight">
-            Connect Directly with Verified Construction Suppliers Across Tanzania
+            Connect directly with Verified Construction Suppliers and Service providers across the World.
           </h1>
 
           {/* Subheadline */}
           <p className="text-sm sm:text-lg text-blue-100 max-w-2xl mx-auto font-normal leading-relaxed">
-            Find cement, TMT steel, roofing sheets, heavy equipment, registered contractors, consulting engineers, and skilled artisans in your district. Zero broker markups.
+            Find ready mix concrete, roofing materials, cement, equipment & plants, reliable transporters, registered contractors, consulting engineers, freelancers, Engineers, Technicians, safety experts, Architects, skilled artisans, casual laborers etc in your Zone. Zero broker or middleman markup.
+          </p>
+
+          {/* Purpose Statement */}
+          <p className="text-xs sm:text-sm text-blue-200 max-w-xl mx-auto font-medium italic">
+            The ultimate purpose is to serve and connect the whole world
           </p>
 
           {/* Prominent Search Bar Container */}

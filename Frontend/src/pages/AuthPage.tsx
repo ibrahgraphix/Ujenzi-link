@@ -110,7 +110,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             <Building2 className="w-7 h-7 text-white" />
           </div>
           <h2 className="text-xl sm:text-2xl font-black font-heading text-white">
-            {mode === 'login' ? 'Sign In to Ujenzi Link' : 'Join Plan Moja Construction Portal'}
+            {mode === 'login' ? 'Sign In to Ujenzi Link' : 'Join Ujenzi Link Portal'}
           </h2>
           <p className="text-xs text-blue-200 mt-1">
             "We connect, we care!" — Direct Tanzanian Marketplace

@@ -65,6 +65,75 @@ export class InquiryService {
     return inquiry;
   }
 
+  async createGuestInquiry(data: {
+    buyerId: string;
+    buyerName: string;
+    buyerPhone: string;
+    buyerEmail: string | null;
+    providerId: string;
+    listingId: string | null;
+    listingTitle: string | null;
+    listingImage: string | null;
+    message: string;
+    quantity: string | null;
+  }) {
+    const { buyerId, buyerName, buyerPhone, buyerEmail, providerId, listingId, listingTitle, listingImage, message, quantity } = data;
+    console.log('Creating guest inquiry with data:', { buyerId, buyerName, buyerPhone, providerId, listingId });
+
+    // If listingId is provided, verify listing exists and belongs to the provider
+    if (listingId) {
+      const { data: listing, error: listingError } = await supabase
+        .from('listings')
+        .select('id, provider_id, status')
+        .eq('id', listingId)
+        .single();
+
+      console.log('Listing check:', { listing, listingError });
+
+      if (listingError || !listing) {
+        throw new Error('Listing not found');
+      }
+
+      if (listing.provider_id !== providerId) {
+        throw new Error('Listing does not belong to the specified provider');
+      }
+
+      if (listing.status !== 'active') {
+        throw new Error('Cannot inquire on inactive listings');
+      }
+    }
+
+    // Create guest inquiry with buyer details in the message or in custom fields
+    const { data: inquiry, error } = await supabase
+      .from('inquiries')
+      .insert({
+        id: crypto.randomUUID(),
+        buyer_id: buyerId,
+        provider_id: providerId,
+        listing_id: listingId,
+        message: `${message}\n\n--- Guest Buyer Details ---\nName: ${buyerName}\nPhone: ${buyerPhone}\nEmail: ${buyerEmail || 'Not provided'}\nQuantity: ${quantity || 'Not specified'}`,
+        status: InquiryStatus.NEW,
+        created_at: new Date().toISOString()
+      })
+      .select(`
+        *,
+        listings (*),
+        provider_profiles (
+          *,
+          users (*)
+        )
+      `)
+      .single();
+
+    console.log('Guest inquiry creation result:', { inquiry, error });
+
+    if (error || !inquiry) {
+      throw new Error(`Failed to create guest inquiry: ${error?.message}`);
+    }
+
+    return inquiry;
+  }
+
   async getProviderInquiries(providerId: string, filters?: {
     status?: InquiryStatus;
     listingId?: string;

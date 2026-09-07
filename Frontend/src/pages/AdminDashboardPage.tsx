@@ -33,6 +33,7 @@ import { getProviders, verifyProvider } from '../services/providersService';
 import { getListings, deleteListing } from '../services/listingsService';
 import { getAllAdvertsAdmin, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
 import { getAdminAnalytics, AdminAnalytics } from '../services/adminAnalyticsService';
+import { getTrafficStats, TrafficStats } from '../services/trafficService';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -78,6 +79,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [listings, setListings] = useState<Listing[]>([]);
   const [adverts, setAdverts] = useState<Advert[]>([]);
   const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
+  const [trafficStats, setTrafficStats] = useState<TrafficStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
@@ -95,8 +97,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
-    const data = await getAdminAnalytics();
+    const [data, traffic] = await Promise.all([
+      getAdminAnalytics(),
+      getTrafficStats()
+    ]);
     setAnalytics(data);
+    setTrafficStats(traffic);
     setAnalyticsLoading(false);
   }, []);
 
@@ -251,7 +257,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       </div>
 
       {/* KPI Metrics — from real DB */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-2">
             <span>Total Suppliers</span>
@@ -261,7 +267,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             {kpis?.totalProviders ?? providers.length}
           </div>
           <div className="text-[11px] text-emerald-600 font-semibold mt-1">
-            {kpis?.verifiedProviders ?? providers.filter((p) => p.isVerified).length} Verified by Plan Moja
+            {kpis?.verifiedProviders ?? providers.filter((p) => p.isVerified).length} Verified by Ujenzi Link
           </div>
         </div>
 
@@ -287,6 +293,19 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             {kpis?.totalInquiries ?? '—'}
           </div>
           <div className="text-[11px] text-emerald-600 font-semibold mt-1">100% Free / Direct Deal</div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-2">
+            <span>Page Visits</span>
+            <Activity className="w-4 h-4 text-purple-500" />
+          </div>
+          <div className="text-2xl font-black text-slate-900">
+            {trafficStats?.totalPageVisits ?? '—'}
+          </div>
+          <div className="text-[11px] text-purple-600 font-semibold mt-1">
+            {trafficStats?.uniqueVisitors ?? '—'} Unique Visitors
+          </div>
         </div>
 
         <div

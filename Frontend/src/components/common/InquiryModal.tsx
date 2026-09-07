@@ -4,7 +4,7 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Input, Textarea } from './Input';
 import { Listing, Provider } from '../../types';
-import { createInquiry } from '../../services/inquiriesService';
+import { createInquiry, createGuestInquiry } from '../../services/inquiriesService';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -54,25 +54,41 @@ export const InquiryModal: React.FC<InquiryModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const inquiryData = {
-        listingId: listing?.id,
-        listingTitle: listing?.title,
-        listingImage: listing?.images?.[0],
-        providerId: listing?.providerId || provider?.id,
-        providerName: targetProviderName,
-        buyerId: user?.id || `buyer-guest-${Date.now()}`,
-        buyerName: name,
-        buyerPhone: phone,
-        buyerEmail: email || 'guest@ujenzilink.co.tz',
-        message,
-        quantity: quantity || undefined,
-      };
-      console.log('Submitting inquiry with data:', inquiryData);
-      console.log('Listing object:', listing);
-      console.log('Provider object:', provider);
-      console.log('User object:', user);
+      if (user) {
+        // Authenticated user - use regular inquiry
+        const inquiryData = {
+          listingId: listing?.id,
+          listingTitle: listing?.title,
+          listingImage: listing?.images?.[0],
+          providerId: listing?.providerId || provider?.id,
+          providerName: targetProviderName,
+          buyerId: user.id,
+          buyerName: name,
+          buyerPhone: phone,
+          buyerEmail: email || 'guest@ujenzilink.co.tz',
+          message,
+          quantity: quantity || undefined,
+        };
+        console.log('Submitting authenticated inquiry with data:', inquiryData);
 
-      await createInquiry(inquiryData);
+        await createInquiry(inquiryData);
+      } else {
+        // Guest user - use guest inquiry
+        const guestInquiryData = {
+          providerId: listing?.providerId || provider?.id,
+          listingId: listing?.id,
+          listingTitle: listing?.title,
+          listingImage: listing?.images?.[0],
+          buyerName: name,
+          buyerPhone: phone,
+          buyerEmail: email || undefined,
+          message,
+          quantity: quantity || undefined,
+        };
+        console.log('Submitting guest inquiry with data:', guestInquiryData);
+
+        await createGuestInquiry(guestInquiryData);
+      }
 
       setIsSubmitted(true);
       success('Inquiry sent! The supplier will contact you directly via phone or WhatsApp.', 'Request Dispatched');

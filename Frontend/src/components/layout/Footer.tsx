@@ -20,13 +20,13 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2E86D8] block mb-1">
-              Plan Moja Company Ltd
+              Ujenzi Link
             </span>
             <h3 className="text-xl sm:text-2xl font-extrabold text-white font-heading">
               "We connect, we care!"
             </h3>
             <p className="text-sm text-slate-300 mt-1 max-w-xl">
-              Connecting contractors, developers, and homeowners with trusted direct manufacturers and certified artisans across Tanzania.
+              Powered by Plan Moja Company Ltd. Connecting contractors, developers, and homeowners with trusted direct manufacturers and certified artisans across Tanzania.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </div>
 
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md">
-              A digital directory and direct connection platform by Plan Moja Company Ltd. We bridge the gap between building material suppliers, certified contractors, technicians, and property developers.
+              A digital directory and direct connection platform by Ujenzi Link. We bridge the gap between building material suppliers, certified contractors, technicians, and property developers.
             </p>
 
             <div className="p-3.5 bg-white/5 rounded-xl border border-white/10 text-xs text-slate-300 space-y-1">
@@ -158,42 +158,22 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </ul>
           </div>
 
-          {/* Col 4: Contact & Plan Moja Office */}
+          {/* Col 4: Contact & Ujenzi Link Office */}
           <div>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-l-2 border-[#2E86D8] pl-2.5">
               Tanzania Headquarters
             </h4>
             <div className="space-y-3 text-xs text-slate-300">
               <div className="flex items-start gap-2.5">
-                <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-white">Director 1: Isakwisa G. Ambokile</div>
-                  <div className="text-slate-400">+255 767 856 452 • kwisa077@gmail.com</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-semibold text-white">Director 2: Salome J. Machimu</div>
-                  <div className="text-slate-400">+255 657 899 440 • machimusalome@yahoo.com</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
                 <span>
-                  Mwenge, Kinondoni, Dar es Salaam, Box 33165
+                  Mwenge, Kinondoni, Dar es Salaam, P.O. Box 33165
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                <a href="tel:+255767856452" className="hover:text-white transition-colors">
-                  +255 767 856 452 / +255 657 899 440
-                </a>
-              </div>
-              <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                <a href="mailto:kwisa077@gmail.com" className="hover:text-white transition-colors">
-                  kwisa077@gmail.com • machimusalome@yahoo.com
+                <a href="mailto:planmoja2026@gmail.com" className="hover:text-white transition-colors">
+                  planmoja2026@gmail.com
                 </a>
               </div>
             </div>
@@ -222,7 +202,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         {/* Bottom copyright line */}
         <div className="mt-12 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
-            © {new Date().getFullYear()} <strong className="text-slate-200">Plan Moja Company Ltd</strong>. All rights reserved.
+            © {new Date().getFullYear()} <strong className="text-slate-200">Ujenzi Link</strong>. All rights reserved.
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => onNavigate('about')} className="hover:text-white">
