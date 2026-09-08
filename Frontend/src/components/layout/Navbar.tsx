@@ -77,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform">
               <img
-                src="/logo.jpg"
+                src="/logo.jpeg"
                 alt="Ujenzi Link Logo"
                 className="w-full h-full object-cover"
               />
@@ -98,51 +98,46 @@ export const Navbar: React.FC<NavbarProps> = ({
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             <button
               onClick={() => handleNav('home')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                currentPage === 'home'
+              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'home'
                   ? 'text-[#1B3A6B] bg-slate-100'
                   : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-              }`}
+                }`}
             >
               Home
             </button>
             <button
               onClick={() => handleNav('listings')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                currentPage === 'listings'
+              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'listings'
                   ? 'text-[#1B3A6B] bg-slate-100'
                   : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-              }`}
+                }`}
             >
               Materials & Services
             </button>
             <button
               onClick={() => handleNav('providers')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                currentPage === 'providers'
+              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'providers'
                   ? 'text-[#1B3A6B] bg-slate-100'
                   : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-              }`}
+                }`}
             >
               Suppliers & Contractors
             </button>
             <button
               onClick={() => handleNav('about')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                currentPage === 'about'
+              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'about'
                   ? 'text-[#1B3A6B] bg-slate-100'
                   : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-              }`}
+                }`}
             >
               About Us
             </button>
             <button
               onClick={() => handleNav('contact')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                currentPage === 'contact'
+              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'contact'
                   ? 'text-[#1B3A6B] bg-slate-100'
                   : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-              }`}
+                }`}
             >
               Contact
             </button>
