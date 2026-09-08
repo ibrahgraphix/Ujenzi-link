@@ -17,7 +17,7 @@ import { ContactPage } from './pages/ContactPage';
 import { TermsPage } from './pages/TermsPage';
 import { InquiryModal } from './components/common/InquiryModal';
 import { Listing, Provider } from './types';
-import { trackVisit } from './services/trafficService';
+import { trackPageVisit } from './services/trafficService';
 
 const MainApp: React.FC = () => {
   const { user } = useAuth();
@@ -29,7 +29,7 @@ const MainApp: React.FC = () => {
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
   useEffect(() => {
-    trackVisit(`/${currentPage}`);
+    trackPageVisit(`/${currentPage}`);
   }, [currentPage]);
 
   // Inquiry Modal Global State
