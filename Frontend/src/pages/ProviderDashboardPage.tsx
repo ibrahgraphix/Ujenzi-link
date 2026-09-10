@@ -17,11 +17,11 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Listing, Inquiry, Provider, LocationHierarchy, Category } from '../types';
+import { Listing, Inquiry, Provider, LocationHierarchy, Category, AvailabilityStatus, ProviderType } from '../types';
 import { getListings, getProviderListings, createListing, updateListing, deleteListing } from '../services/listingsService';
 import { getInquiries, updateInquiryStatus } from '../services/inquiriesService';
 import { getCategories } from '../services/categoriesService';
-import { getProviders } from '../services/providersService';
+import { getProviders, updateProviderAvailabilityStatus } from '../services/providersService';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -71,6 +71,8 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const [listingImageItems, setListingImageItems] = useState<UploadedImage[]>([]);
   const [providerLogo, setProviderLogo] = useState<UploadedImage | null>(null);
   const [isSavingLogo, setIsSavingLogo] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('available');
+  const [isSavingAvailability, setIsSavingAvailability] = useState(false);
   const [listingLocation, setListingLocation] = useState<LocationHierarchy>({
     country: 'Tanzania',
     region: '',
@@ -90,6 +92,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setMyProvider(prov);
     if (prov?.logo) {
       setProviderLogo({ url: prov.logo, fileId: prov.logoFileId || '' });
+    }
+    if (prov?.availabilityStatus) {
+      setAvailabilityStatus(prov.availabilityStatus);
     }
 
     // Use user.id as providerId for backend API calls
@@ -117,6 +122,15 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       default:
         return { label: status, className: 'bg-slate-100 text-slate-600 border-slate-200' };
     }
+  };
+
+  // Helper function to check if provider type is an expert/service provider
+  const isExpertProvider = (type?: ProviderType | string): boolean => {
+    if (!type) return false;
+    // Handle both frontend display format and backend database format
+    const normalizedType = type.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
+    const expertTypes = ['contractor', 'consultant', 'freelancer', 'technician', 'casual_labourer'];
+    return expertTypes.includes(normalizedType);
   };
 
   const activeListingCount = myListings.filter((l) => l.status === 'active').length;
@@ -288,6 +302,21 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     }
   };
 
+  const handleSaveAvailabilityStatus = async () => {
+    setIsSavingAvailability(true);
+    try {
+      const updated = await updateProviderAvailabilityStatus(availabilityStatus);
+      if (updated) {
+        setMyProvider(updated);
+        success('Availability status updated successfully.');
+      }
+    } catch {
+      error('Failed to update availability status. Please try again.');
+    } finally {
+      setIsSavingAvailability(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
@@ -366,6 +395,40 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Availability Status Settings (for expert providers) */}
+      {isExpertProvider(myProvider?.providerType || user?.providerType) && (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6">
+          <h3 className="text-sm font-bold text-slate-900 mb-1">Availability Status</h3>
+          <p className="text-xs text-slate-500 mb-4">Update your current work capacity to help clients know your availability.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Current Status
+              </label>
+              <select
+                value={availabilityStatus}
+                onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)}
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium"
+              >
+                <option value="available">Available - Ready to take new projects</option>
+                <option value="occupied">Occupied - Currently fully booked</option>
+                <option value="busy_and_occupied">Busy & Occupied - Limited availability</option>
+                <option value="occupied_but_available">Occupied but Available - Can take urgent work</option>
+              </select>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveAvailabilityStatus}
+              disabled={isSavingAvailability}
+              className="md:mb-2"
+            >
+              {isSavingAvailability ? 'Saving…' : 'Update Status'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

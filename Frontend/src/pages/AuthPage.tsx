@@ -11,11 +11,12 @@ import {
   ArrowRight,
   Briefcase,
   Home,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
-import { AccountType, ProviderType } from '../types';
+import { AccountType, ProviderType, AvailabilityStatus } from '../types';
 import { useToast } from '../context/ToastContext';
 
 interface AuthPageProps {
@@ -42,9 +43,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [phone, setPhone] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [providerType, setProviderType] = useState<ProviderType>('Retailer/Supplier');
+  const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('available');
 
   // Buyer type: 'customer' (simple buyer) or 'client' (institution/project-based)
   const [buyerType, setBuyerType] = useState<'customer' | 'client'>('customer');
+
+  // Helper function to check if provider type is an expert/service provider
+  const isExpertProvider = (type: ProviderType | string): boolean => {
+    // Handle both frontend display format and backend database format
+    const normalizedType = type.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
+    const expertTypes = ['contractor', 'consultant', 'freelancer', 'technician', 'casual_labourer'];
+    return expertTypes.includes(normalizedType);
+  };
 
   // Client-only fields
   const [institutionName, setInstitutionName] = useState('');
@@ -88,6 +98,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         buyerType: accountType === 'buyer' ? buyerType : undefined,
         businessName: accountType === 'provider' ? businessName || name : undefined,
         providerType: accountType === 'provider' ? providerType : undefined,
+        availabilityStatus: accountType === 'provider' && isExpertProvider(providerType) ? availabilityStatus : undefined,
         institutionName: accountType === 'buyer' && buyerType === 'client' ? institutionName : undefined,
         projectName: accountType === 'buyer' && buyerType === 'client' ? projectName : undefined,
         projectDescription: accountType === 'buyer' && buyerType === 'client' ? projectDescription : undefined,
@@ -292,6 +303,28 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <option value="Casual Labourer">Mason / Tiler / Site Labour</option>
                     </select>
                   </div>
+
+                  {/* Availability Status for Expert Providers */}
+                  {isExpertProvider(providerType) && (
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Availability Status *
+                      </label>
+                      <select
+                        value={availabilityStatus}
+                        onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
+                      >
+                        <option value="available">Available - Ready to take new projects</option>
+                        <option value="occupied">Occupied - Currently fully booked</option>
+                        <option value="busy_and_occupied">Busy & Occupied - Limited availability</option>
+                        <option value="occupied_but_available">Occupied but Available - Can take urgent work</option>
+                      </select>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        This helps clients know your current work capacity.
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
 

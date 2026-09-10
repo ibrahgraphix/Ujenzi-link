@@ -1,5 +1,5 @@
 import { supabase } from '../config';
-import { User, UserRole, BuyerType, ProviderType } from '../models';
+import { User, UserRole, BuyerType, ProviderType, AvailabilityStatus } from '../models';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,11 +15,12 @@ export class AuthService {
     businessName?: string;
     description?: string;
     locationId?: string;
+    availabilityStatus?: AvailabilityStatus;
     institutionName?: string;
     projectName?: string;
     projectDescription?: string;
   }) {
-    const { email, password, name, phone, role, buyerType, providerType, businessName, description, locationId, institutionName, projectName, projectDescription } = data;
+    const { email, password, name, phone, role, buyerType, providerType, businessName, description, locationId, availabilityStatus, institutionName, projectName, projectDescription } = data;
 
     // Create user in Supabase Auth via Admin API to bypass email confirmation
     const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
@@ -82,7 +83,7 @@ export class AuthService {
         throw new Error(`Failed to create buyer profile: ${profileError.message}`);
       }
     } else if (role === UserRole.PROVIDER && providerType && businessName) {
-      console.log('Creating provider profile for user:', userId, 'with data:', { providerType, businessName, description, locationId });
+      console.log('Creating provider profile for user:', userId, 'with data:', { providerType, businessName, description, locationId, availabilityStatus });
       const { error: profileError } = await supabase
         .from('provider_profiles')
         .insert({
@@ -91,6 +92,7 @@ export class AuthService {
           business_name: businessName,
           description,
           location_id: locationId,
+          availability_status: availabilityStatus,
           is_verified: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()

@@ -9,8 +9,10 @@ import {
   MessageSquare,
   Filter,
   ExternalLink,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react';
-import { Provider, ProviderType, Advert } from '../types';
+import { Provider, ProviderType, Advert, AvailabilityStatus } from '../types';
 import { getProviders } from '../services/providersService';
 import { getRegions } from '../services/locationsService';
 import { getAdverts } from '../services/advertsService';
@@ -43,6 +45,53 @@ const PROVIDER_ROLES: { label: string; value: ProviderType | 'all' }[] = [
   { label: 'Electricians & Technicians', value: 'Technician' },
   { label: 'Masons & Site Labour', value: 'Casual Labourer' },
 ];
+
+// Helper function to check if provider type is an expert/service provider
+const isExpertProvider = (type?: ProviderType | string): boolean => {
+  if (!type) return false;
+  // Handle both frontend display format and backend database format
+  const normalizedType = type.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
+  const expertTypes = ['contractor', 'consultant', 'freelancer', 'technician', 'casual_labourer'];
+  return expertTypes.includes(normalizedType);
+};
+
+// Helper function to get availability status badge styling
+const getAvailabilityStatusBadge = (status?: AvailabilityStatus) => {
+  if (!status) return null;
+
+  const statusConfig = {
+    available: {
+      label: 'Available',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      icon: <CheckCircle2 className="w-3 h-3" />
+    },
+    occupied: {
+      label: 'Occupied',
+      className: 'bg-red-50 text-red-700 border-red-200',
+      icon: <Clock className="w-3 h-3" />
+    },
+    busy_and_occupied: {
+      label: 'Busy & Occupied',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      icon: <Clock className="w-3 h-3" />
+    },
+    occupied_but_available: {
+      label: 'Occupied but Available',
+      className: 'bg-blue-50 text-blue-700 border-blue-200',
+      icon: <CheckCircle2 className="w-3 h-3" />
+    }
+  };
+
+  const config = statusConfig[status];
+  if (!config) return null;
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${config.className}`}>
+      {config.icon}
+      {config.label}
+    </span>
+  );
+};
 
 export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   initialType = 'all',
@@ -200,6 +249,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       <ProviderTypeBadge type={provider.providerType} size="xs" />
                       {provider.isVerified && <VerifiedBadge size="sm" showText={false} />}
+                      {isExpertProvider(provider.providerType) && getAvailabilityStatusBadge(provider.availabilityStatus)}
                     </div>
                     <h3 className="text-base font-bold text-slate-900 truncate hover:text-[#1B3A6B]">
                       {provider.name}

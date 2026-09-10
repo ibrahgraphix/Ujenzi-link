@@ -1,4 +1,4 @@
-import { Provider, ProviderType } from '../types';
+import { Provider, ProviderType, AvailabilityStatus } from '../types';
 import apiClient from './apiClient';
 
 const STORAGE_KEY = 'ujenzi_providers_v1';
@@ -27,6 +27,7 @@ function mapBackendProvider(p: any): Provider {
     specialties: p.specialties || ['Construction Materials'],
     joinedDate: (p.created_at || p.joinedDate || new Date().toISOString()).split('T')[0],
     status: p.is_verified ? 'active' : p.status || 'pending',
+    availabilityStatus: p.availability_status as AvailabilityStatus,
   };
 }
 
@@ -161,6 +162,23 @@ export async function updateProviderLogo(
     }
   } catch (err) {
     console.warn('Failed to update provider logo via API:', err);
+    throw err;
+  }
+  return null;
+}
+
+export async function updateProviderAvailabilityStatus(
+  availabilityStatus: AvailabilityStatus
+): Promise<Provider | null> {
+  try {
+    const res = await apiClient.put<{ profile: any }>('/api/provider/profile/availability', {
+      availabilityStatus,
+    });
+    if (res?.profile) {
+      return mapBackendProvider(res.profile);
+    }
+  } catch (err) {
+    console.warn('Failed to update provider availability status via API:', err);
     throw err;
   }
   return null;

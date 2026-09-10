@@ -1,4 +1,4 @@
-import { User, AccountType, BuyerRole, ProviderType } from '../types';
+import { User, AccountType, BuyerRole, ProviderType, AvailabilityStatus } from '../types';
 import apiClient, { setStoredToken, getStoredToken, TOKEN_KEY, USER_KEY } from './apiClient';
 
 interface AuthResponse {
@@ -97,6 +97,7 @@ export async function register(
     institutionName?: string;
     projectName?: string;
     projectDescription?: string;
+    availabilityStatus?: AvailabilityStatus;
   }
 ): Promise<{ user: User; token: string }> {
   const buyerType = userData.buyerType || userData.buyerRole?.toLowerCase();
@@ -121,6 +122,7 @@ export async function register(
     buyerType,
     providerType: userData.providerType ? providerTypeMap[userData.providerType] : undefined,
     businessName: userData.businessName || userData.name,
+    availabilityStatus: userData.availabilityStatus,
   };
 
   if (buyerType === 'client') {

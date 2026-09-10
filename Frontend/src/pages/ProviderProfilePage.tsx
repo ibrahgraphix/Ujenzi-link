@@ -14,7 +14,7 @@ import {
   Share2,
   PlusCircle,
 } from 'lucide-react';
-import { Provider, Listing, Review } from '../types';
+import { Provider, Listing, Review, AvailabilityStatus, ProviderType } from '../types';
 import { getProviderById } from '../services/providersService';
 import { getListings } from '../services/listingsService';
 import { getReviews, addReview } from '../services/reviewsService';
@@ -129,6 +129,53 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
     success('Thank you! Your verified client review has been posted.');
   };
 
+  // Helper function to check if provider type is an expert/service provider
+  const isExpertProvider = (type?: ProviderType | string): boolean => {
+    if (!type) return false;
+    // Handle both frontend display format and backend database format
+    const normalizedType = type.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
+    const expertTypes = ['contractor', 'consultant', 'freelancer', 'technician', 'casual_labourer'];
+    return expertTypes.includes(normalizedType);
+  };
+
+  // Helper function to get availability status badge styling
+  const getAvailabilityStatusBadge = (status?: AvailabilityStatus) => {
+    if (!status) return null;
+
+    const statusConfig = {
+      available: {
+        label: 'Available',
+        className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        icon: <CheckCircle2 className="w-3 h-3" />
+      },
+      occupied: {
+        label: 'Occupied',
+        className: 'bg-red-50 text-red-700 border-red-200',
+        icon: <Clock className="w-3 h-3" />
+      },
+      busy_and_occupied: {
+        label: 'Busy & Occupied',
+        className: 'bg-amber-50 text-amber-700 border-amber-200',
+        icon: <Clock className="w-3 h-3" />
+      },
+      occupied_but_available: {
+        label: 'Occupied but Available',
+        className: 'bg-blue-50 text-blue-700 border-blue-200',
+        icon: <CheckCircle2 className="w-3 h-3" />
+      }
+    };
+
+    const config = statusConfig[status];
+    if (!config) return null;
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${config.className}`}>
+        {config.icon}
+        {config.label}
+      </span>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* Back button */}
@@ -166,6 +213,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <ProviderTypeBadge type={provider.providerType} size="sm" />
                   {provider.isVerified && <VerifiedBadge size="sm" />}
+                  {isExpertProvider(provider.providerType) && getAvailabilityStatusBadge(provider.availabilityStatus)}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
                   {provider.name}

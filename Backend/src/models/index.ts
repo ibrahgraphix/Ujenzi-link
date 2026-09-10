@@ -62,6 +62,8 @@ export interface BuyerProfile {
   updated_at: string;
 }
 
+export type AvailabilityStatus = 'available' | 'occupied' | 'busy_and_occupied' | 'occupied_but_available';
+
 export interface ProviderProfile {
   id: string;
   user_id: string;
@@ -72,6 +74,7 @@ export interface ProviderProfile {
   logo?: string;
   logo_file_id?: string;
   is_verified: boolean;
+  availability_status?: AvailabilityStatus;
   created_at: string;
   updated_at: string;
 }

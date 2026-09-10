@@ -11,6 +11,8 @@ export type ProviderType =
   | 'Technician'
   | 'Casual Labourer';
 
+export type AvailabilityStatus = 'available' | 'occupied' | 'busy_and_occupied' | 'occupied_but_available';
+
 export interface LocationHierarchy {
   country: string;
   region: string;
@@ -91,6 +93,7 @@ export interface Provider {
   specialties: string[];
   joinedDate: string;
   status: 'active' | 'pending' | 'suspended';
+  availabilityStatus?: AvailabilityStatus;
 }
 
 export interface Inquiry {

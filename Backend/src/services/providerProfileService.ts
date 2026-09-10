@@ -1,5 +1,6 @@
 import { supabase } from '../config';
 import { ImageKitService } from './imagekitService';
+import { AvailabilityStatus } from '../models';
 
 export interface ImagePayload {
   url: string;
@@ -54,6 +55,24 @@ export class ProviderProfileService {
 
     if (oldFileId && oldFileId !== logoFileId) {
       await imageKitService.deleteFile(oldFileId);
+    }
+
+    return updated;
+  }
+
+  async updateProviderAvailabilityStatus(userId: string, availabilityStatus: AvailabilityStatus) {
+    const { data: updated, error: updateError } = await supabase
+      .from('provider_profiles')
+      .update({
+        availability_status: availabilityStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (updateError || !updated) {
+      throw new Error(`Failed to update availability status: ${updateError?.message}`);
     }
 
     return updated;

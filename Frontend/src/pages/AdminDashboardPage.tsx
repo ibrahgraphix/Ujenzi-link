@@ -28,7 +28,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { Provider, Listing, Advert } from '../types';
+import { Provider, Listing, Advert, AvailabilityStatus, ProviderType } from '../types';
 import { getProviders, verifyProvider } from '../services/providersService';
 import { getListings, deleteListing } from '../services/listingsService';
 import { getAllAdvertsAdmin, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
@@ -65,6 +65,53 @@ function activityIcon(type: string) {
   if (type === 'inquiry') return <MessageSquare className="w-3.5 h-3.5 text-[#2E86D8]" />;
   if (type === 'listing') return <Package className="w-3.5 h-3.5 text-emerald-500" />;
   return <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />;
+}
+
+// Helper function to check if provider type is an expert/service provider
+function isExpertProvider(type?: ProviderType | string): boolean {
+  if (!type) return false;
+  // Handle both frontend display format and backend database format
+  const normalizedType = type.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
+  const expertTypes = ['contractor', 'consultant', 'freelancer', 'technician', 'casual_labourer'];
+  return expertTypes.includes(normalizedType);
+}
+
+// Helper function to get availability status badge styling
+function getAvailabilityStatusBadge(status?: AvailabilityStatus) {
+  if (!status) return null;
+
+  const statusConfig = {
+    available: {
+      label: 'Available',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      icon: <CheckCircle2 className="w-3 h-3" />
+    },
+    occupied: {
+      label: 'Occupied',
+      className: 'bg-red-50 text-red-700 border-red-200',
+      icon: <Clock className="w-3 h-3" />
+    },
+    busy_and_occupied: {
+      label: 'Busy & Occupied',
+      className: 'bg-amber-50 text-amber-700 border-amber-200',
+      icon: <Clock className="w-3 h-3" />
+    },
+    occupied_but_available: {
+      label: 'Occupied but Available',
+      className: 'bg-blue-50 text-blue-700 border-blue-200',
+      icon: <CheckCircle2 className="w-3 h-3" />
+    }
+  };
+
+  const config = statusConfig[status];
+  if (!config) return null;
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${config.className}`}>
+      {config.icon}
+      {config.label}
+    </span>
+  );
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
@@ -543,6 +590,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <th className="py-3 px-4">Provider / Business</th>
                   <th className="py-3 px-4">Role Type</th>
                   <th className="py-3 px-4">Region</th>
+                  <th className="py-3 px-4">Availability</th>
                   <th className="py-3 px-4">Verification Status</th>
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
@@ -565,6 +613,15 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       <ProviderTypeBadge type={p.providerType} size="xs" />
                     </td>
                     <td className="py-3.5 px-4 text-slate-600">{p.location.region}</td>
+                    <td className="py-3.5 px-4">
+                      {isExpertProvider(p.providerType) ? (
+                        getAvailabilityStatusBadge(p.availabilityStatus) || (
+                          <span className="text-[10px] text-slate-400 italic">Not set</span>
+                        )
+                      ) : (
+                        <span className="text-[10px] text-slate-400">N/A</span>
+                      )}
+                    </td>
                     <td className="py-3.5 px-4">
                       {p.isVerified ? (
                         <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">

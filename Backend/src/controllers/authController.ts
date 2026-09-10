@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService';
-import { UserRole, BuyerType, ProviderType } from '../models';
+import { UserRole, BuyerType, ProviderType, AvailabilityStatus } from '../models';
 import { AppError } from '../middleware';
 
 const authService = new AuthService();
@@ -21,6 +21,7 @@ export class AuthController {
         businessName,
         description,
         locationId,
+        availabilityStatus,
         institutionName,
         projectName,
         projectDescription
@@ -54,6 +55,7 @@ export class AuthController {
         businessName,
         description,
         locationId,
+        availabilityStatus,
         institutionName,
         projectName,
         projectDescription
