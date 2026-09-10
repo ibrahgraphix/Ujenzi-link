@@ -103,7 +103,7 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
-            name: user.name,
+            name: (user as any).full_name || (user as any).name || '',
             phone: user.phone,
             role: user.role
           },
