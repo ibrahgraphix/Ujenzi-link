@@ -27,6 +27,7 @@ const MainApp: React.FC = () => {
   const [pageParams, setPageParams] = useState<Record<string, any>>({});
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [providersRefreshKey, setProvidersRefreshKey] = useState<number>(0);
 
   useEffect(() => {
     trackPageVisit(`/${currentPage}`);
@@ -70,6 +71,10 @@ const MainApp: React.FC = () => {
     setSelectedProviderId(provider.id);
     setCurrentPage('provider-profile');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const refreshProviders = () => {
+    setProvidersRefreshKey(prev => prev + 1);
   };
 
   const handleOpenInquiry = (listing?: Listing, provider?: Provider) => {
@@ -128,6 +133,7 @@ const MainApp: React.FC = () => {
             initialType={pageParams.type}
             onSelectProvider={handleSelectProvider}
             onOpenInquiry={(listing, provider) => handleOpenInquiry(listing, provider)}
+            refreshKey={providersRefreshKey}
           />
         );
 
@@ -191,6 +197,7 @@ const MainApp: React.FC = () => {
             onNavigate={handleNavigate}
             onSelectListing={handleSelectListing}
             onSelectProvider={handleSelectProvider}
+            onRefreshProviders={refreshProviders}
           />
         );
 

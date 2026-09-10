@@ -36,5 +36,6 @@ export const config = {
   imagekitPublicKey: process.env.IMAGEKIT_PUBLIC_KEY!,
   imagekitPrivateKey: process.env.IMAGEKIT_PRIVATE_KEY!,
   imagekitUrlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT!,
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
 };
 export type Config = typeof config;

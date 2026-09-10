@@ -4,8 +4,12 @@ import { mapBackendListing } from './listingsService';
 
 function mapBackendProvider(p: any): Provider {
   const user = p.users || {};
+  console.log('Mapping provider:', p);
+  // The provider_profiles table uses user_id as the primary key
+  const mappedId = p.user_id || user.id;
+  console.log('Mapped provider ID:', mappedId, 'User ID:', p.user_id, 'User object ID:', user.id);
   return {
-    id: p.id,
+    id: mappedId,
     name: user.name || p.business_name || 'Supplier',
     businessName: p.business_name || 'Business Name',
     providerType: p.provider_type || 'Retailer/Supplier',
@@ -41,8 +45,12 @@ export async function approveProvider(providerId: string): Promise<void> {
   await apiClient.post(`/api/admin/providers/${providerId}/approve`);
 }
 
-export async function deactivateProvider(providerId: string): Promise<void> {
-  await apiClient.post(`/api/admin/providers/${providerId}/deactivate`);
+export async function deleteProvider(providerId: string): Promise<void> {
+  console.log('=== FRONTEND DELETE DEBUG ===');
+  console.log('Sending delete request for provider ID:', providerId);
+  console.log('Provider ID type:', typeof providerId);
+  console.log('Provider ID length:', providerId.length);
+  await apiClient.delete(`/api/admin/providers/${providerId}`);
 }
 
 export async function getPendingListings(): Promise<Listing[]> {

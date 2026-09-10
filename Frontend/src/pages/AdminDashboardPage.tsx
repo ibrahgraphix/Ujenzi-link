@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import { Provider, Listing, Advert, AvailabilityStatus, ProviderType } from '../types';
 import { getProviders, verifyProvider } from '../services/providersService';
+import { deleteProvider } from '../services/adminService';
 import { getListings, deleteListing } from '../services/listingsService';
 import { getAllAdvertsAdmin, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
 import { getAdminAnalytics, AdminAnalytics } from '../services/adminAnalyticsService';
@@ -47,6 +48,7 @@ interface AdminDashboardPageProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
   onSelectListing: (listing: Listing) => void;
   onSelectProvider: (provider: Provider) => void;
+  onRefreshProviders?: () => void;
 }
 
 const COLORS = ['#1B3A6B', '#2E86D8', '#8B5E3C', '#10B981', '#F59E0B', '#6366F1'];
@@ -118,6 +120,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   onNavigate,
   onSelectListing,
   onSelectProvider,
+  onRefreshProviders,
 }) => {
   const { success, error } = useToast();
 
@@ -136,7 +139,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [adSubtitle, setAdSubtitle] = useState('');
   const [adImage, setAdImage] = useState<UploadedImage | null>(null);
   const [adLinkUrl, setAdLinkUrl] = useState('');
-  const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'footer'>('hero');
+  const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'featured_section' | 'banner'>('hero');
   const [adIsPaid, setAdIsPaid] = useState(false);
   const [adPriceAmount, setAdPriceAmount] = useState('');
   const [adStartDate, setAdStartDate] = useState(new Date().toISOString().split('T')[0]);
@@ -172,20 +175,38 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     loadAdminData();
   }, []);
 
-  const handleToggleVerification = async (provider: Provider) => {
-    const newStatus = !provider.isVerified;
-    await verifyProvider(provider.id, newStatus);
-    setProviders((prev) =>
-      prev.map((p) => (p.id === provider.id ? { ...p, isVerified: newStatus } : p))
+  const handleVerifyProvider = async (provider: Provider) => {
+    await verifyProvider(provider.id, true);
+    setProviders((prev: Provider[]) =>
+      prev.map((p: Provider) => (p.id === provider.id ? { ...p, isVerified: true } : p))
     );
-    success(`${provider.name} verification status is now ${newStatus ? 'VERIFIED' : 'UNVERIFIED'}.`);
+    success(`${provider.name} has been verified successfully.`);
     loadAnalytics();
+    // Reload provider data to ensure consistency across the app
+    await loadAdminData();
+    // Refresh providers directory to show updated verification status
+    if (onRefreshProviders) {
+      onRefreshProviders();
+    }
+  };
+
+  const handleDeleteProvider = async (providerId: string, providerName: string) => {
+    if (window.confirm(`Are you sure you want to delete ${providerName}? This will permanently remove the provider, their listings, and all associated data including images. This action cannot be undone.`)) {
+      try {
+        await deleteProvider(providerId);
+        setProviders((prev: Provider[]) => prev.filter((p: Provider) => p.id !== providerId));
+        success(`${providerName} has been permanently deleted from the platform.`);
+        loadAnalytics();
+      } catch (err: any) {
+        error(`Failed to delete provider: ${err?.message || 'Unknown error'}`);
+      }
+    }
   };
 
   const handleDeleteListing = async (id: string) => {
     if (window.confirm('Delete this listing from the marketplace?')) {
       await deleteListing(id);
-      setListings((prev) => prev.filter((l) => l.id !== id));
+      setListings((prev: Listing[]) => prev.filter((l: Listing) => l.id !== id));
       success('Listing removed.');
       loadAnalytics();
     }
@@ -193,14 +214,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
   const handleToggleAdvert = async (ad: Advert) => {
     const updated = await updateAdvert(ad.id, { isActive: !ad.isActive });
-    setAdverts((prev) => prev.map((a) => (a.id === ad.id ? updated : a)));
+    setAdverts((prev: Advert[]) => prev.map((a: Advert) => (a.id === ad.id ? updated : a)));
     success(`Advert "${ad.title}" is now ${!ad.isActive ? 'Active' : 'Paused'}.`);
   };
 
   const handleDeleteAdvert = async (id: string) => {
     if (!window.confirm('Delete this advert campaign?')) return;
     await deleteAdvert(id);
-    setAdverts((prev) => prev.filter((a) => a.id !== id));
+    setAdverts((prev: Advert[]) => prev.filter((a: Advert) => a.id !== id));
     success('Advert campaign deleted.');
   };
 
@@ -592,7 +613,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   <th className="py-3 px-4">Region</th>
                   <th className="py-3 px-4">Availability</th>
                   <th className="py-3 px-4">Verification Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -634,16 +655,26 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => handleToggleVerification(p)}
-                        className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors ${
-                          p.isVerified
-                            ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                            : 'bg-emerald-600 text-white hover:bg-emerald-500'
-                        }`}
-                      >
-                        {p.isVerified ? 'Revoke' : 'Approve & Verify'}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {!p.isVerified && (
+                          <button
+                            onClick={() => handleVerifyProvider(p)}
+                            className="px-3 py-1.5 rounded-xl font-bold text-xs transition-colors bg-emerald-600 text-white hover:bg-emerald-500"
+                          >
+                            Verify
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            console.log('Attempting to delete provider with ID:', p.id, 'Name:', p.name);
+                            handleDeleteProvider(p.id, p.name);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete provider permanently"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -847,7 +878,8 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
               >
                 <option value="hero">Hero Top Banner</option>
                 <option value="sidebar">Sidebar Placement</option>
-                <option value="footer">Footer Placement</option>
+                <option value="featured_section">Featured Section</option>
+                <option value="banner">Banner Placement</option>
               </select>
             </div>
             <Input

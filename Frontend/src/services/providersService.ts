@@ -6,7 +6,7 @@ const STORAGE_KEY = 'ujenzi_providers_v1';
 function mapBackendProvider(p: any): Provider {
   const user = p.users || {};
   return {
-    id: p.user_id || p.id || user.id || `prov-${Date.now()}`,
+    id: p.id || p.user_id || user.id || `prov-${Date.now()}`,
     name: user.name || p.name || p.business_name || 'Supplier',
     businessName: p.business_name || p.businessName || 'Business Name',
     providerType: (p.provider_type as ProviderType) || p.providerType || 'Retailer/Supplier',
@@ -35,7 +35,7 @@ export async function getProviders(type?: string): Promise<Provider[]> {
   try {
     console.log('Fetching providers from public endpoint');
     // Try public endpoint first for customer/client views
-    const res = await apiClient.get<any>('/api/provider/all');
+    const res = await apiClient.get<any>('/api/provider/all', { cache: 'no-store' });
     console.log('Provider API response:', res);
     const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
     console.log('Extracted provider items:', items);
@@ -51,7 +51,7 @@ export async function getProviders(type?: string): Promise<Provider[]> {
     console.warn('Failed to fetch providers from public API, trying admin endpoint:', err);
     try {
       // Fallback to admin endpoint (requires auth)
-      const res = await apiClient.get<any>('/api/admin/providers');
+      const res = await apiClient.get<any>('/api/admin/providers', { cache: 'no-store' });
       console.log('Admin provider API response:', res);
       const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
       console.log('Extracted admin provider items:', items);
@@ -126,10 +126,8 @@ export async function verifyProvider(id: string, isVerified: boolean): Promise<b
   try {
     if (isVerified) {
       await apiClient.post(`/api/admin/providers/${id}/approve`);
-    } else {
-      await apiClient.post(`/api/admin/providers/${id}/deactivate`);
+      return true;
     }
-    return true;
   } catch (err) {
     console.warn(`Failed to verify provider ${id} via API:`, err);
   }

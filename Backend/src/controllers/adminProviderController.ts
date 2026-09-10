@@ -125,7 +125,7 @@ export class AdminProviderController {
     }
   };
 
-  deactivateProvider = async (req: AuthRequest, res: Response): Promise<void> => {
+  deleteProvider = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { providerId } = req.params;
 
@@ -138,15 +138,15 @@ export class AdminProviderController {
       }
 
       if (req.user.role !== UserRole.ADMIN) {
-        throw new AppError(403, 'Only admins can deactivate providers');
+        throw new AppError(403, 'Only admins can delete providers');
       }
 
-      const provider = await adminProviderService.deactivateProvider(providerId, req.user.userId);
+      const result = await adminProviderService.deleteProvider(providerId, req.user.userId);
 
       res.status(200).json({
         status: 'success',
-        message: 'Provider deactivated successfully',
-        data: { provider }
+        message: 'Provider deleted successfully',
+        data: result
       });
     } catch (error) {
       if (error instanceof Error) {

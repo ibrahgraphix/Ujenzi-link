@@ -23,7 +23,18 @@ const app = express();
 const PORT = config.port;
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    config.frontendUrl
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -51,22 +62,24 @@ app.use('/api/traffic', trafficRoutes);
 // Error handling
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
-  console.log(`📂 Categories: http://localhost:${PORT}/api/categories`);
-  console.log(`🏪 Listings: http://localhost:${PORT}/api/listings`);
-  console.log(`🔍 Search: http://localhost:${PORT}/api/search`);
-  console.log(`💬 Inquiries: http://localhost:${PORT}/api/inquiries`);
-  console.log(`👥 Admin Users: http://localhost:${PORT}/api/admin/users`);
-  console.log(`🏢 Admin Providers: http://localhost:${PORT}/api/admin/providers`);
-  console.log(`📋 Admin Listings: http://localhost:${PORT}/api/admin/listings`);
-  console.log(`📢 Adverts: http://localhost:${PORT}/api/adverts`);
-  console.log(`📈 Analytics: http://localhost:${PORT}/api/analytics`);
-  console.log(`📊 Dashboard: http://localhost:${PORT}/api/admin/dashboard`);
-  console.log(`🌍 Environment: ${config.nodeEnv}`);
-});
+// Start server only when not on Vercel
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/auth`);
+    console.log(`📂 Categories: http://localhost:${PORT}/api/categories`);
+    console.log(`🏪 Listings: http://localhost:${PORT}/api/listings`);
+    console.log(`🔍 Search: http://localhost:${PORT}/api/search`);
+    console.log(`💬 Inquiries: http://localhost:${PORT}/api/inquiries`);
+    console.log(`👥 Admin Users: http://localhost:${PORT}/api/admin/users`);
+    console.log(`🏢 Admin Providers: http://localhost:${PORT}/api/admin/providers`);
+    console.log(`📋 Admin Listings: http://localhost:${PORT}/api/admin/listings`);
+    console.log(`📢 Adverts: http://localhost:${PORT}/api/adverts`);
+    console.log(`📈 Analytics: http://localhost:${PORT}/api/analytics`);
+    console.log(`📊 Dashboard: http://localhost:${PORT}/api/admin/dashboard`);
+    console.log(`🌍 Environment: ${config.nodeEnv}`);
+  });
+}
 
 export default app;

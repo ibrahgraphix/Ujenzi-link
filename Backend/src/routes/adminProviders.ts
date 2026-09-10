@@ -11,7 +11,7 @@ const adminProviderController = new AdminProviderController();
 router.get('/', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminProviderController.getAllProviders));
 router.get('/pending', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminProviderController.getPendingProviders));
 router.post('/:providerId/approve', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminProviderController.approveProvider));
-router.post('/:providerId/deactivate', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminProviderController.deactivateProvider));
+router.delete('/:providerId', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminProviderController.deleteProvider));
 router.get('/:providerId/full-profile', authenticate, authorize(UserRole.ADMIN), asyncHandler(adminProviderController.getProviderFullProfile));
 
 export default router;

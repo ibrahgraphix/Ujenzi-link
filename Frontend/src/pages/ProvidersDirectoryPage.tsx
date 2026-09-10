@@ -25,6 +25,7 @@ interface ProvidersDirectoryPageProps {
   initialType?: string;
   onSelectProvider: (provider: Provider) => void;
   onOpenInquiry: (listing?: any, provider?: Provider) => void;
+  refreshKey?: number;
 }
 
 function normalizeProviderType(type?: string): string {
@@ -97,6 +98,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   initialType = 'all',
   onSelectProvider,
   onOpenInquiry,
+  refreshKey = 0,
 }) => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [regionsList, setRegionsList] = useState<string[]>([]);
@@ -105,6 +107,14 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [query, setQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Use a separate state for data loading to control when to reload
+  const [dataLoadKey, setDataLoadKey] = useState<number>(0);
+
+  // Update dataLoadKey when refreshKey changes
+  useEffect(() => {
+    setDataLoadKey(refreshKey);
+  }, [refreshKey]);
 
   useEffect(() => {
     const load = async () => {
@@ -120,7 +130,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
       setIsLoading(false);
     };
     load();
-  }, []);
+  }, [selectedType, dataLoadKey]);
 
   const filteredProviders = providers.filter((p) => {
     if (
