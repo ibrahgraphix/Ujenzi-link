@@ -4,8 +4,15 @@ import { config, supabase } from '../config';
 import { AuthRequest, UserRole } from '../models';
 import { AppError } from './errorHandler';
 
-// Remote JWKS set initialization
-const JWKS = createRemoteJWKSet(new URL(config.supabaseJwksUrl));
+// Remote JWKS set initialization (lazy-initialized)
+let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+const getJWKS = () => {
+  if (!jwks) {
+    jwks = createRemoteJWKSet(new URL(config.supabaseJwksUrl));
+  }
+  return jwks;
+};
 
 export const authenticate = async (
   req: AuthRequest,
@@ -24,7 +31,7 @@ export const authenticate = async (
     // Verify token using jose JWKS
     let payload;
     try {
-      const result = await jwtVerify(token, JWKS);
+      const result = await jwtVerify(token, getJWKS());
       payload = result.payload;
     } catch (jwtError: any) {
       if (jwtError.code === 'ERR_JWT_EXPIRED' || jwtError.message?.toLowerCase().includes('expired')) {

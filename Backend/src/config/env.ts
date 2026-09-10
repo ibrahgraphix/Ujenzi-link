@@ -2,8 +2,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const requiredEnvVars = [
-  'PORT',
-  'NODE_ENV',
   'SUPABASE_URL',
   'SUPABASE_SECRET_KEY',
   'SUPABASE_JWKS_URL',
@@ -27,7 +25,7 @@ if (missingEnvVars.length > 0) {
 
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
-  nodeEnv: process.env.NODE_ENV!,
+  nodeEnv: process.env.NODE_ENV || 'development',
   supabaseUrl: process.env.SUPABASE_URL!,
   supabaseSecretKey: process.env.SUPABASE_SECRET_KEY!,
   supabaseJwksUrl: process.env.SUPABASE_JWKS_URL!,
