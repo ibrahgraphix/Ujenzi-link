@@ -2,16 +2,12 @@ import React from 'react';
 import {
   Building2,
   ShieldCheck,
-  Target,
   Award,
-  Users,
   CheckCircle2,
   ArrowRight,
   MapPin,
-  Phone,
   Mail,
   HeartHandshake,
-  User,
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 
@@ -51,11 +47,15 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
             </div>
 
             <p className="text-sm text-slate-700 leading-relaxed">
-              Construction projects in Tanzania have historically suffered from steep broker markups, counterfeit building supplies, and difficulty in finding vetted local artisans.
+              Ujenzi Link is a zero-commission construction marketplace and directory designed to connect clients, contractors, suppliers, skilled tradespeople, and other construction professionals directly within one interconnected platform.
             </p>
 
             <p className="text-sm text-slate-700 leading-relaxed">
-              <strong>Plan Moja Company Ltd</strong> founded <strong>Ujenzi Link</strong> as a direct, zero-commission directory. Whether you are a property developer casting a 5-storey slab in Dar es Salaam, or a homeowner roofing a house in Arusha, Ujenzi Link allows you to find verified suppliers within your ward and negotiate direct trade pricing.
+              The platform enables users to easily find verified suppliers, skilled personnel, contractors, and construction services based on their location, including those available near their premises, neighbourhood, or street. Ujenzi Link promotes direct engagement and transparent trade, allowing users to communicate, negotiate prices, and agree on terms directly with service providers without intermediary commissions.
+            </p>
+
+            <p className="text-sm text-slate-700 leading-relaxed">
+              Our purpose is to make construction procurement and access to skilled services faster, more transparent, more affordable, and locally accessible, while creating greater opportunities for construction businesses and skilled professionals to connect directly with customers.
             </p>
 
             <div className="space-y-3 pt-2">
@@ -105,7 +105,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
                 className="rounded-3xl shadow-xl w-full object-cover aspect-[4/3] border border-slate-200"
               />
               <div className="absolute -bottom-6 -left-6 bg-white p-5 rounded-2xl shadow-xl border border-slate-200 max-w-xs hidden sm:block">
-                <div className="text-xs font-bold text-[#1B3A6B] uppercase tracking-wider">Plan Moja Pledge</div>
+                <div className="text-xs font-bold text-[#1B3A6B] uppercase tracking-wider">Ujenzi Link Pledge</div>
                 <div className="text-sm font-extrabold text-slate-900 mt-1">
                   100% Transparency for Contractors & Homebuilders.
                 </div>
@@ -176,38 +176,24 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
                 Visit our offices for corporate partnership inquiries, supplier verification audits, or advertising sponsorships.
               </p>
 
-              <div className="space-y-2 text-xs pt-2">
-                <div className="flex items-start gap-2 text-slate-700">
-                  <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold">Director 1: Isakwisa G. Ambokile</div>
-                    <div className="text-slate-500">+255 767 856 452 • kwisa077@gmail.com</div>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0" />
+                  <span>Mwenge, Kinondoni, Dar es Salaam</span>
                 </div>
-                <div className="flex items-start gap-2 text-slate-700">
-                  <User className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-semibold">Director 2: Salome J. Machimu</div>
-                    <div className="text-slate-500">+255 657 899 440 • machimusalome@yahoo.com</div>
-                  </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Building2 className="w-4 h-4 text-[#2E86D8] shrink-0" />
+                  <span>P.O. Box 33165, Dar es Salaam</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                    <span>Mwenge, Kinondoni, Dar es Salaam, Box 33165</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Phone className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                    <span>+255 767 856 452 / +255 657 899 440</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                    <span>kwisa077@gmail.com • machimusalome@yahoo.com</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-700">
-                    <Building2 className="w-4 h-4 text-[#8B5E3C] shrink-0" />
-                    <span>Registered in the United Republic of Tanzania</span>
-                  </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
+                  <a href="mailto:planmoja2026@gmail.com" className="hover:underline text-[#2E86D8]">
+                    planmoja2026@gmail.com
+                  </a>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <Building2 className="w-4 h-4 text-[#8B5E3C] shrink-0" />
+                  <span>Registered in the United Republic of Tanzania</span>
                 </div>
               </div>
             </div>
