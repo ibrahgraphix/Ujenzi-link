@@ -1,4 +1,5 @@
-const API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'http://localhost:3001';
+const RAW_API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'http://localhost:3001';
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
 
 export const TOKEN_KEY = 'ujenzi_auth_token';
 export const USER_KEY = 'ujenzi_auth_user';
@@ -37,7 +38,8 @@ export async function apiFetch<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${cleanEndpoint}`;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

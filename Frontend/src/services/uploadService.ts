@@ -1,6 +1,7 @@
 import { getStoredToken, apiClient } from './apiClient';
 
-const API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'http://localhost:3001';
+const RAW_API_BASE_URL = ((import.meta as any).env?.VITE_API_BASE_URL as string) || 'http://localhost:3001';
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, '');
 
 export interface UploadedImage {
   url: string;
