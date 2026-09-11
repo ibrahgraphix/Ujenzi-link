@@ -21,6 +21,7 @@ import { LocationSelector } from '../components/common/LocationSelector';
 import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
+import { trackSiteVisit } from '../services/adminAnalyticsService';
 
 interface ListingsPageProps {
   initialQuery?: string;
@@ -115,6 +116,15 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
     setListings(results);
     setCurrentPage(1);
     setIsLoading(false);
+
+    // Track regional search context when location filter is active
+    if (location.region) {
+      trackSiteVisit({
+        pagePath: '/listings',
+        viewedRegion: location.region || undefined,
+        viewedDistrict: location.district || undefined,
+      }).catch(console.error);
+    }
   };
 
   useEffect(() => {

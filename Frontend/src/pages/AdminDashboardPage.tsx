@@ -15,6 +15,10 @@ import {
   Activity,
   RefreshCw,
   Building2,
+  MapPin,
+  ChevronDown,
+  ChevronRight,
+  Calendar,
 } from 'lucide-react';
 import {
   BarChart,
@@ -33,7 +37,7 @@ import { getProviders, verifyProvider } from '../services/providersService';
 import { deleteProvider } from '../services/adminService';
 import { getListings, deleteListing } from '../services/listingsService';
 import { getAllAdvertsAdmin, createAdvert, updateAdvert, deleteAdvert } from '../services/advertsService';
-import { getAdminAnalytics, AdminAnalytics } from '../services/adminAnalyticsService';
+import { getAdminAnalytics, AdminAnalytics, getRegionalVisitCounts, RegionalVisitRow } from '../services/adminAnalyticsService';
 import { getTrafficStats, TrafficStats } from '../services/trafficService';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
@@ -133,6 +137,18 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  // Regional visits state
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const [regionalVisits, setRegionalVisits] = useState<RegionalVisitRow[]>([]);
+  const [regionalLoading, setRegionalLoading] = useState(false);
+  const [regionalStartDate, setRegionalStartDate] = useState(thirtyDaysAgo);
+  const [regionalEndDate, setRegionalEndDate] = useState(today);
+  const [regionalSortBy, setRegionalSortBy] = useState<'total_visits' | 'unique_visitors'>('total_visits');
+  const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
+  const [districtDrilldown, setDistrictDrilldown] = useState<Record<string, RegionalVisitRow[]>>({});
+  const [districtLoading, setDistrictLoading] = useState<Record<string, boolean>>({});
+
   // New Advert Modal State
   const [isAdvertModalOpen, setIsAdvertModalOpen] = useState(false);
   const [adTitle, setAdTitle] = useState('');
@@ -156,6 +172,45 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     setAnalyticsLoading(false);
   }, []);
 
+  const loadRegionalVisits = useCallback(async (startDate: string, endDate: string, sortBy: 'total_visits' | 'unique_visitors') => {
+    setRegionalLoading(true);
+    const rows = await getRegionalVisitCounts({ startDate, endDate, sortBy });
+    // Roll up to region level (no district filter here)
+    const regionMap = new Map<string, { total_visits: number; unique_visitors: number }>();
+    for (const row of rows) {
+      if (!row.region) continue;
+      const existing = regionMap.get(row.region) ?? { total_visits: 0, unique_visitors: 0 };
+      existing.total_visits += row.total_visits;
+      existing.unique_visitors += row.unique_visitors;
+      regionMap.set(row.region, existing);
+    }
+    const regionRows: RegionalVisitRow[] = Array.from(regionMap.entries()).map(([region, counts]) => ({
+      region,
+      district: null,
+      ...counts,
+    }));
+    regionRows.sort((a, b) =>
+      sortBy === 'unique_visitors'
+        ? b.unique_visitors - a.unique_visitors
+        : b.total_visits - a.total_visits
+    );
+    setRegionalVisits(regionRows);
+    setRegionalLoading(false);
+  }, []);
+
+  const handleExpandRegion = useCallback(async (region: string, startDate: string, endDate: string, sortBy: 'total_visits' | 'unique_visitors') => {
+    if (expandedRegion === region) {
+      setExpandedRegion(null);
+      return;
+    }
+    setExpandedRegion(region);
+    if (districtDrilldown[region]) return; // cached
+    setDistrictLoading(prev => ({ ...prev, [region]: true }));
+    const rows = await getRegionalVisitCounts({ startDate, endDate, region, sortBy });
+    setDistrictDrilldown(prev => ({ ...prev, [region]: rows }));
+    setDistrictLoading(prev => ({ ...prev, [region]: false }));
+  }, [expandedRegion, districtDrilldown]);
+
   const loadAdminData = useCallback(async () => {
     setIsLoading(true);
     const [allProv, allListings, allAds] = await Promise.all([
@@ -169,11 +224,20 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     setIsLoading(false);
     // Load analytics in parallel
     loadAnalytics();
-  }, [loadAnalytics]);
+    loadRegionalVisits(regionalStartDate, regionalEndDate, regionalSortBy);
+  }, [loadAnalytics, loadRegionalVisits]);
 
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  // Reload regional visits when date range or sort changes
+  useEffect(() => {
+    // Reset drilldown cache when filters change
+    setDistrictDrilldown({});
+    setExpandedRegion(null);
+    loadRegionalVisits(regionalStartDate, regionalEndDate, regionalSortBy);
+  }, [regionalStartDate, regionalEndDate, regionalSortBy, loadRegionalVisits]);
 
   const handleVerifyProvider = async (provider: Provider) => {
     await verifyProvider(provider.id, true);
@@ -586,6 +650,188 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Visits by Region */}
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#1B3A6B]" />
+                  Visits by Region
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Real traffic numbers by area — click a region to drill into districts.
+                </p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Date range */}
+                <div className="flex items-center gap-2 text-xs">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <input
+                    type="date"
+                    value={regionalStartDate}
+                    max={regionalEndDate}
+                    onChange={e => setRegionalStartDate(e.target.value)}
+                    className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-[#2E86D8]"
+                  />
+                  <span className="text-slate-400">—</span>
+                  <input
+                    type="date"
+                    value={regionalEndDate}
+                    min={regionalStartDate}
+                    max={today}
+                    onChange={e => setRegionalEndDate(e.target.value)}
+                    className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-[#2E86D8]"
+                  />
+                </div>
+
+                {/* Sort toggle */}
+                <div className="flex rounded-xl overflow-hidden border border-slate-200 text-[11px] font-bold">
+                  <button
+                    onClick={() => setRegionalSortBy('total_visits')}
+                    className={`px-3 py-1.5 transition-colors ${regionalSortBy === 'total_visits' ? 'bg-[#1B3A6B] text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    By Visits
+                  </button>
+                  <button
+                    onClick={() => setRegionalSortBy('unique_visitors')}
+                    className={`px-3 py-1.5 transition-colors ${regionalSortBy === 'unique_visitors' ? 'bg-[#1B3A6B] text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    By Unique
+                  </button>
+                </div>
+
+                {regionalLoading && (
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-400 shrink-0" />
+                )}
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              {regionalVisits.length === 0 && !regionalLoading ? (
+                <div className="py-12 text-center text-xs text-slate-400">
+                  No regional visit data yet. Visit a listing or provider page to generate data.
+                </div>
+              ) : (
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4 w-8"></th>
+                      <th className="py-3 px-4">Region</th>
+                      <th className="py-3 px-4 text-right">Total Visits</th>
+                      <th className="py-3 px-4 text-right">Unique Visitors</th>
+                      <th className="py-3 px-4 text-right">Conversion %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {regionalVisits.map((row) => {
+                      const isExpanded = expandedRegion === row.region;
+                      const districts = districtDrilldown[row.region] ?? [];
+                      const isLoadingDistricts = districtLoading[row.region];
+                      const conversionPct = row.total_visits > 0
+                        ? Math.round((row.unique_visitors / row.total_visits) * 100)
+                        : 0;
+
+                      return (
+                        <React.Fragment key={row.region}>
+                          {/* Region row */}
+                          <tr
+                            className="hover:bg-slate-50 cursor-pointer transition-colors group"
+                            onClick={() => handleExpandRegion(row.region, regionalStartDate, regionalEndDate, regionalSortBy)}
+                          >
+                            <td className="py-3.5 px-4">
+                              <div className="text-slate-400 group-hover:text-[#1B3A6B] transition-colors">
+                                {isExpanded
+                                  ? <ChevronDown className="w-3.5 h-3.5" />
+                                  : <ChevronRight className="w-3.5 h-3.5" />
+                                }
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-lg bg-[#1B3A6B]/10 flex items-center justify-center shrink-0">
+                                  <MapPin className="w-3 h-3 text-[#1B3A6B]" />
+                                </span>
+                                <span className="font-bold text-slate-900">{row.region}</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <span className="font-black text-slate-900 text-sm">{row.total_visits.toLocaleString()}</span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <span className="font-bold text-[#2E86D8]">{row.unique_visitors.toLocaleString()}</span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-[#1B3A6B] rounded-full"
+                                    style={{ width: `${Math.min(conversionPct, 100)}%` }}
+                                  />
+                                </div>
+                                <span className="text-slate-600 font-semibold tabular-nums">{conversionPct}%</span>
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* District drilldown rows */}
+                          {isExpanded && (
+                            isLoadingDistricts ? (
+                              <tr>
+                                <td colSpan={5} className="py-4 pl-12 text-xs text-slate-400 flex items-center gap-2">
+                                  <RefreshCw className="w-3 h-3 animate-spin inline mr-1" />
+                                  Loading districts...
+                                </td>
+                              </tr>
+                            ) : districts.length === 0 ? (
+                              <tr>
+                                <td colSpan={5} className="py-4 pl-12 text-xs text-slate-400 italic">
+                                  No district-level data available for this region.
+                                </td>
+                              </tr>
+                            ) : districts.map((d) => {
+                              const dConv = d.total_visits > 0
+                                ? Math.round((d.unique_visitors / d.total_visits) * 100)
+                                : 0;
+                              return (
+                                <tr key={`${d.region}-${d.district}`} className="bg-slate-50/60 border-l-2 border-[#2E86D8]/20">
+                                  <td className="py-2.5 px-4" />
+                                  <td className="py-2.5 px-4 pl-10">
+                                    <span className="text-slate-600 font-medium">{d.district ?? '(unknown district)'}</span>
+                                  </td>
+                                  <td className="py-2.5 px-4 text-right text-slate-700 font-semibold tabular-nums">
+                                    {d.total_visits.toLocaleString()}
+                                  </td>
+                                  <td className="py-2.5 px-4 text-right text-[#2E86D8] font-semibold tabular-nums">
+                                    {d.unique_visitors.toLocaleString()}
+                                  </td>
+                                  <td className="py-2.5 px-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                        <div
+                                          className="h-full bg-[#2E86D8] rounded-full"
+                                          style={{ width: `${Math.min(dConv, 100)}%` }}
+                                        />
+                                      </div>
+                                      <span className="text-slate-500 tabular-nums">{dConv}%</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       )}

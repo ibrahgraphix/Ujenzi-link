@@ -14,5 +14,6 @@ router.post('/track', asyncHandler(analyticsController.trackVisit));
 router.get('/traffic-summary', authenticate, authorize(UserRole.ADMIN), asyncHandler(analyticsController.getTrafficSummary));
 router.get('/traffic-stats', authenticate, authorize(UserRole.ADMIN), asyncHandler(analyticsController.getTrafficStats));
 router.get('/top-pages', authenticate, authorize(UserRole.ADMIN), asyncHandler(analyticsController.getTopPages));
+router.get('/regional-visits', authenticate, authorize(UserRole.ADMIN), asyncHandler(analyticsController.getRegionalVisits));
 
 export default router;

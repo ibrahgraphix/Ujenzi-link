@@ -20,6 +20,7 @@ import { Listing, Provider } from '../types';
 import { getListingById, getListings } from '../services/listingsService';
 import { getProviderById } from '../services/providersService';
 import { trackListingVisit } from '../services/trafficService';
+import { trackSiteVisit } from '../services/adminAnalyticsService';
 import { Button } from '../components/common/Button';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { ListingCard } from '../components/common/ListingCard';
@@ -64,8 +65,14 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
         setProvider(prov);
         setRelatedListings(allListings.filter((l) => l.id !== current.id).slice(0, 3));
 
-        // Track listing visit
+        // Track listing visit (legacy traffic tables)
         trackListingVisit(listingId).catch(console.error);
+        // Track visit with region/district context for regional analytics
+        trackSiteVisit({
+          pagePath: `/listings/${listingId}`,
+          viewedRegion: current.location?.region || undefined,
+          viewedDistrict: current.location?.district || undefined,
+        }).catch(console.error);
       }
       setIsLoading(false);
     };

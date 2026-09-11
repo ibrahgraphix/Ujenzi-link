@@ -8,7 +8,7 @@ const analyticsService = new AnalyticsService();
 export class AnalyticsController {
   trackVisit = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { sessionId, pagePath, referrer, userId } = req.body;
+      const { sessionId, pagePath, referrer, userId, viewedRegion, viewedDistrict } = req.body;
 
       if (!sessionId || !pagePath) {
         throw new AppError(400, 'Missing required fields: sessionId, pagePath');
@@ -18,7 +18,9 @@ export class AnalyticsController {
         sessionId,
         pagePath,
         referrer,
-        userId
+        userId,
+        viewedRegion: viewedRegion || undefined,
+        viewedDistrict: viewedDistrict || undefined,
       });
 
       res.status(200).json({
@@ -115,6 +117,39 @@ export class AnalyticsController {
       res.status(200).json({
         status: 'success',
         data: { topPages }
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(500, error.message);
+      }
+      throw error;
+    }
+  };
+
+  getRegionalVisits = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { startDate, endDate, region, sortBy } = req.query;
+
+      if (!req.user) {
+        throw new AppError(401, 'User not authenticated');
+      }
+
+      if (req.user.role !== UserRole.ADMIN) {
+        throw new AppError(403, 'Only admins can view regional visit data');
+      }
+
+      const validSortBy = sortBy === 'unique_visitors' ? 'unique_visitors' : 'total_visits';
+
+      const data = await analyticsService.getRegionalVisitCounts({
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+        region: region as string | undefined,
+        sortBy: validSortBy,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: { regionalVisits: data }
       });
     } catch (error) {
       if (error instanceof Error) {

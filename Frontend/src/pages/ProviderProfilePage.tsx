@@ -25,6 +25,7 @@ import { Modal } from '../components/common/Modal';
 import { Input, Textarea } from '../components/common/Input';
 import { useToast } from '../context/ToastContext';
 import { logoImageUrl } from '../utils/imagekit';
+import { trackSiteVisit } from '../services/adminAnalyticsService';
 
 interface ProviderProfilePageProps {
   providerId: string;
@@ -68,6 +69,12 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
         ]);
         setListings(provListings);
         setReviews(provReviews);
+        // Track visit with region/district context for regional analytics
+        trackSiteVisit({
+          pagePath: `/providers/${providerId}`,
+          viewedRegion: prov.location?.region || undefined,
+          viewedDistrict: prov.location?.district || undefined,
+        }).catch(console.error);
       }
       setIsLoading(false);
     };
