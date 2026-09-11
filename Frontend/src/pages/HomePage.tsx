@@ -519,12 +519,40 @@ export const HomePage: React.FC<HomePageProps> = ({
         </section>
       )}
 
-      {/* 7. SUPPLIER ONBOARDING CALL TO ACTION */}
+      {/* 7. ABOUT UJENZI LINK SECTION */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-[#12284C] via-[#1B3A6B] to-[#2E86D8] rounded-3xl p-8 sm:p-14 text-white shadow-xl relative overflow-hidden text-center space-y-4">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+          <div className="relative z-10 max-w-3xl mx-auto space-y-4">
+            <span className="inline-block bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border border-amber-400/30">
+              About Us
+            </span>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-heading text-white tracking-tight leading-tight">
+              ABOUT UJENZI LINK
+            </h2>
+            <p className="text-sm sm:text-lg text-blue-100 max-w-2xl mx-auto leading-relaxed font-normal">
+              Pioneering digital transformation and transparency across the globe construction sector by connecting manufacturers, suppliers, developers, and people with unique and specialized skills.
+            </p>
+            <div className="pt-3 flex justify-center">
+              <Button
+                variant="white"
+                size="md"
+                onClick={() => onNavigate('about')}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
+                Learn More About Us
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. SUPPLIER ONBOARDING CALL TO ACTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1B3A6B] via-[#12284C] to-[#8B5E3C] text-white p-8 sm:p-12 shadow-2xl">
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-8 space-y-4">
-              <span className="inline-block bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-amber-400/30">
+              <span className="inline-block bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border border-amber-400/30">
                 Are You A Supplier, Contractor, or Artisan?
               </span>
               <h2 className="text-2xl sm:text-4xl font-extrabold font-heading text-white leading-tight">
@@ -563,7 +591,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onClick={() => onNavigate('about')}
                 className="text-center text-xs text-blue-200 hover:text-white py-2 underline"
               >
-                Learn more about Plan Moja Company Ltd
+                Learn more about Ujenzi Link
               </button>
             </div>
           </div>

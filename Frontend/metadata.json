@@ -1,6 +1,6 @@
 {
   "name": "Ujenzi Link",
-  "description": "Construction industry marketplace & supplier directory by Plan Moja Company Ltd. We connect, we care!",
+  "description": "Construction industry marketplace & supplier directory. We connect, we care!",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

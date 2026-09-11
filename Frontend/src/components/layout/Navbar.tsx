@@ -49,47 +49,47 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
       {/* Top micro announcement bar */}
       <div className="bg-[#1B3A6B] text-white text-[11px] py-1.5 px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-1 gap-x-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-amber-300">Plan Moja Company Ltd:</span>
+            <span className="font-semibold text-amber-300">Ujenzi Link:</span>
             <span className="hidden sm:inline text-slate-200">"We connect, we care!"</span>
-            <span className="text-slate-300">| Direct Construction Marketplace</span>
+            <span className="text-slate-300 hidden md:inline">| Direct Construction Marketplace</span>
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleNav('contact')}
-              className="text-slate-300 hover:text-white transition-colors hidden md:inline text-[11px]"
+            <a
+              href="mailto:ujenzilink@gmail.com"
+              className="text-slate-300 hover:text-amber-300 transition-colors inline-flex items-center gap-1 text-[11px]"
             >
-              Need Help? Call +255 767 856 452
-            </button>
+              <span>Need help?: contact - <span className="text-amber-300 font-semibold hover:underline">ujenzilink@gmail.com</span></span>
+            </a>
           </div>
         </div>
       </div>
 
       {/* Main navigation container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
+        <div className="flex items-center justify-between h-20 sm:h-24 lg:h-26">
           {/* Brand Logo */}
           <div
             onClick={() => handleNav('home')}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 sm:gap-4 cursor-pointer group py-1"
           >
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-2xl overflow-hidden shadow-lg border border-slate-200/80 group-hover:scale-105 transition-transform bg-[#0B305C] shrink-0 flex items-center justify-center">
               <img
                 src="/logo.jpeg"
                 alt="Ujenzi Link Logo"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-1"
               />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xl sm:text-2xl font-black tracking-tight text-[#1B3A6B] font-heading">
+                <span className="text-2xl sm:text-3xl font-black tracking-tight text-[#1B3A6B] font-heading">
                   Ujenzi<span className="text-[#2E86D8]">Link</span>
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide">
-                by Plan Moja • <span className="text-[#8B5E3C] font-semibold">We connect, we care!</span>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium tracking-wide">
+                Construction Marketplace • <span className="text-[#8B5E3C] font-semibold">"We connect, we care!"</span>
               </p>
             </div>
           </div>
@@ -391,7 +391,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => handleNav('about')}
               className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
             >
-              About Plan Moja Company Ltd
+              About Ujenzi Link
             </button>
             <button
               onClick={() => handleNav('contact')}

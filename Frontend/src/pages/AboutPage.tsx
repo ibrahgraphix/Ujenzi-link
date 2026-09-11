@@ -22,13 +22,16 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-br from-[#12284C] via-[#1B3A6B] to-[#2E86D8] rounded-3xl text-white p-8 sm:p-14 shadow-xl relative overflow-hidden text-center space-y-4">
           <span className="inline-block bg-amber-400/20 text-amber-300 text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full border border-amber-400/30">
-            About Plan Moja Company Ltd
+            About Us
           </span>
-          <h1 className="text-3xl sm:text-5xl font-black font-heading text-white max-w-3xl mx-auto leading-tight">
-            "We connect, we care!"
+          <h1 className="text-3xl sm:text-5xl font-black font-heading text-white max-w-4xl mx-auto leading-tight">
+            ABOUT UJENZI LINK
           </h1>
-          <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto leading-relaxed">
-            Pioneering digital transformation and transparency across the Tanzanian construction sector by connecting material manufacturers, certified contractors, and property builders directly.
+          <p className="text-base sm:text-xl font-bold text-amber-300 tracking-wide">
+            "We connect, we care!"
+          </p>
+          <p className="text-sm sm:text-base text-blue-100 max-w-3xl mx-auto leading-relaxed font-normal">
+            Pioneering digital transformation and transparency across the globe construction sector by connecting manufacturers, suppliers, developers, and people with unique and specialized skills.
           </p>
         </div>
       </section>
@@ -187,8 +190,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
                 </div>
                 <div className="flex items-center gap-2 text-slate-700">
                   <Mail className="w-4 h-4 text-[#2E86D8] shrink-0" />
-                  <a href="mailto:planmoja2026@gmail.com" className="hover:underline text-[#2E86D8]">
-                    planmoja2026@gmail.com
+                  <a href="mailto:ujenzilink@gmail.com" className="hover:underline text-[#2E86D8]">
+                    ujenzilink@gmail.com
                   </a>
                 </div>
                 <div className="flex items-center gap-2 text-slate-700">
