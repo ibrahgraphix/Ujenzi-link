@@ -26,8 +26,9 @@ const PORT = config.port;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://ujenzi-link.vercel.app',
-  config.frontendUrl.replace(/\/+$/, ''),
+  'https://ujenzi-link.com',
+  'https://www.ujenzi-link.com',
+  config.frontendUrl.replace(/\/+$/, ''), // Vercel preview/staging URL (set via FRONTEND_URL env var)
 ];
 
 const corsOptions: cors.CorsOptions = {
