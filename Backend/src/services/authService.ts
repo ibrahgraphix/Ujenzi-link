@@ -124,7 +124,7 @@ export class AuthService {
     }
 
     if (signInError || !authData?.user || !authData?.session) {
-      // Check if user exists in public users table (e.g. manually created admin with bcrypt hash)
+      // Check if user exists in public users table (e.g. manually created admin or provider with bcrypt hash)
       const { data: dbUser } = await supabase
         .from('users')
         .select('*')
@@ -134,12 +134,29 @@ export class AuthService {
       if (dbUser && dbUser.password_hash) {
         const isMatch = await bcrypt.compare(password, dbUser.password_hash);
         if (isMatch) {
+          // Fast sync: update password in Supabase Auth so future logins succeed directly
+          try {
+            await supabase.auth.admin.updateUserById(dbUser.id, { password });
+            const directLogin = await supabase.auth.signInWithPassword({ email, password });
+            if (directLogin.data?.session?.access_token) {
+              return { user: dbUser, token: directLogin.data.session.access_token };
+            }
+          } catch (syncErr) {
+            console.warn('Direct auth update sync failed, falling back to session creation:', syncErr);
+          }
+
           const token = await this.createSessionForUser(dbUser);
           return { user: dbUser, token };
         }
       }
 
-      throw new Error(signInError?.message || 'Invalid email or password');
+      // Check if the underlying error was a transient timeout from Supabase or gateway
+      const errLower = signInError?.message?.toLowerCase() || '';
+      if (errLower.includes('timeout') || errLower.includes('gateway') || errLower.includes('504')) {
+        throw new Error('Connection timeout while verifying credentials. Please try again.');
+      }
+
+      throw new Error('Invalid email or password');
     }
 
     const { data: user, error } = await supabase

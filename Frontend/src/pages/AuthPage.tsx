@@ -74,10 +74,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     if (mode === 'login') {
       const loggedUser = await login(email, password);
       if (loggedUser) {
-        success('Welcome back to Ujenzi Link!');
         onSuccess(loggedUser);
-      } else {
-        error('Invalid login credentials. Please check your email and password and try again.');
       }
     } else {
       if (!name) {

@@ -113,7 +113,8 @@ export class AuthController {
       });
     } catch (error) {
       if (error instanceof Error) {
-        throw new AppError(401, error.message);
+        const isTimeout = error.message.toLowerCase().includes('timeout') || error.message.toLowerCase().includes('gateway');
+        throw new AppError(isTimeout ? 504 : 401, error.message);
       }
       throw error;
     }

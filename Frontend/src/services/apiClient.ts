@@ -68,7 +68,8 @@ export async function apiFetch<T = any>(
       data = await response.text();
     }
 
-    if (response.status === 401) {
+    const isAuthRoute = endpoint.includes('/api/auth/login') || endpoint.includes('/api/auth/register');
+    if (response.status === 401 && !isAuthRoute) {
       setStoredToken(null);
       localStorage.removeItem(USER_KEY);
       window.dispatchEvent(new CustomEvent('ujenzi:unauthorized'));
