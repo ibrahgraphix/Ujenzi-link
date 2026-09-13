@@ -22,6 +22,7 @@ export class SearchService {
   async searchListings(params: {
     keyword?: string;
     categoryId?: string;
+    providerId?: string;
     region?: string;
     county?: string;
     district?: string;
@@ -37,6 +38,7 @@ export class SearchService {
     const {
       keyword,
       categoryId,
+      providerId,
       region,
       county,
       district,
@@ -71,6 +73,11 @@ export class SearchService {
     // Filter by category
     if (categoryId) {
       query = query.eq('category_id', categoryId);
+    }
+
+    // Filter by provider ID
+    if (providerId) {
+      query = query.eq('provider_id', providerId);
     }
 
     // Filter by provider type

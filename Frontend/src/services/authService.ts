@@ -125,6 +125,7 @@ export async function register(
     buyerType,
     providerType: userData.providerType ? providerTypeMap[userData.providerType] : undefined,
     businessName: userData.businessName || userData.name,
+    description: userData.description,
     availabilityStatus: userData.availabilityStatus,
   };
 

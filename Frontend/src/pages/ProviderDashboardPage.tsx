@@ -21,7 +21,7 @@ import { Listing, Inquiry, Provider, LocationHierarchy, Category, AvailabilitySt
 import { getListings, getProviderListings, createListing, updateListing, deleteListing } from '../services/listingsService';
 import { getInquiries, updateInquiryStatus } from '../services/inquiriesService';
 import { getCategories } from '../services/categoriesService';
-import { getProviders, updateProviderAvailabilityStatus } from '../services/providersService';
+import { getProviders, updateProviderAvailabilityStatus, updateProviderLogo, updateProviderBio } from '../services/providersService';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -30,7 +30,6 @@ import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { useToast } from '../context/ToastContext';
 import { UploadedImage } from '../services/uploadService';
-import { updateProviderLogo } from '../services/providersService';
 import { logoImageUrl, thumbnailUrl } from '../utils/imagekit';
 
 interface ProviderDashboardPageProps {
@@ -71,6 +70,8 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const [listingImageItems, setListingImageItems] = useState<UploadedImage[]>([]);
   const [providerLogo, setProviderLogo] = useState<UploadedImage | null>(null);
   const [isSavingLogo, setIsSavingLogo] = useState(false);
+  const [providerBio, setProviderBio] = useState('');
+  const [isSavingBio, setIsSavingBio] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('available');
   const [isSavingAvailability, setIsSavingAvailability] = useState(false);
   const [listingLocation, setListingLocation] = useState<LocationHierarchy>({
@@ -92,6 +93,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setMyProvider(prov);
     if (prov?.logo) {
       setProviderLogo({ url: prov.logo, fileId: prov.logoFileId || '' });
+    }
+    if (prov?.bio) {
+      setProviderBio(prov.bio);
     }
     if (prov?.availabilityStatus) {
       setAvailabilityStatus(prov.availabilityStatus);
@@ -317,6 +321,21 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     }
   };
 
+  const handleSaveBio = async () => {
+    setIsSavingBio(true);
+    try {
+      const updated = await updateProviderBio(providerBio);
+      if (updated) {
+        setMyProvider(updated);
+        success('Business description updated. It will now appear on your public shopfront!');
+      }
+    } catch {
+      error('Failed to update business description. Please try again.');
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
@@ -349,13 +368,14 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
           {myProvider && (
             <Button
               variant="white"
               size="sm"
               onClick={() => onSelectProvider(myProvider)}
               leftIcon={<Store className="w-4 h-4 text-[#1B3A6B]" />}
+              className="w-full sm:w-auto justify-center"
             >
               View Public Shopfront
             </Button>
@@ -365,34 +385,68 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
             size="sm"
             onClick={handleOpenAdd}
             leftIcon={<PlusCircle className="w-4 h-4" />}
+            className="w-full sm:w-auto justify-center"
           >
             Post New Listing
           </Button>
         </div>
       </div>
 
-      {/* Logo / Profile Settings */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6">
-        <h3 className="text-sm font-bold text-slate-900 mb-1">Business Logo</h3>
-        <p className="text-xs text-slate-500 mb-4">Upload your company logo shown on your public supplier profile.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-          <ImageUpload
-            label="Company Logo"
-            folderType="providers"
-            entityId={myProvider?.id}
-            value={providerLogo}
-            onChange={(val) => setProviderLogo(val as UploadedImage | null)}
-            hint="Square or landscape logo, PNG/JPG recommended."
-          />
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleSaveLogo}
-            disabled={isSavingLogo || !providerLogo}
-            className="md:mb-2"
-          >
-            {isSavingLogo ? 'Saving…' : 'Save Logo'}
-          </Button>
+      {/* Profile & Shopfront Customization Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Logo / Profile Settings */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Business Logo</h3>
+            <p className="text-xs text-slate-500 mb-4">Upload your company logo shown on your public supplier profile.</p>
+            <ImageUpload
+              label="Company Logo"
+              folderType="providers"
+              entityId={myProvider?.id}
+              value={providerLogo}
+              onChange={(val) => setProviderLogo(val as UploadedImage | null)}
+              hint="Piga picha au chagua nembo kutoka galari."
+            />
+          </div>
+          <div className="pt-4 flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveLogo}
+              disabled={isSavingLogo || !providerLogo}
+              className="w-full sm:w-auto"
+            >
+              {isSavingLogo ? 'Saving…' : 'Save Logo'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Business Description / Shopfront Bio Card */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Shopfront Description & About Us</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Maelezo ya biashara au utaalamu wako yanayoonekana kwa wateja kwenye shopfront profile.
+            </p>
+            <Textarea
+              label="About The Supplier / Contractor"
+              rows={4}
+              placeholder="Eleza uzoefu wako, bidhaa au huduma unazotoa, utaalamu na maeneo unayohudumia..."
+              value={providerBio}
+              onChange={(e) => setProviderBio(e.target.value)}
+            />
+          </div>
+          <div className="pt-4 flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveBio}
+              disabled={isSavingBio}
+              className="w-full sm:w-auto"
+            >
+              {isSavingBio ? 'Saving…' : 'Save Description'}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -422,7 +476,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
               size="sm"
               onClick={handleSaveAvailabilityStatus}
               disabled={isSavingAvailability}
-              className="md:mb-2"
+              className="md:mb-2 w-full sm:w-auto"
             >
               {isSavingAvailability ? 'Saving…' : 'Update Status'}
             </Button>

@@ -73,7 +73,7 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
               <MessageSquare className="w-3.5 h-3.5" />
             </button>
           )}
-          <Button size="xs" variant="white" onClick={handleAction}>
+          <Button size="sm" variant="white" onClick={handleAction}>
             {advert.ctaText || 'View'}
           </Button>
         </div>

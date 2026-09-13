@@ -16,7 +16,10 @@ export type AvailabilityStatus = 'available' | 'occupied' | 'busy_and_occupied' 
 export interface LocationHierarchy {
   country: string;
   region: string;
-  district: string;
+  district?: string;
+  county?: string;
+  ward?: string;
+  street?: string;
 }
 
 export interface User {
@@ -32,6 +35,8 @@ export interface User {
   projectDescription?: string;
   providerType?: ProviderType;
   businessName?: string;
+  description?: string;
+  availabilityStatus?: AvailabilityStatus;
   location: LocationHierarchy;
   avatar?: string;
   isVerified?: boolean;
@@ -111,6 +116,7 @@ export interface Inquiry {
   buyerPhone: string;
   buyerEmail: string;
   message: string;
+  targetLocation?: string;
   quantity?: string;
   createdAt: string;
   status: 'new' | 'pending' | 'responded' | 'closed';

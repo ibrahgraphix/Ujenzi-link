@@ -186,6 +186,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({
           <div className="text-xs text-slate-500 font-medium truncate mb-2">
             By <span className="text-slate-800">{listing.providerName}</span>
           </div>
+
+          {listing.description && (
+            <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-2">
+              {listing.description}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3 pt-2">

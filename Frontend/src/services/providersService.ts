@@ -73,12 +73,22 @@ export async function getProviders(type?: string): Promise<Provider[]> {
 
 export async function getProviderById(id: string): Promise<Provider | null> {
   try {
+    // Try public endpoint first so any user/provider can view the shopfront profile without 403
+    const res = await apiClient.get<any>(`/api/provider/${id}`);
+    if (res?.provider || res?.data?.provider) {
+      return mapBackendProvider(res.provider || res.data.provider);
+    }
+  } catch (err) {
+    console.warn(`Failed to fetch provider ${id} from public endpoint, trying fallback:`, err);
+  }
+
+  try {
     const res = await apiClient.get<any>(`/api/admin/providers/${id}/full-profile`);
     if (res) {
       return mapBackendProvider(res.provider || res);
     }
   } catch (err) {
-    console.warn(`Failed to fetch provider ${id} full profile from API:`, err);
+    console.warn(`Failed to fetch provider ${id} full profile from admin API:`, err);
   }
 
   const providers = await getProviders();
@@ -177,6 +187,21 @@ export async function updateProviderAvailabilityStatus(
     }
   } catch (err) {
     console.warn('Failed to update provider availability status via API:', err);
+    throw err;
+  }
+  return null;
+}
+
+export async function updateProviderBio(bio: string): Promise<Provider | null> {
+  try {
+    const res = await apiClient.put<{ profile: any }>('/api/provider/profile/bio', {
+      bio,
+    });
+    if (res?.profile) {
+      return mapBackendProvider(res.profile);
+    }
+  } catch (err) {
+    console.warn('Failed to update provider bio via API:', err);
     throw err;
   }
   return null;

@@ -109,12 +109,36 @@ export class AuthService {
   }
 
   async loginUser(email: string, password: string) {
-    const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    let authData: any = null;
+    let signInError: any = null;
 
-    if (signInError || !authData.user || !authData.session) {
+    try {
+      const result = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      authData = result.data;
+      signInError = result.error;
+    } catch (err: any) {
+      signInError = err;
+    }
+
+    if (signInError || !authData?.user || !authData?.session) {
+      // Check if user exists in public users table (e.g. manually created admin with bcrypt hash)
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (dbUser && dbUser.password_hash) {
+        const isMatch = await bcrypt.compare(password, dbUser.password_hash);
+        if (isMatch) {
+          const token = await this.createSessionForUser(dbUser);
+          return { user: dbUser, token };
+        }
+      }
+
       throw new Error(signInError?.message || 'Invalid email or password');
     }
 
@@ -152,6 +176,43 @@ export class AuthService {
 
     return { user, token: authData.session.access_token };
   }
+
+  private async createSessionForUser(user: any): Promise<string> {
+    // Ensure user exists in Supabase Auth
+    const { data: authUser } = await supabase.auth.admin.getUserById(user.id);
+    if (!authUser || !authUser.user) {
+      const { error: createError } = await supabase.auth.admin.createUser({
+        email: user.email,
+        password: 'AdminTempPass_' + uuidv4(),
+        email_confirm: true,
+        user_metadata: { name: user.name || user.full_name, phone: user.phone, role: user.role }
+      });
+      if (createError && !createError.message?.toLowerCase().includes('already')) {
+        throw new Error(`Failed to initialize auth account: ${createError.message}`);
+      }
+    }
+
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: user.email
+    });
+
+    if (linkError || !linkData?.properties?.hashed_token) {
+      throw new Error(`Failed to generate auth token: ${linkError?.message || 'Unknown error'}`);
+    }
+
+    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: linkData.properties.hashed_token,
+      type: 'magiclink'
+    });
+
+    if (verifyError || !verifyData?.session) {
+      throw new Error(`Failed to create session: ${verifyError?.message || 'Unknown error'}`);
+    }
+
+    return verifyData.session.access_token;
+  }
+
 
   async getUserById(userId: string) {
     const { data: user, error } = await supabase

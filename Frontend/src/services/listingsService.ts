@@ -183,6 +183,10 @@ export async function getListings(params?: ListingFilterParams): Promise<Listing
     const queryParams = new URLSearchParams();
     if (params?.query) queryParams.set('keyword', params.query);
     if (params?.category && params.category !== 'all') queryParams.set('categoryId', params.category);
+    if (params?.providerId) {
+      queryParams.set('providerId', params.providerId);
+      queryParams.set('limit', '100');
+    }
     if (params?.region && params.region !== 'all') queryParams.set('region', params.region);
     if (params?.district && params.district !== 'all') queryParams.set('district', params.district);
     if (params?.providerType && params.providerType !== 'all') queryParams.set('providerType', params.providerType);

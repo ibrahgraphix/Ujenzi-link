@@ -24,6 +24,46 @@ export class ProviderProfileService {
     return profile;
   }
 
+  async getPublicProviderProfile(providerId: string) {
+    const { data: profile, error } = await supabase
+      .from('provider_profiles')
+      .select(`
+        *,
+        users (id, name, email, phone, role),
+        locations (*)
+      `)
+      .eq('user_id', providerId)
+      .maybeSingle();
+
+    if (error || !profile) {
+      throw new Error('Provider profile not found');
+    }
+
+    return profile;
+  }
+
+  async updateProviderBio(userId: string, bio: string) {
+    const { data: updated, error: updateError } = await supabase
+      .from('provider_profiles')
+      .update({
+        description: bio,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .select(`
+        *,
+        users (id, name, email, phone, role),
+        locations (*)
+      `)
+      .single();
+
+    if (updateError || !updated) {
+      throw new Error(`Failed to update provider profile: ${updateError?.message}`);
+    }
+
+    return updated;
+  }
+
   async updateProviderLogo(userId: string, logo: string, logoFileId?: string) {
     const { data: existing, error: fetchError } = await supabase
       .from('provider_profiles')

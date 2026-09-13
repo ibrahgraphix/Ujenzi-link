@@ -29,6 +29,7 @@ export class SearchController {
       const {
         keyword,
         categoryId,
+        providerId,
         region,
         county,
         district,
@@ -44,6 +45,7 @@ export class SearchController {
       const results = await searchService.searchListings({
         keyword: keyword as string,
         categoryId: categoryId as string,
+        providerId: providerId as string,
         region: region as string,
         county: county as string,
         district: district as string,

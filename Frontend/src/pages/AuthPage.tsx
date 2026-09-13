@@ -61,6 +61,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
 
+  // Provider-only fields
+  const [providerBio, setProviderBio] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -98,6 +101,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         buyerType: accountType === 'buyer' ? buyerType : undefined,
         businessName: accountType === 'provider' ? businessName || name : undefined,
         providerType: accountType === 'provider' ? providerType : undefined,
+        description: accountType === 'provider' ? providerBio : undefined,
         availabilityStatus: accountType === 'provider' && isExpertProvider(providerType) ? availabilityStatus : undefined,
         institutionName: accountType === 'buyer' && buyerType === 'client' ? institutionName : undefined,
         projectName: accountType === 'buyer' && buyerType === 'client' ? projectName : undefined,
@@ -325,6 +329,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       </p>
                     </div>
                   )}
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      Business Description / Services Offered
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Briefly describe your services, materials, years of experience, or expertise (inaonekana kwenye shopfront)..."
+                      value={providerBio}
+                      onChange={(e) => setProviderBio(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium resize-none focus:border-[#2E86D8] focus:outline-none focus:ring-2 focus:ring-[#2E86D8]/20"
+                    />
+                  </div>
                 </>
               )}
 

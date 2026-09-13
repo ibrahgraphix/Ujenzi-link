@@ -62,4 +62,27 @@ router.put('/profile/availability', authenticate, authorize(UserRole.PROVIDER), 
   res.json({ status: 'success', message: 'Availability status updated', data: { profile: updated } });
 }));
 
+router.put('/profile/bio', authenticate, authorize(UserRole.PROVIDER), asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.user) throw new AppError(401, 'Unauthorized');
+
+  const { bio } = req.body;
+  if (typeof bio !== 'string') {
+    throw new AppError(400, 'bio string is required');
+  }
+
+  const updated = await providerProfileService.updateProviderBio(req.user.userId, bio);
+  res.json({ status: 'success', message: 'Provider profile bio updated', data: { profile: updated } });
+}));
+
+// Public route to get a single provider profile for shopfront
+router.get('/:providerId', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { providerId } = req.params;
+  if (!providerId) {
+    throw new AppError(400, 'providerId is required');
+  }
+
+  const profile = await providerProfileService.getPublicProviderProfile(providerId);
+  res.json({ status: 'success', data: { provider: profile } });
+}));
+
 export default router;
