@@ -18,7 +18,7 @@ router.get('/me', authenticate, asyncHandler(async (req: any, res: any) => {
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, email, name, phone, role, created_at, updated_at')
+    .select('id, email, name, phone, role, created_at, updated_at, must_change_password')
     .eq('id', userId)
     .single();
 
@@ -27,6 +27,10 @@ router.get('/me', authenticate, asyncHandler(async (req: any, res: any) => {
   }
 
   const enrichedUser: Record<string, any> = { ...user };
+
+  if (user.role === 'admin') {
+    enrichedUser.must_change_password = !!user.must_change_password;
+  }
 
   if (user.role === 'buyer') {
     const { data: buyerProfile } = await supabase
@@ -59,6 +63,9 @@ router.get('/me', authenticate, asyncHandler(async (req: any, res: any) => {
 
   res.json({ status: 'success', data: { user: enrichedUser } });
 }));
+
+// Admin force password change endpoint (exempt from PASSWORD_CHANGE_REQUIRED guard)
+router.put('/admin/force-password-change', authenticate, asyncHandler(authController.forceAdminPasswordChange));
 
 router.get('/admin-only', authenticate, authorize(UserRole.ADMIN), asyncHandler(async (req: any, res: any) => {
   res.json({ message: 'Admin access granted' });

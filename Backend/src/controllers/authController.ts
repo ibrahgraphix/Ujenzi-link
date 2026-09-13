@@ -105,7 +105,8 @@ export class AuthController {
             email: user.email,
             name: (user as any).full_name || (user as any).name || '',
             phone: user.phone,
-            role: user.role
+            role: user.role,
+            ...(user.role === 'admin' ? { must_change_password: !!user.must_change_password } : {})
           },
           token
         }
@@ -116,5 +117,24 @@ export class AuthController {
       }
       throw error;
     }
+  };
+
+  forceAdminPasswordChange = async (req: Request, res: Response): Promise<void> => {
+    const authReq = req as any;
+    if (!authReq.user || authReq.user.role !== UserRole.ADMIN) {
+      throw new AppError(403, 'Forbidden: Admin access required');
+    }
+
+    const { newPassword } = req.body;
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+      throw new AppError(400, 'New password is required and must be at least 8 characters long');
+    }
+
+    await authService.forceAdminPasswordChange(authReq.user.userId, newPassword);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Password updated successfully'
+    });
   };
 }

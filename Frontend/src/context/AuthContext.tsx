@@ -7,11 +7,12 @@ import { useToast } from './ToastContext';
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password?: string) => Promise<boolean>;
+  login: (email: string, password?: string) => Promise<User | null>;
   signUp: (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<boolean>;
   signup: (userData: Omit<User, 'id' | 'createdAt'> & { password?: string }) => Promise<boolean>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
+  completeAdminPasswordChange: (newPassword: string) => Promise<boolean>;
   favorites: string[];
   isFavorite: (listingId: string) => boolean;
   toggleFavorite: (listingId: string) => Promise<void>;
@@ -49,9 +50,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       error('Session expired. Please log in again.', 'Authentication Error');
     };
 
+    const handlePasswordChangeRequired = () => {
+      setUser((prev) => {
+        if (!prev) return null;
+        const updated = { ...prev, mustChangePassword: true };
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      error('You must set a new password before accessing admin features.', 'Password Change Required');
+    };
+
     window.addEventListener('ujenzi:unauthorized', handleUnauthorized);
+    window.addEventListener('ujenzi:password_change_required', handlePasswordChangeRequired);
     return () => {
       window.removeEventListener('ujenzi:unauthorized', handleUnauthorized);
+      window.removeEventListener('ujenzi:password_change_required', handlePasswordChangeRequired);
     };
   }, []);
 
@@ -65,14 +78,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
-  const login = async (email: string, password?: string): Promise<boolean> => {
+  const login = async (email: string, password?: string): Promise<User | null> => {
     try {
       const res = await authService.login(email, password);
       setUser(res.user);
       success(`Welcome back, ${res.user.name}!`, 'Signed In');
-      return true;
+      return res.user;
     } catch (err: any) {
       error(err.message || 'Login failed. Please check your credentials.');
+      return null;
+    }
+  };
+
+  const completeAdminPasswordChange = async (newPassword: string): Promise<boolean> => {
+    try {
+      const updatedUser = await authService.forcePasswordChange(newPassword);
+      if (updatedUser) {
+        setUser(updatedUser);
+      } else if (user) {
+        setUser({ ...user, mustChangePassword: false });
+      }
+      success('Password changed successfully!', 'Security Updated');
+      return true;
+    } catch (err: any) {
+      error(err.message || 'Failed to update password. Please try again.');
       return false;
     }
   };
@@ -128,6 +157,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signup: signUp,
         logout,
         updateUser,
+        completeAdminPasswordChange,
         favorites,
         isFavorite,
         toggleFavorite,

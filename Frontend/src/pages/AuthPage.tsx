@@ -22,7 +22,7 @@ import { useToast } from '../context/ToastContext';
 interface AuthPageProps {
   initialMode?: 'login' | 'signup';
   initialType?: AccountType;
-  onSuccess: () => void;
+  onSuccess: (loggedInUser?: any) => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({
@@ -69,10 +69,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     }
 
     if (mode === 'login') {
-      const ok = await login(email, password);
-      if (ok) {
+      const loggedUser = await login(email, password);
+      if (loggedUser) {
         success('Welcome back to Ujenzi Link!');
-        onSuccess();
+        onSuccess(loggedUser);
       } else {
         error('Invalid login credentials. Please check your email and password and try again.');
       }

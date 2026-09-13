@@ -59,12 +59,6 @@ export async function apiFetch<T = any>(
   try {
     const response = await fetch(url, config);
 
-    if (response.status === 401) {
-      setStoredToken(null);
-      localStorage.removeItem(USER_KEY);
-      window.dispatchEvent(new CustomEvent('ujenzi:unauthorized'));
-    }
-
     const contentType = response.headers.get('content-type');
     let data: any;
 
@@ -72,6 +66,21 @@ export async function apiFetch<T = any>(
       data = await response.json();
     } else {
       data = await response.text();
+    }
+
+    if (response.status === 401) {
+      setStoredToken(null);
+      localStorage.removeItem(USER_KEY);
+      window.dispatchEvent(new CustomEvent('ujenzi:unauthorized'));
+    }
+
+    if (
+      response.status === 403 &&
+      data &&
+      typeof data === 'object' &&
+      (data.code === 'PASSWORD_CHANGE_REQUIRED' || data.errorCode === 'PASSWORD_CHANGE_REQUIRED')
+    ) {
+      window.dispatchEvent(new CustomEvent('ujenzi:password_change_required', { detail: data }));
     }
 
     if (!response.ok) {

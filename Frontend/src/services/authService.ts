@@ -22,6 +22,8 @@ interface AuthResponse {
     project_description?: string;
     isVerified?: boolean;
     is_verified?: boolean;
+    must_change_password?: boolean;
+    mustChangePassword?: boolean;
   };
   token: string;
 }
@@ -69,6 +71,7 @@ function mapBackendUserToFrontendUser(backendUser: any): User {
     },
     avatar: backendUser.avatar,
     isVerified: backendUser.isVerified ?? backendUser.is_verified ?? false,
+    mustChangePassword: backendUser.must_change_password ?? backendUser.mustChangePassword ?? false,
     createdAt: backendUser.createdAt || backendUser.created_at || new Date().toISOString(),
   };
 }
@@ -174,4 +177,14 @@ export async function getToken(): Promise<string | null> {
 export async function isAuthenticated(): Promise<boolean> {
   const token = getStoredToken();
   return !!token;
+}
+
+export async function forcePasswordChange(newPassword: string): Promise<User | null> {
+  await apiClient.put('/api/auth/admin/force-password-change', { newPassword });
+  // Hydrate full profile after password change
+  const fullUser = await getCurrentUser();
+  if (fullUser) {
+    localStorage.setItem(USER_KEY, JSON.stringify(fullUser));
+  }
+  return fullUser;
 }

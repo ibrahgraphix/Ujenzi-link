@@ -35,6 +35,7 @@ export interface User {
   location: LocationHierarchy;
   avatar?: string;
   isVerified?: boolean;
+  mustChangePassword?: boolean;
   createdAt: string;
 }
 

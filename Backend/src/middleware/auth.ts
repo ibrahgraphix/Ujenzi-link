@@ -50,7 +50,7 @@ export const authenticate = async (
     // Fetch user's role from the public users table
     const { data: dbUser, error: dbError } = await supabase
       .from('users')
-      .select('role')
+      .select('role, must_change_password')
       .eq('id', userId)
       .single();
 
@@ -62,6 +62,7 @@ export const authenticate = async (
       userId,
       email,
       role: dbUser.role as UserRole,
+      mustChangePassword: !!dbUser.must_change_password,
     };
     next();
   } catch (error) {
@@ -79,6 +80,31 @@ export const authorize = (...roles: UserRole[]) => {
       throw new AppError(403, 'Insufficient permissions');
     }
 
+    if (req.user.role === UserRole.ADMIN && req.user.mustChangePassword) {
+      res.status(403).json({
+        status: 'error',
+        code: 'PASSWORD_CHANGE_REQUIRED',
+        message: 'Password change required before accessing admin resources'
+      });
+      return;
+    }
+
     next();
   };
+};
+
+export const requireAdminPasswordNotRequired = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (req.user && req.user.role === UserRole.ADMIN && req.user.mustChangePassword) {
+    res.status(403).json({
+      status: 'error',
+      code: 'PASSWORD_CHANGE_REQUIRED',
+      message: 'Password change required before accessing admin resources'
+    });
+    return;
+  }
+  next();
 };

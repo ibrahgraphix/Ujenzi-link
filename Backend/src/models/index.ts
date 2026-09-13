@@ -46,6 +46,7 @@ export interface User {
   full_name: string;
   phone: string;
   role: UserRole;
+  must_change_password?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -174,6 +175,7 @@ export interface JWTPayload {
   userId: string;
   email: string;
   role: UserRole;
+  mustChangePassword?: boolean;
 }
 
 // Extended Request interface with auth data

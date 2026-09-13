@@ -15,6 +15,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { TermsPage } from './pages/TermsPage';
+import { SetNewPasswordPage } from './pages/SetNewPasswordPage';
 import { InquiryModal } from './components/common/InquiryModal';
 import { Listing, Provider } from './types';
 import { trackPageVisit } from './services/trafficService';
@@ -33,6 +34,26 @@ const MainApp: React.FC = () => {
     trackPageVisit(`/${currentPage}`);
   }, [currentPage]);
 
+  // Guard: if admin has mustChangePassword, lock navigation to set-new-password screen
+  useEffect(() => {
+    if (user?.accountType === 'admin' && user?.mustChangePassword) {
+      if (currentPage !== 'set-new-password') {
+        setCurrentPage('set-new-password');
+      }
+    }
+  }, [user, currentPage]);
+
+  // Global listener for PASSWORD_CHANGE_REQUIRED error from any admin API call
+  useEffect(() => {
+    const handlePasswordChangeRequired = () => {
+      setCurrentPage('set-new-password');
+    };
+    window.addEventListener('ujenzi:password_change_required', handlePasswordChangeRequired);
+    return () => {
+      window.removeEventListener('ujenzi:password_change_required', handlePasswordChangeRequired);
+    };
+  }, []);
+
   // Inquiry Modal Global State
   const [inquiryModal, setInquiryModal] = useState<{
     isOpen: boolean;
@@ -43,6 +64,12 @@ const MainApp: React.FC = () => {
   });
 
   const handleNavigate = (page: string, params: Record<string, any> = {}) => {
+    // If admin must change password, prevent navigation away from set-new-password
+    if (user?.accountType === 'admin' && user?.mustChangePassword && page !== 'set-new-password' && page !== 'auth') {
+      setCurrentPage('set-new-password');
+      return;
+    }
+
     setCurrentPage(page);
     setPageParams(params);
 
@@ -158,15 +185,27 @@ const MainApp: React.FC = () => {
           <AuthPage
             initialMode={pageParams.mode}
             initialType={pageParams.initialType}
-            onSuccess={() => {
-              if (user?.accountType === 'provider') {
+            onSuccess={(loggedInUser) => {
+              const activeUser = loggedInUser || user;
+              if (activeUser?.accountType === 'admin') {
+                if (activeUser?.mustChangePassword) {
+                  handleNavigate('set-new-password');
+                } else {
+                  handleNavigate('admin-dashboard');
+                }
+              } else if (activeUser?.accountType === 'provider') {
                 handleNavigate('provider-dashboard');
-              } else if (user?.accountType === 'admin') {
-                handleNavigate('admin-dashboard');
               } else {
                 handleNavigate('home');
               }
             }}
+          />
+        );
+
+      case 'set-new-password':
+        return (
+          <SetNewPasswordPage
+            onSuccess={() => handleNavigate('admin-dashboard')}
           />
         );
 
@@ -221,6 +260,15 @@ const MainApp: React.FC = () => {
         );
     }
   };
+
+  // Dedicated screen with no navbar/footer/sidebar for admin forced password change
+  if (currentPage === 'set-new-password') {
+    return (
+      <main className="min-h-screen">
+        <SetNewPasswordPage onSuccess={() => handleNavigate('admin-dashboard')} />
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-[#2E86D8]/20 selection:text-[#1B3A6B]">

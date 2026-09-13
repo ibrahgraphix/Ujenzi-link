@@ -222,4 +222,31 @@ export class AuthService {
 
     return updated;
   }
+
+  async forceAdminPasswordChange(userId: string, newPassword: string) {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({
+        password_hash: passwordHash,
+        must_change_password: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+
+    if (updateError) {
+      throw new Error(`Failed to update password: ${updateError.message}`);
+    }
+
+    try {
+      await supabase.auth.admin.updateUserById(userId, {
+        password: newPassword
+      });
+    } catch (authError) {
+      console.warn('Note: Could not update Supabase auth user password:', authError);
+    }
+
+    return true;
+  }
 }
