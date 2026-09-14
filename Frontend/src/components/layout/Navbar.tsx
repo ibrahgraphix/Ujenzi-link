@@ -89,7 +89,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </div>
               <p className="text-[10px] sm:text-xs text-slate-500 font-medium tracking-wide">
-                Construction Marketplace • <span className="text-[#8B5E3C] font-semibold">"We connect, we care!"</span>
+                Construction Marketplace
+              </p>
+              <p className="text-[10px] sm:text-xs text-[#8B5E3C] font-semibold tracking-wide">
+                "We connect, we care!"
               </p>
             </div>
           </div>
