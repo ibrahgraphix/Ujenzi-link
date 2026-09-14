@@ -438,6 +438,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           <div className="text-[11px] text-purple-600 font-semibold mt-1">
             {trafficStats?.uniqueVisitors ?? '—'} Unique Visitors
           </div>
+          <div className="text-[11px] text-[#1B3A6B] font-semibold mt-1">
+            {regionalVisits.reduce((sum, r) => sum + r.total_visits, 0).toLocaleString()} Total Regional Visits
+          </div>
         </div>
 
         <div
