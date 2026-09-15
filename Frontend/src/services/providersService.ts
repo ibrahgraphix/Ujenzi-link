@@ -5,20 +5,21 @@ const STORAGE_KEY = 'ujenzi_providers_v1';
 
 function mapBackendProvider(p: any): Provider {
   const user = p.users || {};
+  console.log('Mapping provider data:', p, 'User data:', user);
   return {
     id: p.id || p.user_id || user.id || `prov-${Date.now()}`,
     name: user.name || p.name || p.business_name || 'Supplier',
-    businessName: p.business_name || p.businessName || 'Business Name',
-    providerType: (p.provider_type as ProviderType) || p.providerType || 'Retailer/Supplier',
-    logo: p.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=200&q=80',
-    logoFileId: p.logo_file_id || p.logoFileId,
+    businessName: p.business_name || p.businessName || user.business_name || 'Business Name',
+    providerType: (p.provider_type as ProviderType) || p.providerType || user.provider_type || 'Retailer/Supplier',
+    logo: p.logo || user.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=200&q=80',
+    logoFileId: p.logo_file_id || p.logoFileId || user.logo_file_id,
     coverImage: p.coverImage || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80',
     phone: user.phone || p.phone || '+255 700 000 000',
     whatsapp: p.whatsapp || user.phone || '255700000000',
     email: user.email || p.email || 'info@provider.tz',
-    location: p.locations || p.location || { country: 'Tanzania', region: 'Dar es Salaam' },
+    location: p.locations || p.location || user.location || { country: 'Tanzania', region: 'Dar es Salaam' },
     address: p.address || 'Dar es Salaam, Tanzania',
-    bio: p.description || p.bio || 'Quality construction material supplier in Tanzania.',
+    bio: p.description || p.bio || user.description || 'Quality construction material supplier in Tanzania.',
     isVerified: p.is_verified ?? p.isVerified ?? false,
     verificationDate: p.verificationDate || p.updated_at,
     rating: 0,
