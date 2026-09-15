@@ -66,22 +66,24 @@ export async function createAdvert(
   };
 
   const payload = {
-    title: advertData.title,
-    subtitle: advertData.subtitle,
-    description: advertData.description,
-    imageUrl: advertData.bannerUrl,
-    imageFileId: advertData.bannerFileId,
-    linkUrl: advertData.targetUrl || null,
-    phoneNumber: advertData.phoneNumber,
-    email: advertData.email,
-    startTime: advertData.startTime,
-    endTime: advertData.endTime,
+    title: advertData.title || 'Untitled Advert',
+    subtitle: advertData.subtitle || '',
+    description: advertData.description || '',
+    imageUrl: advertData.bannerUrl || '',
+    imageFileId: advertData.bannerFileId || '',
+    linkUrl: advertData.targetUrl || '/contact',
+    phoneNumber: advertData.phoneNumber || '',
+    email: advertData.email || '',
+    startTime: advertData.startTime || '',
+    endTime: advertData.endTime || '',
     isActive: advertData.isActive ?? true,
     isPaid: advertData.isPaid ?? false,
     priceAmount: advertData.priceAmount,
     startsAt: toISO(advertData.startDate),
     endsAt: toISO(advertData.endDate) || new Date(Date.now() + 90 * 86400000).toISOString(),
   };
+
+  console.log('Creating advert with payload:', payload);
 
   // Always try API first — no silent localStorage fallback
   const res = await apiClient.post('/api/adverts', payload);

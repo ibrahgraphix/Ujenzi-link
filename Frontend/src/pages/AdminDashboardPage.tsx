@@ -155,6 +155,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [adSubtitle, setAdSubtitle] = useState('');
   const [adDescription, setAdDescription] = useState('');
   const [adImage, setAdImage] = useState<UploadedImage | null>(null);
+  const [adLinkUrl, setAdLinkUrl] = useState('');
   const [adPhoneNumber, setAdPhoneNumber] = useState('');
   const [adEmail, setAdEmail] = useState('');
   const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'featured_section' | 'banner'>('hero');
@@ -310,6 +311,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         description: adDescription,
         bannerUrl: adImage.url,
         bannerFileId: adImage.fileId,
+        targetUrl: adLinkUrl,
         position: adPosition,
         phoneNumber: adPhoneNumber,
         email: adEmail,
@@ -330,6 +332,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       setAdSubtitle('');
       setAdDescription('');
       setAdImage(null);
+      setAdLinkUrl('');
       setAdPhoneNumber('');
       setAdEmail('');
       setAdIsPaid(false);
@@ -1138,6 +1141,13 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             hint="Upload a promotional banner image (1200px max, auto-compressed)."
           />
 
+          <Input
+            label="Target Link"
+            placeholder="/contact or https://..."
+            value={adLinkUrl}
+            onChange={(e) => setAdLinkUrl(e.target.value)}
+          />
+
           {/* Contact Info */}
           <div className="bg-slate-50 rounded-xl p-3 space-y-3 border border-slate-200">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Info (links directly on banner)</p>
@@ -1158,24 +1168,21 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             </div>
           </div>
 
-          {/* Placement + Dates */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Placement
-              </label>
-              <select
-                value={adPosition}
-                onChange={(e) => setAdPosition(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
-              >
-                <option value="hero">Hero Top Banner</option>
-                <option value="sidebar">Sidebar Placement</option>
-                <option value="featured_section">Featured Section</option>
-                <option value="banner">Banner Placement</option>
-              </select>
-            </div>
-            <div />
+          {/* Placement */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Placement
+            </label>
+            <select
+              value={adPosition}
+              onChange={(e) => setAdPosition(e.target.value as any)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
+            >
+              <option value="hero">Hero Top Banner</option>
+              <option value="sidebar">Sidebar Placement</option>
+              <option value="featured_section">Featured Section</option>
+              <option value="banner">Banner Placement</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
