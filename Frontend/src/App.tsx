@@ -28,6 +28,7 @@ const MainApp: React.FC = () => {
   const [pageParams, setPageParams] = useState<Record<string, any>>({});
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [providersRefreshKey, setProvidersRefreshKey] = useState<number>(0);
 
   useEffect(() => {
@@ -83,6 +84,7 @@ const MainApp: React.FC = () => {
       setSelectedProviderId(params.providerId);
     } else if (page !== 'provider-profile') {
       setSelectedProviderId(null);
+      setSelectedProvider(null);
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -96,6 +98,7 @@ const MainApp: React.FC = () => {
 
   const handleSelectProvider = (provider: Provider) => {
     setSelectedProviderId(provider.id);
+    setSelectedProvider(provider);
     setCurrentPage('provider-profile');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -168,6 +171,7 @@ const MainApp: React.FC = () => {
         return selectedProviderId ? (
           <ProviderProfilePage
             providerId={selectedProviderId}
+            initialProvider={selectedProvider}
             onBack={() => handleNavigate('providers')}
             onSelectListing={handleSelectListing}
             onOpenInquiry={(listing, provider) => handleOpenInquiry(listing, provider)}

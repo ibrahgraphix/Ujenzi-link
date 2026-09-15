@@ -56,7 +56,23 @@ export class AdvertController {
 
   createAdvert = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
+      const b = req.body || {};
+      const title = b.title;
+      const subtitle = b.subtitle || null;
+      const description = b.description || null;
+      const imageUrl = b.imageUrl || b.image_url;
+      const imageFileId = b.imageFileId || b.image_file_id || null;
+      const linkUrl = b.linkUrl || b.link_url || null;
+      const phoneNumber = b.phoneNumber || b.phone_number || b.whatsapp || null;
+      const email = b.email || null;
+      const startTime = b.startTime || b.start_time || null;
+      const endTime = b.endTime || b.end_time || null;
+      const isActive = b.isActive !== undefined ? b.isActive : (b.is_active !== undefined ? b.is_active : true);
+      const isPaid = b.isPaid !== undefined ? b.isPaid : (b.is_paid !== undefined ? b.is_paid : false);
+      const priceAmount = b.priceAmount !== undefined ? Number(b.priceAmount) : (b.price_amount !== undefined ? Number(b.price_amount) : undefined);
+      const startsAt = b.startsAt || b.starts_at;
+      const endsAt = b.endsAt || b.ends_at;
+      const providerId = b.providerId || b.provider_id || null;
 
       if (!title || !imageUrl || !startsAt || !endsAt) {
         throw new AppError(400, 'Missing required fields: title, imageUrl, startsAt, endsAt');
@@ -82,9 +98,9 @@ export class AdvertController {
         email,
         startTime,
         endTime,
-        isActive: isActive !== undefined ? isActive : true,
-        isPaid: isPaid !== undefined ? isPaid : false,
-        priceAmount: priceAmount !== undefined ? Number(priceAmount) : undefined,
+        isActive,
+        isPaid,
+        priceAmount,
         startsAt,
         endsAt,
         providerId
@@ -106,7 +122,7 @@ export class AdvertController {
   updateAdvert = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { advertId } = req.params;
-      const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
+      const b = req.body || {};
 
       if (!advertId) {
         throw new AppError(400, 'Advert ID is required');
@@ -124,22 +140,22 @@ export class AdvertController {
       const advert = await advertService.updateAdvert(
         advertId,
         {
-          title,
-          subtitle,
-          description,
-          imageUrl,
-          imageFileId,
-          linkUrl,
-          phoneNumber,
-          email,
-          startTime,
-          endTime,
-          isActive,
-          isPaid,
-          priceAmount: priceAmount !== undefined ? Number(priceAmount) : undefined,
-          startsAt,
-          endsAt,
-          providerId
+          title: b.title,
+          subtitle: b.subtitle,
+          description: b.description,
+          imageUrl: b.imageUrl || b.image_url,
+          imageFileId: b.imageFileId || b.image_file_id,
+          linkUrl: b.linkUrl || b.link_url,
+          phoneNumber: b.phoneNumber || b.phone_number || b.whatsapp,
+          email: b.email,
+          startTime: b.startTime || b.start_time,
+          endTime: b.endTime || b.end_time,
+          isActive: b.isActive !== undefined ? b.isActive : b.is_active,
+          isPaid: b.isPaid !== undefined ? b.isPaid : b.is_paid,
+          priceAmount: b.priceAmount !== undefined ? Number(b.priceAmount) : (b.price_amount !== undefined ? Number(b.price_amount) : undefined),
+          startsAt: b.startsAt || b.starts_at,
+          endsAt: b.endsAt || b.ends_at,
+          providerId: b.providerId || b.provider_id
         },
         req.user.userId
       );

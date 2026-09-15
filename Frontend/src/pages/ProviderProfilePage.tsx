@@ -29,6 +29,7 @@ import { trackSiteVisit } from '../services/adminAnalyticsService';
 
 interface ProviderProfilePageProps {
   providerId: string;
+  initialProvider?: Provider | null;
   onBack: () => void;
   onSelectListing: (listing: Listing) => void;
   onOpenInquiry: (listing?: Listing, provider?: Provider) => void;
@@ -37,6 +38,7 @@ interface ProviderProfilePageProps {
 
 export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
   providerId,
+  initialProvider,
   onBack,
   onSelectListing,
   onOpenInquiry,
@@ -44,10 +46,10 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
 }) => {
   const { success, error } = useToast();
 
-  const [provider, setProvider] = useState<Provider | null>(null);
+  const [provider, setProvider] = useState<Provider | null>(initialProvider || null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialProvider);
 
   // Review Modal state
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -225,7 +227,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
                 <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
                   {provider.name}
                 </h1>
-                {provider.businessName && provider.businessName !== provider.name && (
+                {provider.businessName && provider.businessName.trim().toLowerCase() !== provider.name.trim().toLowerCase() && (
                   <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                     {provider.businessName}
                   </p>

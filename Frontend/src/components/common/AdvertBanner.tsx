@@ -30,16 +30,18 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
 
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!advert.whatsapp) return;
-    const num = advert.whatsapp.replace(/[^0-9]/g, '');
+    const rawNum = advert.whatsapp || advert.phoneNumber;
+    if (!rawNum) return;
+    const num = rawNum.replace(/[^0-9]/g, '');
     const text = encodeURIComponent(`Habari, I saw your promotion on Ujenzi Link: ${advert.title}`);
     window.open(`https://wa.me/${num}?text=${text}`, '_blank');
   };
 
   const handleCall = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (advert.phoneNumber) {
-      window.location.href = `tel:${advert.phoneNumber.replace(/\s+/g, '')}`;
+    const rawNum = advert.phoneNumber || advert.whatsapp;
+    if (rawNum) {
+      window.location.href = `tel:${rawNum.replace(/\s+/g, '')}`;
     }
   };
 
@@ -53,11 +55,11 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
   const handleAction = () => {
     if (advert.targetUrl && advert.targetUrl !== '#' && onNavigate) {
       onNavigate(advert.targetUrl);
-    } else if (advert.whatsapp) {
-      const num = advert.whatsapp.replace(/[^0-9]/g, '');
+    } else if (advert.whatsapp || advert.phoneNumber) {
+      const num = (advert.whatsapp || advert.phoneNumber || '').replace(/[^0-9]/g, '');
       window.open(`https://wa.me/${num}`, '_blank');
-    } else if (advert.phoneNumber) {
-      window.location.href = `tel:${advert.phoneNumber.replace(/\s+/g, '')}`;
+    } else if (advert.email) {
+      window.location.href = `mailto:${advert.email}`;
     }
   };
 
@@ -98,19 +100,39 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
             </p>
           )}
         </div>
-        <div className="shrink-0 flex items-center gap-1">
-          {advert.whatsapp && (
+        <div className="shrink-0 flex items-center gap-1.5">
+          {(advert.whatsapp || advert.phoneNumber) && (
             <button
               onClick={handleWhatsApp}
-              className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+              className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"
               title="WhatsApp Sponsor"
             >
               <MessageSquare className="w-3.5 h-3.5" />
             </button>
           )}
-          <Button size="sm" variant="white" onClick={handleAction}>
-            {advert.ctaText || 'View'}
-          </Button>
+          {(advert.phoneNumber || advert.whatsapp) && (
+            <button
+              onClick={handleCall}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors cursor-pointer"
+              title="Call Sponsor"
+            >
+              <Phone className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {advert.email && (
+            <button
+              onClick={handleEmail}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors cursor-pointer"
+              title="Email Sponsor"
+            >
+              <Mail className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {advert.targetUrl && advert.targetUrl !== '#' && (
+            <Button size="sm" variant="white" onClick={handleAction}>
+              {advert.ctaText || 'View'}
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -176,33 +198,33 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
 
           {/* CTA Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            {advert.whatsapp && (
+            {(advert.whatsapp || advert.phoneNumber) && (
               <button
                 onClick={handleWhatsApp}
-                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-colors cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>WhatsApp</span>
               </button>
             )}
 
-            {advert.phoneNumber && (
+            {(advert.phoneNumber || advert.whatsapp) && (
               <button
                 onClick={handleCall}
-                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors cursor-pointer"
               >
                 <Phone className="w-4 h-4" />
-                <span>{advert.phoneNumber}</span>
+                <span>Call {advert.phoneNumber || advert.whatsapp}</span>
               </button>
             )}
 
             {advert.email && (
               <button
                 onClick={handleEmail}
-                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors"
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors cursor-pointer"
               >
                 <Mail className="w-4 h-4" />
-                <span>{advert.email}</span>
+                <span>Email</span>
               </button>
             )}
 

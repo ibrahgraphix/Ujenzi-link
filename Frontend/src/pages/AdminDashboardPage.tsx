@@ -311,7 +311,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         description: adDescription,
         bannerUrl: adImage.url,
         bannerFileId: adImage.fileId,
-        targetUrl: adLinkUrl,
+        targetUrl: undefined,
         position: adPosition,
         phoneNumber: adPhoneNumber,
         email: adEmail,
@@ -1139,13 +1139,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             value={adImage}
             onChange={(val) => setAdImage(val as UploadedImage | null)}
             hint="Upload a promotional banner image (1200px max, auto-compressed)."
-          />
-
-          <Input
-            label="Target Link"
-            placeholder="/contact or https://..."
-            value={adLinkUrl}
-            onChange={(e) => setAdLinkUrl(e.target.value)}
           />
 
           {/* Contact Info */}

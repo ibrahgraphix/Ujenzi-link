@@ -4,6 +4,29 @@ import { ImageKitService } from './imagekitService';
 
 const imageKitService = new ImageKitService();
 
+function normalizeDbTime(t?: string | null): string | null {
+  if (!t || typeof t !== 'string' || !t.trim()) return null;
+  const clean = t.trim();
+  const match24 = clean.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (match24) {
+    const hh = match24[1].padStart(2, '0');
+    const mm = match24[2];
+    const ss = match24[3] || '00';
+    return `${hh}:${mm}:${ss}`;
+  }
+  const match12 = clean.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)$/i);
+  if (match12) {
+    let hh = parseInt(match12[1], 10);
+    const mm = match12[2];
+    const ss = match12[3] || '00';
+    const isPm = match12[4].toLowerCase() === 'pm';
+    if (isPm && hh < 12) hh += 12;
+    if (!isPm && hh === 12) hh = 0;
+    return `${String(hh).padStart(2, '0')}:${mm}:${ss}`;
+  }
+  return clean;
+}
+
 export class AdvertService {
   async getActiveAdverts() {
     const { data: adverts, error } = await supabase
@@ -97,8 +120,8 @@ export class AdvertService {
         link_url: linkUrl || null,
         phone_number: phoneNumber || null,
         email: email || null,
-        start_time: startTime || null,
-        end_time: endTime || null,
+        start_time: normalizeDbTime(startTime),
+        end_time: normalizeDbTime(endTime),
         is_active: isActive,
         is_paid: isPaid ?? false,
         price_amount: priceAmount ?? null,
@@ -160,8 +183,8 @@ export class AdvertService {
     if (linkUrl !== undefined) updatePayload.link_url = linkUrl;
     if (phoneNumber !== undefined) updatePayload.phone_number = phoneNumber;
     if (email !== undefined) updatePayload.email = email;
-    if (startTime !== undefined) updatePayload.start_time = startTime;
-    if (endTime !== undefined) updatePayload.end_time = endTime;
+    if (startTime !== undefined) updatePayload.start_time = normalizeDbTime(startTime);
+    if (endTime !== undefined) updatePayload.end_time = normalizeDbTime(endTime);
     if (isActive !== undefined) updatePayload.is_active = isActive;
     if (isPaid !== undefined) updatePayload.is_paid = isPaid;
     if (priceAmount !== undefined) updatePayload.price_amount = priceAmount;

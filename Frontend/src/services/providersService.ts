@@ -6,19 +6,21 @@ const STORAGE_KEY = 'ujenzi_providers_v1';
 function mapBackendProvider(p: any): Provider {
   // Supabase may return users as object or single-element array depending on join type
   const user = Array.isArray(p.users) ? (p.users[0] || {}) : (p.users || {});
-  const fullName =
+  
+  // Full name used during registration
+  const registeredFullName =
     user.full_name ||
     user.name ||
     p.full_name ||
     p.name ||
-    p.business_name ||
-    p.businessName ||
     null;
+
+  const businessName = p.business_name || p.businessName || user.business_name || '';
 
   return {
     id: p.user_id || p.id || user.id || `prov-${Date.now()}`,
-    name: fullName || 'Unknown Provider',
-    businessName: p.business_name || p.businessName || user.business_name || '',
+    name: registeredFullName || businessName || 'Supplier',
+    businessName: businessName,
     providerType: (p.provider_type as ProviderType) || p.providerType || user.provider_type || 'Retailer/Supplier',
     logo: p.logo || p.logo_url || user.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=200&q=80',
     logoFileId: p.logo_file_id || p.logoFileId || user.logo_file_id,
