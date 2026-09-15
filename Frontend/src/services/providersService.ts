@@ -8,8 +8,8 @@ function mapBackendProvider(p: any): Provider {
   console.log('Mapping provider data:', p, 'User data:', user);
   return {
     id: p.id || p.user_id || user.id || `prov-${Date.now()}`,
-    name: user.name || p.name || 'Supplier', // Always prioritize user's actual name over business name
-    businessName: p.business_name || p.businessName || user.business_name || user.business_name || 'Business Name',
+    name: user.full_name || user.name || p.full_name || p.name || 'Supplier', // Use full_name from database
+    businessName: p.business_name || p.businessName || user.business_name || 'Business Name',
     providerType: (p.provider_type as ProviderType) || p.providerType || user.provider_type || 'Retailer/Supplier',
     logo: p.logo || user.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=200&q=80',
     logoFileId: p.logo_file_id || p.logoFileId || user.logo_file_id,
