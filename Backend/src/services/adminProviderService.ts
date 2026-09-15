@@ -288,7 +288,7 @@ export class AdminProviderService {
   }
 
   async getProviderById(providerId: string) {
-    const { data: provider, error } = await serviceRoleClient
+    let { data: provider, error } = await serviceRoleClient
       .from('provider_profiles')
       .select(`
         *,
@@ -296,7 +296,21 @@ export class AdminProviderService {
         locations (*)
       `)
       .eq('user_id', providerId)
-      .single();
+      .maybeSingle();
+
+    if (!provider) {
+      const res = await serviceRoleClient
+        .from('provider_profiles')
+        .select(`
+          *,
+          users (id, full_name, email, phone, role),
+          locations (*)
+        `)
+        .eq('id', providerId)
+        .maybeSingle();
+      provider = res.data;
+      error = res.error;
+    }
 
     if (error || !provider) {
       throw new Error('Provider not found');

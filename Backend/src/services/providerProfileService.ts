@@ -1,6 +1,8 @@
 import { supabase } from '../config';
 import { ImageKitService } from './imagekitService';
 import { AvailabilityStatus } from '../models';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config';
 
 export interface ImagePayload {
   url: string;
@@ -8,6 +10,17 @@ export interface ImagePayload {
 }
 
 const imageKitService = new ImageKitService();
+
+// Service-role client to bypass RLS for public reads of related tables (e.g. users join)
+const serviceRoleClient = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+  global: {
+    headers: {
+      'apikey': config.supabaseSecretKey,
+      'Authorization': `Bearer ${config.supabaseSecretKey}`,
+    },
+  },
+});
 
 export class ProviderProfileService {
   async getProviderProfileByUserId(userId: string) {
@@ -25,7 +38,7 @@ export class ProviderProfileService {
   }
 
   async getPublicProviderProfile(providerId: string) {
-    const { data: profile, error } = await supabase
+    let { data: profile, error } = await serviceRoleClient
       .from('provider_profiles')
       .select(`
         *,
@@ -35,12 +48,27 @@ export class ProviderProfileService {
       .eq('user_id', providerId)
       .maybeSingle();
 
+    if (!profile) {
+      const res = await serviceRoleClient
+        .from('provider_profiles')
+        .select(`
+          *,
+          users (id, full_name, email, phone, role),
+          locations (*)
+        `)
+        .eq('id', providerId)
+        .maybeSingle();
+      profile = res.data;
+      error = res.error;
+    }
+
     if (error || !profile) {
       throw new Error('Provider profile not found');
     }
 
     return profile;
   }
+
 
   async updateProviderBio(userId: string, bio: string) {
     const { data: updated, error: updateError } = await supabase

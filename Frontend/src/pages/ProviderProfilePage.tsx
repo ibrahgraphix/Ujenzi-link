@@ -225,7 +225,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
                 <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
                   {provider.name}
                 </h1>
-                {provider.businessName && (
+                {provider.businessName && provider.businessName !== provider.name && (
                   <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                     {provider.businessName}
                   </p>
