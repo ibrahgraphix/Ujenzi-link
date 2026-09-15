@@ -185,6 +185,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({
 
           <div className="text-xs text-slate-500 font-medium truncate mb-2">
             By <span className="text-slate-800">{listing.providerName}</span>
+            <span className="text-slate-400 mx-1">•</span>
+            <span className="text-slate-600">
+              {listing.location.district ? `${listing.location.district}, ` : ''}
+              {listing.location.region}
+            </span>
           </div>
 
           {listing.description && (

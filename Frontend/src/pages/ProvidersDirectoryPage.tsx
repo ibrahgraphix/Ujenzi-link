@@ -290,7 +290,10 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
                 <div className="flex items-center justify-between text-xs text-slate-500">
                   <div className="flex items-center gap-1 text-slate-600 truncate max-w-[150px]">
                     <MapPin className="w-3.5 h-3.5 text-[#2E86D8] shrink-0" />
-                    <span className="truncate">{provider.location?.region}</span>
+                    <span className="truncate">
+                      {provider.location?.district ? `${provider.location.district}, ` : ''}
+                      {provider.location?.region}
+                    </span>
                   </div>
                 </div>
 

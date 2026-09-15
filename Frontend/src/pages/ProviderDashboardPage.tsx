@@ -179,7 +179,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setListingPrice(String(listing.price));
     setListingUnit(listing.unit);
     setListingMinOrder(listing.minOrderQuantity || '1 Unit');
-    setListingDeliveryAvailable(listing.deliveryAvailable);
+    setListingDeliveryAvailable(listing.deliveryAvailable ?? true);
     setListingDescription(listing.description);
     setListingImageItems(
       listing.imageItems?.map((img) => ({ url: img.url, fileId: img.fileId || '' })) ||
@@ -704,7 +704,16 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       <Modal
         isOpen={isListingModalOpen}
         onClose={() => setIsListingModalOpen(false)}
-        title={editingListingId ? 'Edit Material / Service' : 'Post New Construction Material / Trade'}
+        title={
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.jpeg"
+              alt="Ujenzi Link Logo"
+              className="w-8 h-8 rounded-lg object-contain border border-slate-200"
+            />
+            <span>{editingListingId ? 'Edit Material / Service' : 'Post New Construction Material / Trade'}</span>
+          </div>
+        }
         subtitle="Make your building supplies searchable across Tanzania's regions and districts."
         maxWidth="max-w-2xl"
       >

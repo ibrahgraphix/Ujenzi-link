@@ -259,7 +259,11 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
               <MapPin className="w-4 h-4 text-[#2E86D8] shrink-0 mt-0.5" />
               <div>
                 <div className="font-bold text-slate-900">Physical Location</div>
-                <div className="text-slate-500 mt-0.5">{provider.address}</div>
+                <div className="text-slate-500 mt-0.5">
+                  {provider.location?.district ? `${provider.location.district}, ` : ''}
+                  {provider.location?.region}
+                  {provider.address && ` • ${provider.address}`}
+                </div>
               </div>
             </div>
 
@@ -274,14 +278,19 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
 
           {/* Bio & Specialties */}
           <div className="mt-6 space-y-4">
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-2">
+            <div className="flex items-center gap-2.5 mb-2">
+              <img
+                src="/logo.jpeg"
+                alt="Ujenzi Link Logo"
+                className="w-8 h-8 rounded-lg object-contain border border-slate-200"
+              />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                 About The Supplier / Contractor
               </h3>
-              <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
-                {provider.bio}
-              </p>
             </div>
+            <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
+              {provider.bio}
+            </p>
 
             {provider.specialties && provider.specialties.length > 0 && (
               <div>
@@ -307,13 +316,20 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
       {/* Active Listings / Catalog */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-extrabold text-slate-900 font-heading">
-              Active Catalog & Materials ({listings.length})
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Direct inventory available for dispatch from {provider.name}.
-            </p>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.jpeg"
+              alt="Ujenzi Link Logo"
+              className="w-8 h-8 rounded-lg object-contain border border-slate-200"
+            />
+            <div>
+              <h3 className="text-xl font-extrabold text-slate-900 font-heading">
+                Active Catalog & Materials ({listings.length})
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Direct inventory available for dispatch from {provider.name}.
+              </p>
+            </div>
           </div>
         </div>
 

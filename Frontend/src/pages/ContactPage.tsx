@@ -160,9 +160,11 @@ export const ContactPage: React.FC = () => {
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-[#12284C] text-white rounded-3xl p-6 sm:p-7 shadow-md space-y-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#2E86D8] flex items-center justify-center text-white">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="/logo.jpeg"
+                alt="Ujenzi Link Logo"
+                className="w-10 h-10 rounded-xl object-contain border border-white/20"
+              />
               <div>
                 <h3 className="font-extrabold text-base font-heading">Ujenzi Link</h3>
                 <p className="text-xs text-blue-200">"We connect, we care!"</p>
