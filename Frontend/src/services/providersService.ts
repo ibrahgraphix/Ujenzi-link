@@ -76,6 +76,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
   try {
     // Try public endpoint first so any user/provider can view the shopfront profile without 403
     const res = await apiClient.get<any>(`/api/provider/${id}`);
+    console.log('Individual provider API response:', res);
     if (res?.provider || res?.data?.provider) {
       return mapBackendProvider(res.provider || res.data.provider);
     }
@@ -85,6 +86,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
 
   try {
     const res = await apiClient.get<any>(`/api/admin/providers/${id}/full-profile`);
+    console.log('Admin provider full profile response:', res);
     if (res) {
       return mapBackendProvider(res.provider || res);
     }

@@ -44,7 +44,7 @@ export class AdminProviderService {
       .from('provider_profiles')
       .select(`
         *,
-        users (*),
+        users (id, full_name, email, phone, role),
         locations (*),
         listings(count)
       `, { count: 'exact' });
@@ -61,7 +61,7 @@ export class AdminProviderService {
 
     // Search by business name or user name/email
     if (search) {
-      query = query.or(`business_name.ilike.%${search}%,users.name.ilike.%${search}%,users.email.ilike.%${search}%`);
+      query = query.or(`business_name.ilike.%${search}%,users.full_name.ilike.%${search}%,users.email.ilike.%${search}%`);
     }
 
     // Pagination
@@ -93,7 +93,7 @@ export class AdminProviderService {
       .from('provider_profiles')
       .select(`
         *,
-        users (*),
+        users (id, full_name, email, phone, role),
         locations (*)
       `)
       .eq('is_verified', false)
@@ -292,7 +292,7 @@ export class AdminProviderService {
       .from('provider_profiles')
       .select(`
         *,
-        users (*),
+        users (id, full_name, email, phone, role),
         locations (*)
       `)
       .eq('user_id', providerId)

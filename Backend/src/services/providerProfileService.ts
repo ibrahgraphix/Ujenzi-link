@@ -29,7 +29,7 @@ export class ProviderProfileService {
       .from('provider_profiles')
       .select(`
         *,
-        users (id, name, email, phone, role),
+        users (id, full_name, email, phone, role),
         locations (*)
       `)
       .eq('user_id', providerId)
@@ -52,7 +52,7 @@ export class ProviderProfileService {
       .eq('user_id', userId)
       .select(`
         *,
-        users (id, name, email, phone, role),
+        users (id, full_name, email, phone, role),
         locations (*)
       `)
       .single();
