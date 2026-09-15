@@ -166,6 +166,19 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [adStartTime, setAdStartTime] = useState('');
   const [adEndTime, setAdEndTime] = useState('');
 
+  // Edit Advert Modal State
+  const [isEditAdvertModalOpen, setIsEditAdvertModalOpen] = useState(false);
+  const [editingAdvert, setEditingAdvert] = useState<Advert | null>(null);
+  const [editAdTitle, setEditAdTitle] = useState('');
+  const [editAdSubtitle, setEditAdSubtitle] = useState('');
+  const [editAdDescription, setEditAdDescription] = useState('');
+  const [editAdPhoneNumber, setEditAdPhoneNumber] = useState('');
+  const [editAdEmail, setEditAdEmail] = useState('');
+  const [editAdStartTime, setEditAdStartTime] = useState('');
+  const [editAdEndTime, setEditAdEndTime] = useState('');
+  const [editAdStartDate, setEditAdStartDate] = useState('');
+  const [editAdEndDate, setEditAdEndDate] = useState('');
+
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
     const [data, traffic] = await Promise.all([
@@ -292,6 +305,45 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     await deleteAdvert(id);
     setAdverts((prev: Advert[]) => prev.filter((a: Advert) => a.id !== id));
     success('Advert campaign deleted.');
+  };
+
+  const handleOpenEditAdvert = (ad: Advert) => {
+    setEditingAdvert(ad);
+    setEditAdTitle(ad.title);
+    setEditAdSubtitle(ad.subtitle || '');
+    setEditAdDescription(ad.description || '');
+    setEditAdPhoneNumber(ad.phoneNumber || '');
+    setEditAdEmail(ad.email || '');
+    setEditAdStartTime(ad.startTime || '');
+    setEditAdEndTime(ad.endTime || '');
+    setEditAdStartDate(ad.startDate ? ad.startDate.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setEditAdEndDate(ad.endDate ? ad.endDate.split('T')[0] : '2026-12-31');
+    setIsEditAdvertModalOpen(true);
+  };
+
+  const handleUpdateAdvert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdvert) return;
+    try {
+      const toISO = (d: string) => d.includes('T') ? d : new Date(d + 'T00:00:00.000Z').toISOString();
+      const updated = await updateAdvert(editingAdvert.id, {
+        title: editAdTitle,
+        subtitle: editAdSubtitle,
+        description: editAdDescription,
+        phoneNumber: editAdPhoneNumber,
+        email: editAdEmail,
+        startTime: editAdStartTime,
+        endTime: editAdEndTime,
+        startDate: toISO(editAdStartDate),
+        endDate: toISO(editAdEndDate),
+      });
+      setAdverts((prev: Advert[]) => prev.map((a: Advert) => (a.id === editingAdvert.id ? updated : a)));
+      setIsEditAdvertModalOpen(false);
+      setEditingAdvert(null);
+      success('Banner updated successfully!');
+    } catch (err: any) {
+      error(`Failed to update advert: ${err?.message || 'Unknown error'}`);
+    }
   };
 
   const handleCreateAdvert = async (e: React.FormEvent) => {
@@ -1076,6 +1128,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                     </span>
                     <div className="flex items-center gap-3">
                       <button
+                        onClick={() => handleOpenEditAdvert(ad)}
+                        className="font-bold text-slate-500 hover:text-slate-800"
+                      >
+                        Edit
+                      </button>
+                      <button
                         onClick={() => handleToggleAdvert(ad)}
                         className="font-bold text-[#2E86D8] hover:text-[#1B3A6B]"
                       >
@@ -1243,6 +1301,113 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             </Button>
             <Button type="submit" variant="primary" fullWidth>
               Launch Banner
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Advert Modal */}
+      <Modal
+        isOpen={isEditAdvertModalOpen}
+        onClose={() => setIsEditAdvertModalOpen(false)}
+        title="Edit Banner Campaign"
+        subtitle="Update the details, contacts and working hours for this banner."
+      >
+        <form onSubmit={handleUpdateAdvert} className="space-y-4">
+          <Input
+            label="Banner Headline *"
+            placeholder="e.g. 15% Off Cement Bulk Orders This Month"
+            value={editAdTitle}
+            onChange={(e) => setEditAdTitle(e.target.value)}
+            required
+          />
+
+          <Input
+            label="Subtitle"
+            placeholder="e.g. Direct manufacturer promotion with free site delivery."
+            value={editAdSubtitle}
+            onChange={(e) => setEditAdSubtitle(e.target.value)}
+          />
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Description <span className="text-slate-400 normal-case font-normal">(shown in Learn More on shopfront)</span>
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Full details about the offer, terms, products included, etc."
+              value={editAdDescription}
+              onChange={(e) => setEditAdDescription(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]/30 resize-none"
+            />
+          </div>
+
+          {/* Contact Info */}
+          <div className="bg-slate-50 rounded-xl p-3 space-y-3 border border-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Info (links directly on banner)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Phone Number (WhatsApp & Call)"
+                placeholder="e.g. +255 755 000 000"
+                value={editAdPhoneNumber}
+                onChange={(e) => setEditAdPhoneNumber(e.target.value)}
+              />
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="e.g. info@partner.co.tz"
+                value={editAdEmail}
+                onChange={(e) => setEditAdEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Campaign Dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Campaign Start Date"
+              type="date"
+              value={editAdStartDate}
+              onChange={(e) => setEditAdStartDate(e.target.value)}
+            />
+            <Input
+              label="Campaign End Date"
+              type="date"
+              value={editAdEndDate}
+              onChange={(e) => setEditAdEndDate(e.target.value)}
+            />
+          </div>
+
+          {/* Partner working hours */}
+          <div className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Partner Working Hours <span className="text-slate-400 normal-case font-normal">(optional)</span></p>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Opening Time"
+                type="time"
+                value={editAdStartTime}
+                onChange={(e) => setEditAdStartTime(e.target.value)}
+              />
+              <Input
+                label="Closing Time"
+                type="time"
+                value={editAdEndTime}
+                onChange={(e) => setEditAdEndTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              fullWidth
+              onClick={() => setIsEditAdvertModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" fullWidth>
+              Save Changes
             </Button>
           </div>
         </form>

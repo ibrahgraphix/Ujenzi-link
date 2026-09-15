@@ -91,36 +91,32 @@ export async function createAdvert(
 }
 
 export async function updateAdvert(id: string, advertData: Partial<Advert> & { bannerFileId?: string }): Promise<Advert> {
-  try {
-    const payload = {
-      title: advertData.title,
-      subtitle: advertData.subtitle,
-      description: advertData.description,
-      imageUrl: advertData.bannerUrl,
-      imageFileId: advertData.bannerFileId,
-      linkUrl: advertData.targetUrl || '#',
-      phoneNumber: advertData.phoneNumber,
-      email: advertData.email,
-      startTime: advertData.startTime,
-      endTime: advertData.endTime,
-      isActive: advertData.isActive,
-      isPaid: advertData.isPaid,
-      priceAmount: advertData.priceAmount,
-    };
-    const res = await apiClient.put(`/api/adverts/${id}`, payload);
-    if (res) return mapBackendAdvert(res.advert || res);
-  } catch (err) {
-    console.warn(`Failed to update advert ${id} via API, updating locally:`, err);
-  }
+  const toISO = (d?: string) => {
+    if (!d) return undefined;
+    if (d.includes('T')) return d;
+    return new Date(d + 'T00:00:00.000Z').toISOString();
+  };
 
-  const adverts = await getAdverts();
-  const idx = adverts.findIndex((a) => a.id === id);
-  if (idx !== -1) {
-    adverts[idx] = { ...adverts[idx], ...advertData };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(adverts));
-    return adverts[idx];
-  }
-  return { id, title: 'Updated Advert', ...advertData } as Advert;
+  const payload = {
+    title: advertData.title,
+    subtitle: advertData.subtitle,
+    description: advertData.description,
+    imageUrl: advertData.bannerUrl,
+    imageFileId: advertData.bannerFileId,
+    linkUrl: advertData.targetUrl || '#',
+    phoneNumber: advertData.phoneNumber,
+    email: advertData.email,
+    startTime: advertData.startTime,
+    endTime: advertData.endTime,
+    isActive: advertData.isActive,
+    isPaid: advertData.isPaid,
+    priceAmount: advertData.priceAmount,
+    startsAt: toISO(advertData.startDate),
+    endsAt: toISO(advertData.endDate),
+  };
+
+  const res = await apiClient.put(`/api/adverts/${id}`, payload);
+  return mapBackendAdvert((res as any)?.advert || res);
 }
 
 export async function deleteAdvert(id: string): Promise<boolean> {
