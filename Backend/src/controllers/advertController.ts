@@ -56,10 +56,10 @@ export class AdvertController {
 
   createAdvert = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
+      const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
 
-      if (!title || !imageUrl || !linkUrl || !startsAt || !endsAt) {
-        throw new AppError(400, 'Missing required fields: title, imageUrl, linkUrl, startsAt, endsAt');
+      if (!title || !imageUrl || !startsAt || !endsAt) {
+        throw new AppError(400, 'Missing required fields: title, imageUrl, startsAt, endsAt');
       }
 
       if (!req.user) {
@@ -73,9 +73,15 @@ export class AdvertController {
 
       const advert = await advertService.createAdvert({
         title,
+        subtitle,
+        description,
         imageUrl,
         imageFileId,
         linkUrl,
+        phoneNumber,
+        email,
+        startTime,
+        endTime,
         isActive: isActive !== undefined ? isActive : true,
         isPaid: isPaid !== undefined ? isPaid : false,
         priceAmount: priceAmount !== undefined ? Number(priceAmount) : undefined,
@@ -100,7 +106,7 @@ export class AdvertController {
   updateAdvert = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { advertId } = req.params;
-      const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
+      const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = req.body;
 
       if (!advertId) {
         throw new AppError(400, 'Advert ID is required');
@@ -119,9 +125,15 @@ export class AdvertController {
         advertId,
         {
           title,
+          subtitle,
+          description,
           imageUrl,
           imageFileId,
           linkUrl,
+          phoneNumber,
+          email,
+          startTime,
+          endTime,
           isActive,
           isPaid,
           priceAmount: priceAmount !== undefined ? Number(priceAmount) : undefined,

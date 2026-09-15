@@ -153,13 +153,17 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [isAdvertModalOpen, setIsAdvertModalOpen] = useState(false);
   const [adTitle, setAdTitle] = useState('');
   const [adSubtitle, setAdSubtitle] = useState('');
+  const [adDescription, setAdDescription] = useState('');
   const [adImage, setAdImage] = useState<UploadedImage | null>(null);
-  const [adLinkUrl, setAdLinkUrl] = useState('');
+  const [adPhoneNumber, setAdPhoneNumber] = useState('');
+  const [adEmail, setAdEmail] = useState('');
   const [adPosition, setAdPosition] = useState<'hero' | 'sidebar' | 'featured_section' | 'banner'>('hero');
   const [adIsPaid, setAdIsPaid] = useState(false);
   const [adPriceAmount, setAdPriceAmount] = useState('');
   const [adStartDate, setAdStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [adEndDate, setAdEndDate] = useState('2026-12-31');
+  const [adStartTime, setAdStartTime] = useState('');
+  const [adEndTime, setAdEndTime] = useState('');
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
@@ -303,16 +307,20 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       const newAd = await createAdvert({
         title: adTitle,
         subtitle: adSubtitle,
+        description: adDescription,
         bannerUrl: adImage.url,
         bannerFileId: adImage.fileId,
-        targetUrl: adLinkUrl || '/contact',
         position: adPosition,
+        phoneNumber: adPhoneNumber,
+        email: adEmail,
         isActive: true,
         isPaid: adIsPaid,
         priceAmount: adPriceAmount ? Number(adPriceAmount) : undefined,
         sponsorName: 'Plan Moja Featured Partner',
         startDate: adStartDate,
         endDate: adEndDate,
+        startTime: adStartTime,
+        endTime: adEndTime,
         impressions: 0,
         clicks: 0,
       });
@@ -320,12 +328,16 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       setIsAdvertModalOpen(false);
       setAdTitle('');
       setAdSubtitle('');
+      setAdDescription('');
       setAdImage(null);
-      setAdLinkUrl('');
+      setAdPhoneNumber('');
+      setAdEmail('');
       setAdIsPaid(false);
       setAdPriceAmount('');
       setAdStartDate(new Date().toISOString().split('T')[0]);
       setAdEndDate('2026-12-31');
+      setAdStartTime('');
+      setAdEndTime('');
       success('Banner advert campaign launched successfully!');
     } catch (err: any) {
       error(`Failed to create advert: ${err?.message || 'Unknown error'}`);
@@ -433,13 +445,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             <Activity className="w-4 h-4 text-purple-500" />
           </div>
           <div className="text-2xl font-black text-slate-900">
-            {trafficStats?.totalPageVisits ?? '—'}
+            {regionalVisits.reduce((sum, r) => sum + r.total_visits, 0).toLocaleString()}
           </div>
           <div className="text-[11px] text-purple-600 font-semibold mt-1">
-            {trafficStats?.uniqueVisitors ?? '—'} Unique Visitors
-          </div>
-          <div className="text-[11px] text-[#1B3A6B] font-semibold mt-1">
-            {regionalVisits.reduce((sum, r) => sum + r.total_visits, 0).toLocaleString()} Total Regional Visits
+            {regionalVisits.reduce((sum, r) => sum + r.unique_visitors, 0).toLocaleString()} Unique Visitors
           </div>
         </div>
 
@@ -1101,11 +1110,25 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
           />
 
           <Input
-            label="Subtitle / Description"
+            label="Subtitle"
             placeholder="e.g. Plan Moja direct manufacturer promotion with free site delivery."
             value={adSubtitle}
             onChange={(e) => setAdSubtitle(e.target.value)}
           />
+
+          {/* Description — shown in Learn More / shopfront banner */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Description <span className="text-slate-400 normal-case font-normal">(shown in Learn More on shopfront)</span>
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Full details about the offer, terms, eligibility, products included, etc."
+              value={adDescription}
+              onChange={(e) => setAdDescription(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]/30 resize-none"
+            />
+          </div>
 
           <ImageUpload
             label="Banner Image *"
@@ -1115,6 +1138,27 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
             hint="Upload a promotional banner image (1200px max, auto-compressed)."
           />
 
+          {/* Contact Info */}
+          <div className="bg-slate-50 rounded-xl p-3 space-y-3 border border-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Contact Info (links directly on banner)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Phone Number"
+                placeholder="e.g. +255 755 000 000"
+                value={adPhoneNumber}
+                onChange={(e) => setAdPhoneNumber(e.target.value)}
+              />
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="e.g. info@partner.co.tz"
+                value={adEmail}
+                onChange={(e) => setAdEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Placement + Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
@@ -1131,27 +1175,41 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 <option value="banner">Banner Placement</option>
               </select>
             </div>
-            <Input
-              label="Target Link"
-              placeholder="/contact or https://..."
-              value={adLinkUrl}
-              onChange={(e) => setAdLinkUrl(e.target.value)}
-            />
+            <div />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Start Date"
+              label="Campaign Start Date"
               type="date"
               value={adStartDate}
               onChange={(e) => setAdStartDate(e.target.value)}
             />
             <Input
-              label="End Date"
+              label="Campaign End Date"
               type="date"
               value={adEndDate}
               onChange={(e) => setAdEndDate(e.target.value)}
             />
+          </div>
+
+          {/* Partner working hours */}
+          <div className="bg-slate-50 rounded-xl p-3 space-y-2 border border-slate-200">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Partner Working Hours <span className="text-slate-400 normal-case font-normal">(optional)</span></p>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Opening Time"
+                type="time"
+                value={adStartTime}
+                onChange={(e) => setAdStartTime(e.target.value)}
+              />
+              <Input
+                label="Closing Time"
+                type="time"
+                value={adEndTime}
+                onChange={(e) => setAdEndTime(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

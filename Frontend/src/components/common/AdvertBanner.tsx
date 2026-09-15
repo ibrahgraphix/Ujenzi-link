@@ -1,5 +1,5 @@
-import React from 'react';
-import { Sparkles, Phone, MessageSquare, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Phone, MessageSquare, ArrowRight, Mail, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Advert } from '../../types';
 import { Button } from './Button';
 import { detailImageUrl, cardImageUrl } from '../../utils/imagekit';
@@ -10,11 +10,24 @@ interface AdvertBannerProps {
   compact?: boolean;
 }
 
+/** Format a time string like '08:00' or '08:00:00' into '08:00 AM' display */
+function formatTime(t?: string): string {
+  if (!t) return '';
+  const [hStr, mStr] = t.split(':');
+  const h = parseInt(hStr, 10);
+  const m = mStr || '00';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m} ${ampm}`;
+}
+
 export const AdvertBanner: React.FC<AdvertBannerProps> = ({
   advert,
   onNavigate,
   compact = false,
 }) => {
+  const [showDescription, setShowDescription] = useState(false);
+
   const handleWhatsApp = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!advert.whatsapp) return;
@@ -30,14 +43,31 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
     }
   };
 
+  const handleEmail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (advert.email) {
+      window.location.href = `mailto:${advert.email}`;
+    }
+  };
+
   const handleAction = () => {
-    if (advert.targetUrl && onNavigate) {
+    if (advert.targetUrl && advert.targetUrl !== '#' && onNavigate) {
       onNavigate(advert.targetUrl);
     } else if (advert.whatsapp) {
       const num = advert.whatsapp.replace(/[^0-9]/g, '');
       window.open(`https://wa.me/${num}`, '_blank');
+    } else if (advert.phoneNumber) {
+      window.location.href = `tel:${advert.phoneNumber.replace(/\s+/g, '')}`;
     }
   };
+
+  const hasHours = !!(advert.startTime || advert.endTime);
+  const hoursLabel =
+    advert.startTime && advert.endTime
+      ? `${formatTime(advert.startTime)} – ${formatTime(advert.endTime)}`
+      : advert.startTime
+      ? `Opens ${formatTime(advert.startTime)}`
+      : `Closes ${formatTime(advert.endTime)}`;
 
   if (compact) {
     return (
@@ -61,6 +91,11 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
           </h4>
           {advert.subtitle && (
             <p className="text-[11px] text-blue-100/80 truncate">{advert.subtitle}</p>
+          )}
+          {hasHours && (
+            <p className="text-[10px] text-amber-200/80 flex items-center gap-1">
+              <Clock className="w-2.5 h-2.5" /> {hoursLabel}
+            </p>
           )}
         </div>
         <div className="shrink-0 flex items-center gap-1">
@@ -101,11 +136,45 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
               </p>
             )}
 
+            {/* Description / Learn More section */}
+            {advert.description && (
+              <div className="border-t border-white/10 pt-3">
+                <button
+                  onClick={() => setShowDescription((prev) => !prev)}
+                  className="flex items-center gap-1.5 text-amber-300 text-xs font-bold hover:text-amber-200 transition-colors"
+                >
+                  {showDescription ? (
+                    <>
+                      <ChevronUp className="w-3.5 h-3.5" /> Hide Details
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-3.5 h-3.5" /> Learn More
+                    </>
+                  )}
+                </button>
+                {showDescription && (
+                  <p className="mt-2 text-sm text-blue-100/80 leading-relaxed max-w-xl whitespace-pre-line">
+                    {advert.description}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Partner working hours */}
+            {hasHours && (
+              <div className="flex items-center gap-2 text-xs text-amber-200/90 font-medium">
+                <Clock className="w-3.5 h-3.5 text-amber-300" />
+                <span>Available: {hoursLabel}</span>
+              </div>
+            )}
+
             <div className="text-xs text-blue-200 font-medium">
               Sponsored by <span className="text-amber-300 font-bold">{advert.sponsorName}</span>
             </div>
           </div>
 
+          {/* CTA Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
             {advert.whatsapp && (
               <button
@@ -113,7 +182,7 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
                 className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md transition-colors"
               >
                 <MessageSquare className="w-4 h-4" />
-                <span>WhatsApp Direct</span>
+                <span>WhatsApp</span>
               </button>
             )}
 
@@ -123,18 +192,31 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
                 className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                <span>Call Direct</span>
+                <span>{advert.phoneNumber}</span>
               </button>
             )}
 
-            <Button
-              variant="bronze"
-              size="md"
-              onClick={handleAction}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              {advert.ctaText || 'Claim Offer'}
-            </Button>
+            {advert.email && (
+              <button
+                onClick={handleEmail}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs sm:text-sm flex items-center gap-2 transition-colors"
+              >
+                <Mail className="w-4 h-4" />
+                <span>{advert.email}</span>
+              </button>
+            )}
+
+            {/* Only show Claim Offer button if there's a real targetUrl */}
+            {advert.targetUrl && advert.targetUrl !== '#' && (
+              <Button
+                variant="bronze"
+                size="md"
+                onClick={handleAction}
+                rightIcon={<ArrowRight className="w-4 h-4" />}
+              >
+                {advert.ctaText || 'Claim Offer'}
+              </Button>
+            )}
           </div>
         </div>
 

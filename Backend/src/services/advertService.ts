@@ -67,9 +67,15 @@ export class AdvertService {
 
   async createAdvert(data: {
     title: string;
+    subtitle?: string;
+    description?: string;
     imageUrl: string;
     imageFileId?: string;
-    linkUrl: string;
+    linkUrl?: string;
+    phoneNumber?: string;
+    email?: string;
+    startTime?: string;
+    endTime?: string;
     isActive: boolean;
     isPaid?: boolean;
     priceAmount?: number;
@@ -77,16 +83,22 @@ export class AdvertService {
     endsAt: string;
     providerId?: string;
   }, adminId: string) {
-    const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
+    const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
 
     const { data: advert, error } = await supabase
       .from('adverts')
       .insert({
         id: crypto.randomUUID(),
         title,
+        subtitle: subtitle || null,
+        description: description || null,
         image_url: imageUrl,
         image_file_id: imageFileId || null,
-        link_url: linkUrl,
+        link_url: linkUrl || null,
+        phone_number: phoneNumber || null,
+        email: email || null,
+        start_time: startTime || null,
+        end_time: endTime || null,
         is_active: isActive,
         is_paid: isPaid ?? false,
         price_amount: priceAmount ?? null,
@@ -110,9 +122,15 @@ export class AdvertService {
 
   async updateAdvert(advertId: string, data: {
     title?: string;
+    subtitle?: string;
+    description?: string;
     imageUrl?: string;
     imageFileId?: string;
     linkUrl?: string;
+    phoneNumber?: string;
+    email?: string;
+    startTime?: string;
+    endTime?: string;
     isActive?: boolean;
     isPaid?: boolean;
     priceAmount?: number;
@@ -120,7 +138,7 @@ export class AdvertService {
     endsAt?: string;
     providerId?: string;
   }, adminId: string) {
-    const { title, imageUrl, imageFileId, linkUrl, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
+    const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
 
     const { data: existing, error: fetchError } = await supabase
       .from('adverts')
@@ -135,9 +153,15 @@ export class AdvertService {
     const updatePayload: Record<string, unknown> = {};
 
     if (title !== undefined) updatePayload.title = title;
+    if (subtitle !== undefined) updatePayload.subtitle = subtitle;
+    if (description !== undefined) updatePayload.description = description;
     if (imageUrl !== undefined) updatePayload.image_url = imageUrl;
     if (imageFileId !== undefined) updatePayload.image_file_id = imageFileId;
     if (linkUrl !== undefined) updatePayload.link_url = linkUrl;
+    if (phoneNumber !== undefined) updatePayload.phone_number = phoneNumber;
+    if (email !== undefined) updatePayload.email = email;
+    if (startTime !== undefined) updatePayload.start_time = startTime;
+    if (endTime !== undefined) updatePayload.end_time = endTime;
     if (isActive !== undefined) updatePayload.is_active = isActive;
     if (isPaid !== undefined) updatePayload.is_paid = isPaid;
     if (priceAmount !== undefined) updatePayload.price_amount = priceAmount;

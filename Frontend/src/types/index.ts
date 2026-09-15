@@ -127,16 +127,20 @@ export interface Advert {
   id: string;
   title: string;
   subtitle?: string;
+  description?: string;
   sponsorName: string;
   bannerUrl: string;
   bannerFileId?: string;
   targetUrl?: string;
   phoneNumber?: string;
+  email?: string;
   whatsapp?: string;
   category?: string;
   position: 'hero' | 'sidebar' | 'featured_section' | 'banner';
   startDate: string;
   endDate: string;
+  startTime?: string;   // Partner working hours start e.g. '08:00'
+  endTime?: string;     // Partner working hours end e.g. '17:00'
   isActive: boolean;
   isPaid?: boolean;
   priceAmount?: number;

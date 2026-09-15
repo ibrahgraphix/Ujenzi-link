@@ -138,9 +138,15 @@ export interface Inquiry {
 export interface Advert {
   id: string;
   title: string;
+  subtitle?: string;
+  description?: string;
   image_url: string;
   image_file_id?: string;
-  link_url: string;
+  link_url?: string;
+  phone_number?: string;
+  email?: string;
+  start_time?: string;   // e.g. '08:00:00' — partner working hours start
+  end_time?: string;     // e.g. '17:00:00' — partner working hours end
   is_active: boolean;
   is_paid: boolean;
   price_amount?: number;
