@@ -15,6 +15,7 @@ import {
   X,
   Store,
   ExternalLink,
+  Heart,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Listing, Inquiry, Provider, LocationHierarchy, Category, AvailabilityStatus, ProviderType, TradeCategory, TRADE_CATEGORY_OPTIONS } from '../types';
@@ -28,6 +29,8 @@ import { Modal } from '../components/common/Modal';
 import { LocationSelector } from '../components/common/LocationSelector';
 import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
+import { ListingCard } from '../components/common/ListingCard';
+import { EmptyState } from '../components/common/EmptyState';
 import { useToast } from '../context/ToastContext';
 import { UploadedImage } from '../services/uploadService';
 import { logoImageUrl, thumbnailUrl } from '../utils/imagekit';
@@ -47,12 +50,14 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   onSelectListing,
   onSelectProvider,
 }) => {
-  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'inquiries'>('listings');
+  const { user, favorites, toggleFavorite } = useAuth();
   const { success, error } = useToast();
 
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'inquiries'>(initialTab || 'listings');
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [savedListings, setSavedListings] = useState<Listing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [myProvider, setMyProvider] = useState<Provider | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,10 +97,11 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
 
   const loadProviderData = async () => {
     setIsLoading(true);
-    const [allInquiries, allCats, allProviders] = await Promise.all([
+    const [allInquiries, allCats, allProviders, allListings] = await Promise.all([
       getInquiries(user?.id, 'provider'),
       getCategories(),
       getProviders(),
+      getListings(),
     ]);
 
     const prov = allProviders.find((p) => p.name === user?.name || p.id === user?.id || p.id === 'prov-1') || allProviders[0];
@@ -127,6 +133,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     setMyListings(providerListings.length > 0 ? providerListings : (await getListings()).filter((l) => l.providerId === providerUserId || l.providerName === user?.name));
     setInquiries(allInquiries);
     setCategories(allCats);
+    setSavedListings(allListings.filter((l) => favorites.includes(l.id)));
     setIsLoading(false);
   };
 
@@ -162,7 +169,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
 
   useEffect(() => {
     loadProviderData();
-  }, [user]);
+  }, [user, favorites]);
 
   // Refetch inquiries when switching to inquiries tab or periodically
   useEffect(() => {
@@ -305,6 +312,12 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
       console.error('Error updating inquiry status:', err);
       error(`Failed to update status: ${err?.message || 'Unknown error'}`);
     }
+  };
+
+  const handleRemoveFavorite = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavorite(id);
+    success('Removed from saved listings.');
   };
 
   const handleSaveLogo = async () => {
@@ -645,6 +658,18 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('favorites')}
+          className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
+            activeTab === 'favorites'
+              ? 'border-[#1B3A6B] text-[#1B3A6B] font-extrabold'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <Heart className="w-4 h-4" />
+          <span>Saved Listings ({savedListings.length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('inquiries')}
           className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition-colors ${
             activeTab === 'inquiries'
@@ -748,7 +773,40 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         </div>
       )}
 
-      {/* Tab 2: Received Inquiries */}
+      {/* Tab 2: Saved Listings */}
+      {activeTab === 'favorites' && (
+        <div className="space-y-6">
+          {savedListings.length === 0 ? (
+            <EmptyState
+              title="No saved building materials yet"
+              description="Browse the marketplace and click the heart icon on any listing to save it here."
+              actionText="Browse Marketplace"
+              onAction={() => onNavigate('listings')}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {savedListings.map((listing) => (
+                <div key={listing.id} className="relative group">
+                  <ListingCard
+                    listing={listing}
+                    onSelect={onSelectListing}
+                    onContactSupplier={(l) => onNavigate('listings')}
+                  />
+                  <button
+                    onClick={(e) => handleRemoveFavorite(listing.id, e)}
+                    className="absolute top-3 right-3 z-20 p-2 bg-white/90 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-full shadow-md transition-colors"
+                    title="Remove from saved"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Received Inquiries */}
       {activeTab === 'inquiries' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
