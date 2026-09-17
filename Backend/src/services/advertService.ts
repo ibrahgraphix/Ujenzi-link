@@ -29,17 +29,23 @@ function normalizeDbTime(t?: string | null): string | null {
 
 export class AdvertService {
   async getActiveAdverts() {
-    const { data: adverts, error } = await supabase
-      .from('adverts')
-      .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+    try {
+      const { data: adverts, error } = await supabase
+        .from('adverts')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      throw new Error(`Failed to fetch active adverts: ${error.message}`);
+      if (error) {
+        console.error('Error fetching active adverts from Supabase:', error.message);
+        return [];
+      }
+
+      return adverts || [];
+    } catch (err: any) {
+      console.error('Exception fetching active adverts:', err?.message || err);
+      return [];
     }
-
-    return adverts || [];
   }
 
   async getAllAdverts(filters: {

@@ -12,13 +12,14 @@ export class AdvertController {
 
       res.status(200).json({
         status: 'success',
-        data: { adverts }
+        data: { adverts: adverts || [] }
       });
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new AppError(500, error.message);
-      }
-      throw error;
+    } catch (error: any) {
+      console.error('Error in getActiveAdverts controller:', error?.message || error);
+      res.status(200).json({
+        status: 'success',
+        data: { adverts: [] }
+      });
     }
   };
 
