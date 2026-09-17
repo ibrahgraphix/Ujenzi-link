@@ -71,6 +71,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     district: 'Kinondoni',
   });
 
+  // Buyer location fields
+  const [buyerLocation, setBuyerLocation] = useState<LocationHierarchy>({
+    country: 'Tanzania',
+    region: '',
+    district: '',
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -102,6 +109,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
           return;
         }
       }
+      if (accountType === 'buyer') {
+        if (!buyerLocation.region || !buyerLocation.district) {
+          error('Please select your location (region and district).');
+          return;
+        }
+      }
       const ok = await signup({
         name,
         email,
@@ -117,7 +130,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         institutionName: accountType === 'buyer' && buyerType === 'client' ? institutionName : undefined,
         projectName: accountType === 'buyer' && buyerType === 'client' ? projectName : undefined,
         projectDescription: accountType === 'buyer' && buyerType === 'client' ? projectDescription : undefined,
-        location: accountType === 'provider' ? providerLocation : { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
+        location: accountType === 'provider' ? providerLocation : buyerLocation,
       });
 
       if (ok) {
@@ -249,6 +262,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         <span className="text-[10px] text-slate-400">Institution / Project</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Buyer Location */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      Your Location (Region & District) *
+                    </label>
+                    <LocationSelector
+                      value={buyerLocation}
+                      onChange={(loc) => setBuyerLocation(loc)}
+                      compact={true}
+                    />
                   </div>
 
                   {/* Client-only project fields */}
