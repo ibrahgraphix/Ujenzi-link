@@ -63,8 +63,8 @@ export class AdvertController {
       const imageUrl = b.imageUrl || b.image_url;
       const imageFileId = b.imageFileId || b.image_file_id || null;
       const linkUrl = b.linkUrl || b.link_url || null;
-      const phoneNumber = b.phoneNumber || b.phone_number || b.whatsapp || null;
-      const email = b.email || null;
+      const contactPhone = b.contactPhone || b.contact_phone || b.phoneNumber || b.phone_number || b.whatsapp || null;
+      const contactEmail = b.contactEmail || b.contact_email || b.email || null;
       const startTime = b.startTime || b.start_time || null;
       const endTime = b.endTime || b.end_time || null;
       const isActive = b.isActive !== undefined ? b.isActive : (b.is_active !== undefined ? b.is_active : true);
@@ -94,8 +94,10 @@ export class AdvertController {
         imageUrl,
         imageFileId,
         linkUrl,
-        phoneNumber,
-        email,
+        phoneNumber: contactPhone,
+        email: contactEmail,
+        contactPhone,
+        contactEmail,
         startTime,
         endTime,
         isActive,
@@ -137,6 +139,9 @@ export class AdvertController {
         throw new AppError(403, 'Only admins can update adverts');
       }
 
+      const contactPhone = b.contactPhone !== undefined ? b.contactPhone : (b.contact_phone !== undefined ? b.contact_phone : (b.phoneNumber !== undefined ? b.phoneNumber : (b.phone_number !== undefined ? b.phone_number : b.whatsapp)));
+      const contactEmail = b.contactEmail !== undefined ? b.contactEmail : (b.contact_email !== undefined ? b.contact_email : b.email);
+
       const advert = await advertService.updateAdvert(
         advertId,
         {
@@ -146,8 +151,10 @@ export class AdvertController {
           imageUrl: b.imageUrl || b.image_url,
           imageFileId: b.imageFileId || b.image_file_id,
           linkUrl: b.linkUrl || b.link_url,
-          phoneNumber: b.phoneNumber || b.phone_number || b.whatsapp,
-          email: b.email,
+          phoneNumber: contactPhone,
+          email: contactEmail,
+          contactPhone,
+          contactEmail,
           startTime: b.startTime || b.start_time,
           endTime: b.endTime || b.end_time,
           isActive: b.isActive !== undefined ? b.isActive : b.is_active,

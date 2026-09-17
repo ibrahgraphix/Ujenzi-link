@@ -64,6 +64,7 @@ function mapBackendUserToFrontendUser(backendUser: any): User {
     projectName: backendUser.projectName || backendUser.project_name,
     projectDescription: backendUser.projectDescription || backendUser.project_description,
     providerType: mappedProviderType,
+    tradeCategory: backendUser.tradeCategory || backendUser.trade_category,
     businessName: backendUser.businessName || backendUser.business_name,
     location: backendUser.location || {
       country: 'Tanzania',
@@ -124,9 +125,11 @@ export async function register(
     role: userData.accountType,
     buyerType,
     providerType: userData.providerType ? providerTypeMap[userData.providerType] : undefined,
+    tradeCategory: userData.tradeCategory,
     businessName: userData.businessName || userData.name,
     description: userData.description,
     availabilityStatus: userData.availabilityStatus,
+    location: userData.location,
   };
 
   if (buyerType === 'client') {

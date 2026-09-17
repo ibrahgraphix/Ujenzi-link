@@ -17,11 +17,11 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Listing, Inquiry, Provider, LocationHierarchy, Category, AvailabilityStatus, ProviderType } from '../types';
+import { Listing, Inquiry, Provider, LocationHierarchy, Category, AvailabilityStatus, ProviderType, TradeCategory, TRADE_CATEGORY_OPTIONS } from '../types';
 import { getListings, getProviderListings, createListing, updateListing, deleteListing } from '../services/listingsService';
 import { getInquiries, updateInquiryStatus } from '../services/inquiriesService';
 import { getCategories } from '../services/categoriesService';
-import { getProviders, updateProviderAvailabilityStatus, updateProviderLogo, updateProviderBio } from '../services/providersService';
+import { getProviders, updateProviderAvailabilityStatus, updateProviderLogo, updateProviderBio, updateProviderTradeCategory, updateProviderLocation } from '../services/providersService';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
@@ -81,6 +81,15 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   });
   const [listingFormKey, setListingFormKey] = useState(0);
 
+  const [providerTradeCategory, setProviderTradeCategory] = useState<string>('');
+  const [isSavingTradeCategory, setIsSavingTradeCategory] = useState(false);
+  const [providerProfileLocation, setProviderProfileLocation] = useState<LocationHierarchy>({
+    country: 'Tanzania',
+    region: '',
+    district: '',
+  });
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
+
   const loadProviderData = async () => {
     setIsLoading(true);
     const [allInquiries, allCats, allProviders] = await Promise.all([
@@ -99,6 +108,17 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     }
     if (prov?.availabilityStatus) {
       setAvailabilityStatus(prov.availabilityStatus);
+    }
+    if (prov?.tradeCategory || user?.tradeCategory) {
+      setProviderTradeCategory((prov?.tradeCategory || user?.tradeCategory || '') as string);
+    }
+    const currentLoc = prov?.location || user?.location;
+    if (currentLoc) {
+      setProviderProfileLocation({
+        country: currentLoc.country || 'Tanzania',
+        region: currentLoc.region || '',
+        district: currentLoc.district || '',
+      });
     }
 
     // Use user.id as providerId for backend API calls
@@ -336,6 +356,44 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     }
   };
 
+  const handleSaveTradeCategory = async () => {
+    if (!providerTradeCategory) {
+      error('Please select a trade category.');
+      return;
+    }
+    setIsSavingTradeCategory(true);
+    try {
+      const updated = await updateProviderTradeCategory(providerTradeCategory);
+      if (updated) {
+        setMyProvider(updated);
+      }
+      success('Trade category updated successfully!');
+    } catch (err: any) {
+      error(err.message || 'Failed to update trade category.');
+    } finally {
+      setIsSavingTradeCategory(false);
+    }
+  };
+
+  const handleSaveLocation = async () => {
+    if (!providerProfileLocation.region) {
+      error('Please select at least a region.');
+      return;
+    }
+    setIsSavingLocation(true);
+    try {
+      const updated = await updateProviderLocation(providerProfileLocation);
+      if (updated) {
+        setMyProvider(updated);
+      }
+      success('Business location updated successfully!');
+    } catch (err: any) {
+      error(err.message || 'Failed to update business location.');
+    } finally {
+      setIsSavingLocation(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
@@ -358,7 +416,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
             </p>
             <div className="flex items-center gap-3 text-[11px] text-blue-100 mt-2">
               <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-amber-300" /> {myProvider?.location?.region || 'Dar es Salaam'}
+                <MapPin className="w-3 h-3 text-amber-300" />{' '}
+                {myProvider?.location?.district ? `${myProvider.location.district}, ` : ''}
+                {myProvider?.location?.region || myProvider?.location?.country || 'Tanzania'}
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
@@ -445,6 +505,71 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
               className="w-full sm:w-auto"
             >
               {isSavingBio ? 'Saving…' : 'Save Description'}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Trade Category & Physical Location Settings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Trade Category Card */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Trade Category</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Aina ya usajili au huduma za kiufundi unazotoa (inaonekana kama beji kwenye shopfront na directory).
+            </p>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Select Trade Category
+            </label>
+            <select
+              value={providerTradeCategory}
+              onChange={(e) => setProviderTradeCategory(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-medium"
+            >
+              <option value="">Select Trade Category...</option>
+              {TRADE_CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="pt-4 flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveTradeCategory}
+              disabled={isSavingTradeCategory || !providerTradeCategory}
+              className="w-full sm:w-auto"
+            >
+              {isSavingTradeCategory ? 'Saving…' : 'Save Trade Category'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Location Card */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Business Location (Mkoa & Wilaya)</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Eneo halisi ambapo biashara au karakana yako inapatikana nchini Tanzania.
+            </p>
+            <LocationSelector
+              value={providerProfileLocation}
+              onChange={(loc) => setProviderProfileLocation(loc)}
+              compact={true}
+            />
+          </div>
+          <div className="pt-4 flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveLocation}
+              disabled={isSavingLocation || !providerProfileLocation.region}
+              className="w-full sm:w-auto"
+            >
+              {isSavingLocation ? 'Saving…' : 'Save Location'}
             </Button>
           </div>
         </div>

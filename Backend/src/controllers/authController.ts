@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/authService';
+import { LocationService } from '../services/locationService';
 import { UserRole, BuyerType, ProviderType, AvailabilityStatus } from '../models';
 import { AppError } from '../middleware';
 
 const authService = new AuthService();
+const locationService = new LocationService();
 
 export class AuthController {
   register = async (req: Request, res: Response): Promise<void> => {
@@ -18,9 +20,12 @@ export class AuthController {
         role,
         buyerType,
         providerType,
+        tradeCategory,
+        trade_category,
         businessName,
         description,
         locationId,
+        location,
         availabilityStatus,
         institutionName,
         projectName,
@@ -44,6 +49,17 @@ export class AuthController {
         throw new AppError(400, 'providerType and businessName are required for provider registration');
       }
 
+      let finalLocationId = locationId;
+      if (!finalLocationId && location && (location.region || location.district)) {
+        try {
+          finalLocationId = await locationService.resolveLocationId(location);
+        } catch (locErr) {
+          console.warn('Failed to resolve location during registration:', locErr);
+        }
+      }
+
+      const selectedTradeCategory = tradeCategory || trade_category || null;
+
       const user = await authService.registerUser({
         email,
         password,
@@ -52,9 +68,10 @@ export class AuthController {
         role,
         buyerType,
         providerType,
+        tradeCategory: selectedTradeCategory,
         businessName,
         description,
-        locationId,
+        locationId: finalLocationId,
         availabilityStatus,
         institutionName,
         projectName,

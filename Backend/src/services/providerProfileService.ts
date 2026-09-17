@@ -66,7 +66,70 @@ export class ProviderProfileService {
       throw new Error('Provider profile not found');
     }
 
+    if (!profile.locations && !profile.location_id) {
+      const { data: listingWithLoc } = await serviceRoleClient
+        .from('listings')
+        .select('location_id, locations(*)')
+        .eq('provider_id', profile.user_id)
+        .not('location_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (listingWithLoc?.locations) {
+        profile.locations = listingWithLoc.locations;
+        profile.location_id = listingWithLoc.location_id;
+        await serviceRoleClient
+          .from('provider_profiles')
+          .update({ location_id: listingWithLoc.location_id })
+          .eq('user_id', profile.user_id);
+      }
+    }
+
     return profile;
+  }
+
+  async updateProviderTradeCategory(userId: string, tradeCategory: string) {
+    const { data: updated, error: updateError } = await supabase
+      .from('provider_profiles')
+      .update({
+        trade_category: tradeCategory,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .select(`
+        *,
+        users (id, full_name, email, phone, role),
+        locations (*)
+      `)
+      .single();
+
+    if (updateError || !updated) {
+      throw new Error(`Failed to update trade category: ${updateError?.message}`);
+    }
+
+    return updated;
+  }
+
+  async updateProviderLocation(userId: string, locationId: string) {
+    const { data: updated, error: updateError } = await supabase
+      .from('provider_profiles')
+      .update({
+        location_id: locationId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .select(`
+        *,
+        users (id, full_name, email, phone, role),
+        locations (*)
+      `)
+      .single();
+
+    if (updateError || !updated) {
+      throw new Error(`Failed to update provider location: ${updateError?.message}`);
+    }
+
+    return updated;
   }
 
 

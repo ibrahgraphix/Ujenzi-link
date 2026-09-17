@@ -13,6 +13,23 @@ export type ProviderType =
 
 export type AvailabilityStatus = 'available' | 'occupied' | 'busy_and_occupied' | 'occupied_but_available';
 
+export type TradeCategory =
+  | 'registered_civil_building_contractor'
+  | 'registered_em_contractor'
+  | 'specialized_works'
+  | 'general_supply_services'
+  | 'construction_company'
+  | 'specialized_material_supply';
+
+export const TRADE_CATEGORY_OPTIONS: { label: string; value: TradeCategory }[] = [
+  { label: 'Registered civil and building contractor', value: 'registered_civil_building_contractor' },
+  { label: 'Registered E&M contractor', value: 'registered_em_contractor' },
+  { label: 'Specialized works', value: 'specialized_works' },
+  { label: 'General supply and services', value: 'general_supply_services' },
+  { label: 'Construction company', value: 'construction_company' },
+  { label: 'Specialized Material supply', value: 'specialized_material_supply' },
+];
+
 export interface LocationHierarchy {
   country: string;
   region: string;
@@ -25,6 +42,7 @@ export interface LocationHierarchy {
 export interface User {
   id: string;
   name: string;
+  fullName?: string;
   email: string;
   phone: string;
   accountType: AccountType;
@@ -34,6 +52,7 @@ export interface User {
   projectName?: string;
   projectDescription?: string;
   providerType?: ProviderType;
+  tradeCategory?: TradeCategory | string;
   businessName?: string;
   description?: string;
   availabilityStatus?: AvailabilityStatus;
@@ -80,8 +99,10 @@ export interface Listing {
 export interface Provider {
   id: string;
   name: string;
+  fullName?: string;
   businessName: string;
   providerType: ProviderType;
+  tradeCategory?: TradeCategory | string;
   logo: string;
   logoFileId?: string;
   coverImage?: string;
@@ -134,6 +155,8 @@ export interface Advert {
   targetUrl?: string;
   phoneNumber?: string;
   email?: string;
+  contactPhone?: string;
+  contactEmail?: string;
   whatsapp?: string;
   category?: string;
   position: 'hero' | 'sidebar' | 'featured_section' | 'banner';

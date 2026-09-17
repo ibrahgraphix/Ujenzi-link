@@ -12,6 +12,7 @@ export class AuthService {
     role: UserRole;
     buyerType?: BuyerType;
     providerType?: ProviderType;
+    tradeCategory?: string;
     businessName?: string;
     description?: string;
     locationId?: string;
@@ -20,7 +21,7 @@ export class AuthService {
     projectName?: string;
     projectDescription?: string;
   }) {
-    const { email, password, name, phone, role, buyerType, providerType, businessName, description, locationId, availabilityStatus, institutionName, projectName, projectDescription } = data;
+    const { email, password, name, phone, role, buyerType, providerType, tradeCategory, businessName, description, locationId, availabilityStatus, institutionName, projectName, projectDescription } = data;
 
     // Create user in Supabase Auth via Admin API to bypass email confirmation
     const { data: authData, error: signUpError } = await supabase.auth.admin.createUser({
@@ -83,12 +84,13 @@ export class AuthService {
         throw new Error(`Failed to create buyer profile: ${profileError.message}`);
       }
     } else if (role === UserRole.PROVIDER && providerType && businessName) {
-      console.log('Creating provider profile for user:', userId, 'with data:', { providerType, businessName, description, locationId, availabilityStatus });
+      console.log('Creating provider profile for user:', userId, 'with data:', { providerType, tradeCategory, businessName, description, locationId, availabilityStatus });
       const { error: profileError } = await supabase
         .from('provider_profiles')
         .insert({
           user_id: userId,
           provider_type: providerType,
+          trade_category: tradeCategory || null,
           business_name: businessName,
           description,
           location_id: locationId,

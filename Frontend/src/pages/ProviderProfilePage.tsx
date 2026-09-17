@@ -20,7 +20,7 @@ import { getListings } from '../services/listingsService';
 import { getReviews, addReview } from '../services/reviewsService';
 import { Button } from '../components/common/Button';
 import { ListingCard } from '../components/common/ListingCard';
-import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
+import { ProviderTypeBadge, VerifiedBadge, TradeCategoryBadge } from '../components/common/Badge';
 import { Modal } from '../components/common/Modal';
 import { Input, Textarea } from '../components/common/Input';
 import { useToast } from '../context/ToastContext';
@@ -221,13 +221,14 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
               <div className="pt-2 sm:pt-4">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <ProviderTypeBadge type={provider.providerType} size="sm" />
+                  {provider.tradeCategory && <TradeCategoryBadge category={provider.tradeCategory} size="sm" />}
                   {provider.isVerified && <VerifiedBadge size="sm" />}
                   {isExpertProvider(provider.providerType) && getAvailabilityStatusBadge(provider.availabilityStatus)}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-heading">
-                  {provider.name}
+                  {provider.fullName || provider.name}
                 </h1>
-                {provider.businessName && provider.businessName.trim().toLowerCase() !== provider.name.trim().toLowerCase() && (
+                {provider.businessName && (
                   <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
                     {provider.businessName}
                   </p>
@@ -261,9 +262,19 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
               <div>
                 <div className="font-bold text-slate-900">Physical Location</div>
                 <div className="text-slate-500 mt-0.5">
-                  {provider.location?.district ? `${provider.location.district}, ` : ''}
-                  {provider.location?.region}
-                  {provider.address && ` • ${provider.address}`}
+                  {[
+                    provider.location?.district,
+                    provider.location?.region,
+                    provider.address &&
+                    provider.address.trim() &&
+                    provider.address.trim() !== provider.location?.region &&
+                    provider.address.trim() !== `${provider.location?.region}, Tanzania` &&
+                    provider.address.trim() !== `${provider.location?.district}, ${provider.location?.region}`
+                      ? provider.address.trim()
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(', ') || provider.location?.country || 'Tanzania'}
                 </div>
               </div>
             </div>

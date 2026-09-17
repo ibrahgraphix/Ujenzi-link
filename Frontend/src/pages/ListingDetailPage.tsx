@@ -348,7 +348,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-slate-900 truncate">
-                    {listing.providerName}
+                    {provider?.fullName || provider?.name || listing.providerName}
                   </div>
                   <div className="text-xs text-slate-500 truncate">
                     {provider?.businessName || listing.providerType}

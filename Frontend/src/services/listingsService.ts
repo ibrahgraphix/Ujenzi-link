@@ -65,7 +65,7 @@ export function mapBackendListing(item: any): Listing {
           district: item.district || 'Kinondoni',
         },
     providerId: item.provider_id || providerProfile.user_id || providerUser.id || item.providerId || providerProfile.id || 'prov-demo',
-    providerName: providerProfile.business_name || providerUser.name || item.providerName || 'Local Supplier',
+    providerName: providerUser.full_name || providerUser.name || providerProfile.business_name || item.providerName || 'Local Supplier',
     providerPhone: providerUser.phone || item.providerPhone || '+255 700 000 000',
     providerType: (providerProfile.provider_type as ProviderType) || item.providerType || 'Retailer/Supplier',
     isVerified: providerProfile.is_verified ?? item.isVerified ?? false,

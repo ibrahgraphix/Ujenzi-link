@@ -16,7 +16,7 @@ import { Provider, ProviderType, Advert, AvailabilityStatus } from '../types';
 import { getProviders } from '../services/providersService';
 import { getRegions } from '../services/locationsService';
 import { getAdverts } from '../services/advertsService';
-import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
+import { ProviderTypeBadge, VerifiedBadge, TradeCategoryBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
 import { logoImageUrl } from '../utils/imagekit';
@@ -258,6 +258,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       <ProviderTypeBadge type={provider.providerType} size="xs" />
+                      {provider.tradeCategory && <TradeCategoryBadge category={provider.tradeCategory} size="xs" />}
                       {provider.isVerified && <VerifiedBadge size="sm" showText={false} />}
                       {isExpertProvider(provider.providerType) && getAvailabilityStatusBadge(provider.availabilityStatus)}
                     </div>
@@ -288,11 +289,11 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
 
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex items-center gap-1 text-slate-600 truncate max-w-[150px]">
+                  <div className="flex items-center gap-1 text-slate-600 truncate max-w-[180px]">
                     <MapPin className="w-3.5 h-3.5 text-[#2E86D8] shrink-0" />
                     <span className="truncate">
                       {provider.location?.district ? `${provider.location.district}, ` : ''}
-                      {provider.location?.region}
+                      {provider.location?.region || provider.location?.country || 'Tanzania'}
                     </span>
                   </div>
                 </div>

@@ -50,14 +50,17 @@ router.get('/me', authenticate, asyncHandler(async (req: any, res: any) => {
   if (user.role === 'provider') {
     const { data: providerProfile } = await supabase
       .from('provider_profiles')
-      .select('provider_type, business_name, is_verified')
+      .select('provider_type, trade_category, business_name, is_verified, location_id, locations(*)')
       .eq('user_id', userId)
       .single();
 
     if (providerProfile) {
       enrichedUser.provider_type = providerProfile.provider_type;
+      enrichedUser.trade_category = providerProfile.trade_category;
+      enrichedUser.tradeCategory = providerProfile.trade_category;
       enrichedUser.business_name = providerProfile.business_name;
       enrichedUser.is_verified = providerProfile.is_verified;
+      enrichedUser.location = providerProfile.locations;
     }
   }
 

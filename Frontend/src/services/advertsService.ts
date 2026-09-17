@@ -4,6 +4,8 @@ import apiClient from './apiClient';
 const STORAGE_KEY = 'ujenzi_adverts_v1';
 
 function mapBackendAdvert(ad: any): Advert {
+  const phone = ad.contact_phone || ad.contactPhone || ad.phone_number || ad.phoneNumber || '';
+  const email = ad.contact_email || ad.contactEmail || ad.email || '';
   return {
     id: ad.id || `ad-${Date.now()}`,
     title: ad.title || 'Advert',
@@ -12,9 +14,11 @@ function mapBackendAdvert(ad: any): Advert {
     sponsorName: ad.sponsorName || ad.sponsor_name || 'Ujenzi Partner',
     bannerUrl: ad.bannerUrl || ad.image_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=1200&q=80',
     targetUrl: ad.targetUrl || (ad.link_url && ad.link_url !== '#' ? ad.link_url : undefined),
-    phoneNumber: ad.phoneNumber || ad.phone_number || '',
-    email: ad.email || '',
-    whatsapp: ad.whatsapp || ad.phone_number || ad.phoneNumber || '',
+    phoneNumber: phone,
+    email: email,
+    contactPhone: phone,
+    contactEmail: email,
+    whatsapp: phone,
     category: ad.category || 'General',
     position: ad.position || 'hero',
     startDate: ad.startDate || ad.starts_at || new Date().toISOString(),
@@ -65,6 +69,9 @@ export async function createAdvert(
     return new Date(d + 'T00:00:00.000Z').toISOString();
   };
 
+  const phone = advertData.contactPhone || advertData.phoneNumber || '';
+  const email = advertData.contactEmail || advertData.email || '';
+
   const payload = {
     title: advertData.title || 'Untitled Advert',
     subtitle: advertData.subtitle || '',
@@ -72,8 +79,10 @@ export async function createAdvert(
     imageUrl: advertData.bannerUrl || '',
     imageFileId: advertData.bannerFileId || '',
     linkUrl: advertData.targetUrl || '#',
-    phoneNumber: advertData.phoneNumber || '',
-    email: advertData.email || '',
+    phoneNumber: phone,
+    email: email,
+    contactPhone: phone,
+    contactEmail: email,
     startTime: advertData.startTime || '',
     endTime: advertData.endTime || '',
     isActive: advertData.isActive ?? true,
@@ -97,6 +106,9 @@ export async function updateAdvert(id: string, advertData: Partial<Advert> & { b
     return new Date(d + 'T00:00:00.000Z').toISOString();
   };
 
+  const phone = advertData.contactPhone !== undefined ? advertData.contactPhone : advertData.phoneNumber;
+  const email = advertData.contactEmail !== undefined ? advertData.contactEmail : advertData.email;
+
   const payload = {
     title: advertData.title,
     subtitle: advertData.subtitle,
@@ -104,8 +116,10 @@ export async function updateAdvert(id: string, advertData: Partial<Advert> & { b
     imageUrl: advertData.bannerUrl,
     imageFileId: advertData.bannerFileId,
     linkUrl: advertData.targetUrl || '#',
-    phoneNumber: advertData.phoneNumber,
-    email: advertData.email,
+    phoneNumber: phone,
+    email: email,
+    contactPhone: phone,
+    contactEmail: email,
     startTime: advertData.startTime,
     endTime: advertData.endTime,
     isActive: advertData.isActive,

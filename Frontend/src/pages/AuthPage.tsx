@@ -16,7 +16,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
-import { AccountType, ProviderType, AvailabilityStatus } from '../types';
+import { LocationSelector } from '../components/common/LocationSelector';
+import { AccountType, ProviderType, AvailabilityStatus, LocationHierarchy, TradeCategory, TRADE_CATEGORY_OPTIONS } from '../types';
 import { useToast } from '../context/ToastContext';
 
 interface AuthPageProps {
@@ -63,6 +64,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
   // Provider-only fields
   const [providerBio, setProviderBio] = useState('');
+  const [tradeCategory, setTradeCategory] = useState<TradeCategory | ''>('');
+  const [providerLocation, setProviderLocation] = useState<LocationHierarchy>({
+    country: 'Tanzania',
+    region: 'Dar es Salaam',
+    district: 'Kinondoni',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,9 +92,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         error('Please provide your phone number.');
         return;
       }
-      if (accountType === 'provider' && !businessName) {
-        error('Please provide your business name.');
-        return;
+      if (accountType === 'provider') {
+        if (!businessName) {
+          error('Please provide your business name.');
+          return;
+        }
+        if (!tradeCategory) {
+          error('Please select your Trade Category.');
+          return;
+        }
       }
       const ok = await signup({
         name,
@@ -98,12 +111,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         buyerType: accountType === 'buyer' ? buyerType : undefined,
         businessName: accountType === 'provider' ? businessName || name : undefined,
         providerType: accountType === 'provider' ? providerType : undefined,
+        tradeCategory: accountType === 'provider' ? tradeCategory : undefined,
         description: accountType === 'provider' ? providerBio : undefined,
         availabilityStatus: accountType === 'provider' && isExpertProvider(providerType) ? availabilityStatus : undefined,
         institutionName: accountType === 'buyer' && buyerType === 'client' ? institutionName : undefined,
         projectName: accountType === 'buyer' && buyerType === 'client' ? projectName : undefined,
         projectDescription: accountType === 'buyer' && buyerType === 'client' ? projectDescription : undefined,
-        location: { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
+        location: accountType === 'provider' ? providerLocation : { country: 'Tanzania', region: 'Dar es Salaam', district: 'Kinondoni' },
       });
 
       if (ok) {
@@ -303,6 +317,36 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       <option value="Technician">Certified Electrician / Plumber</option>
                       <option value="Casual Labourer">Mason / Tiler / Site Labour</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      Trade Category *
+                    </label>
+                    <select
+                      value={tradeCategory}
+                      onChange={(e) => setTradeCategory(e.target.value as TradeCategory)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
+                      required
+                    >
+                      <option value="">Select Trade Category...</option>
+                      {TRADE_CATEGORY_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      Business Location (Region & District) *
+                    </label>
+                    <LocationSelector
+                      value={providerLocation}
+                      onChange={(loc) => setProviderLocation(loc)}
+                      compact={true}
+                    />
                   </div>
 
                   {/* Availability Status for Expert Providers */}

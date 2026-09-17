@@ -89,3 +89,33 @@ export const ProviderTypeBadge: React.FC<{ type: ProviderType | string; size?: '
     </Badge>
   );
 };
+
+export const TradeCategoryBadge: React.FC<{ category?: string; size?: 'xs' | 'sm' | 'md' }> = ({
+  category,
+  size = 'sm',
+}) => {
+  if (!category) return null;
+
+  const labels: Record<string, string> = {
+    registered_civil_building_contractor: 'Civil & Building Contractor',
+    registered_em_contractor: 'E&M Contractor',
+    specialized_works: 'Specialized Works',
+    general_supply_services: 'General Supply & Services',
+    construction_company: 'Construction Company',
+    specialized_material_supply: 'Specialized Material Supply',
+  };
+
+  const displayText = labels[category] || category.replace(/_/g, ' ');
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full font-semibold bg-indigo-50 border border-indigo-200 text-indigo-800 ${
+        size === 'xs' ? 'px-2 py-0.5 text-[10px]' : size === 'sm' ? 'px-2.5 py-0.5 text-xs' : 'px-3 py-1 text-sm'
+      }`}
+      title={`Trade Category: ${displayText}`}
+    >
+      <Sparkles className={size === 'xs' ? 'w-2.5 h-2.5 text-indigo-500' : 'w-3 h-3 text-indigo-500'} />
+      <span>{displayText}</span>
+    </span>
+  );
+};

@@ -10,26 +10,29 @@ function mapBackendProvider(p: any): Provider {
   // Full name used during registration
   const registeredFullName =
     user.full_name ||
+    user.fullName ||
     user.name ||
     p.full_name ||
     p.name ||
-    null;
+    '';
 
   const businessName = p.business_name || p.businessName || user.business_name || '';
 
   return {
     id: p.user_id || p.id || user.id || `prov-${Date.now()}`,
     name: registeredFullName || businessName || 'Supplier',
+    fullName: registeredFullName,
     businessName: businessName,
     providerType: (p.provider_type as ProviderType) || p.providerType || user.provider_type || 'Retailer/Supplier',
+    tradeCategory: p.trade_category || p.tradeCategory || user.trade_category || user.tradeCategory || undefined,
     logo: p.logo || p.logo_url || user.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=200&q=80',
     logoFileId: p.logo_file_id || p.logoFileId || user.logo_file_id,
     coverImage: p.coverImage || 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80',
     phone: user.phone || p.phone || '+255 700 000 000',
     whatsapp: p.whatsapp || user.phone || p.phone || '255700000000',
     email: user.email || p.email || 'info@provider.tz',
-    location: p.locations || p.location || user.location || { country: 'Tanzania', region: 'Dar es Salaam' },
-    address: p.address || 'Dar es Salaam, Tanzania',
+    location: p.locations || p.location || user.location || { country: 'Tanzania', region: '' },
+    address: p.address || '',
     bio: p.description || p.bio || user.description || 'Quality construction material supplier in Tanzania.',
     isVerified: p.is_verified ?? p.isVerified ?? false,
     verificationDate: p.verificationDate || p.updated_at,
@@ -221,3 +224,34 @@ export async function updateProviderBio(bio: string): Promise<Provider | null> {
   }
   return null;
 }
+
+export async function updateProviderTradeCategory(tradeCategory: string): Promise<Provider | null> {
+  try {
+    const res = await apiClient.put<{ profile: any }>('/api/provider/profile/trade-category', {
+      tradeCategory,
+    });
+    if (res?.profile) {
+      return mapBackendProvider(res.profile);
+    }
+  } catch (err) {
+    console.warn('Failed to update trade category via API:', err);
+    throw err;
+  }
+  return null;
+}
+
+export async function updateProviderLocation(location: any): Promise<Provider | null> {
+  try {
+    const res = await apiClient.put<{ profile: any }>('/api/provider/profile/location', {
+      location,
+    });
+    if (res?.profile) {
+      return mapBackendProvider(res.profile);
+    }
+  } catch (err) {
+    console.warn('Failed to update provider location via API:', err);
+    throw err;
+  }
+  return null;
+}
+

@@ -74,6 +74,39 @@ router.put('/profile/bio', authenticate, authorize(UserRole.PROVIDER), asyncHand
   res.json({ status: 'success', message: 'Provider profile bio updated', data: { profile: updated } });
 }));
 
+router.put('/profile/trade-category', authenticate, authorize(UserRole.PROVIDER), asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.user) throw new AppError(401, 'Unauthorized');
+
+  const { tradeCategory, trade_category } = req.body;
+  const category = tradeCategory || trade_category;
+  if (!category) {
+    throw new AppError(400, 'tradeCategory is required');
+  }
+
+  const updated = await providerProfileService.updateProviderTradeCategory(req.user.userId, category);
+  res.json({ status: 'success', message: 'Trade category updated', data: { profile: updated } });
+}));
+
+router.put('/profile/location', authenticate, authorize(UserRole.PROVIDER), asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.user) throw new AppError(401, 'Unauthorized');
+
+  const { locationId, location } = req.body;
+  let finalLocationId = locationId;
+
+  if (!finalLocationId && location) {
+    const { LocationService } = await import('../services/locationService');
+    const locationService = new LocationService();
+    finalLocationId = await locationService.resolveLocationId(location);
+  }
+
+  if (!finalLocationId) {
+    throw new AppError(400, 'location or locationId is required');
+  }
+
+  const updated = await providerProfileService.updateProviderLocation(req.user.userId, finalLocationId);
+  res.json({ status: 'success', message: 'Provider location updated', data: { profile: updated } });
+}));
+
 // Public route to get a single provider profile for shopfront
 router.get('/:providerId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const { providerId } = req.params;

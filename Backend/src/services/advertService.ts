@@ -97,6 +97,8 @@ export class AdvertService {
     linkUrl?: string;
     phoneNumber?: string;
     email?: string;
+    contactPhone?: string;
+    contactEmail?: string;
     startTime?: string;
     endTime?: string;
     isActive: boolean;
@@ -106,7 +108,10 @@ export class AdvertService {
     endsAt: string;
     providerId?: string;
   }, adminId: string) {
-    const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
+    const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, contactPhone, contactEmail, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
+
+    const finalContactPhone = contactPhone || phoneNumber || null;
+    const finalContactEmail = contactEmail || email || null;
 
     const { data: advert, error } = await supabase
       .from('adverts')
@@ -118,8 +123,10 @@ export class AdvertService {
         image_url: imageUrl,
         image_file_id: imageFileId || null,
         link_url: linkUrl || null,
-        phone_number: phoneNumber || null,
-        email: email || null,
+        phone_number: finalContactPhone,
+        email: finalContactEmail,
+        contact_phone: finalContactPhone,
+        contact_email: finalContactEmail,
         start_time: normalizeDbTime(startTime),
         end_time: normalizeDbTime(endTime),
         is_active: isActive,
@@ -152,6 +159,8 @@ export class AdvertService {
     linkUrl?: string;
     phoneNumber?: string;
     email?: string;
+    contactPhone?: string;
+    contactEmail?: string;
     startTime?: string;
     endTime?: string;
     isActive?: boolean;
@@ -161,7 +170,7 @@ export class AdvertService {
     endsAt?: string;
     providerId?: string;
   }, adminId: string) {
-    const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
+    const { title, subtitle, description, imageUrl, imageFileId, linkUrl, phoneNumber, email, contactPhone, contactEmail, startTime, endTime, isActive, isPaid, priceAmount, startsAt, endsAt, providerId } = data;
 
     const { data: existing, error: fetchError } = await supabase
       .from('adverts')
@@ -181,8 +190,16 @@ export class AdvertService {
     if (imageUrl !== undefined) updatePayload.image_url = imageUrl;
     if (imageFileId !== undefined) updatePayload.image_file_id = imageFileId;
     if (linkUrl !== undefined) updatePayload.link_url = linkUrl;
-    if (phoneNumber !== undefined) updatePayload.phone_number = phoneNumber;
-    if (email !== undefined) updatePayload.email = email;
+    if (phoneNumber !== undefined || contactPhone !== undefined) {
+      const p = contactPhone !== undefined ? contactPhone : phoneNumber;
+      updatePayload.phone_number = p || null;
+      updatePayload.contact_phone = p || null;
+    }
+    if (email !== undefined || contactEmail !== undefined) {
+      const em = contactEmail !== undefined ? contactEmail : email;
+      updatePayload.email = em || null;
+      updatePayload.contact_email = em || null;
+    }
     if (startTime !== undefined) updatePayload.start_time = normalizeDbTime(startTime);
     if (endTime !== undefined) updatePayload.end_time = normalizeDbTime(endTime);
     if (isActive !== undefined) updatePayload.is_active = isActive;
