@@ -21,6 +21,13 @@ function formatTime(t?: string): string {
   return `${h12}:${m} ${ampm}`;
 }
 
+/** Format a date string like '2026-09-17' into 'Sep 17' display */
+function formatDate(d?: string): string {
+  if (!d) return '';
+  const date = new Date(d);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export const AdvertBanner: React.FC<AdvertBannerProps> = ({
   advert,
   onNavigate,
@@ -42,12 +49,14 @@ export const AdvertBanner: React.FC<AdvertBannerProps> = ({
   };
 
   const hasHours = !!(advert.startTime || advert.endTime);
+  const startDate = formatDate(advert.startDate);
+  const endDate = formatDate(advert.endDate);
   const hoursLabel =
     advert.startTime && advert.endTime
-      ? `${formatTime(advert.startTime)} – ${formatTime(advert.endTime)}`
+      ? `${startDate} ${formatTime(advert.startTime)} – ${endDate} ${formatTime(advert.endTime)}`
       : advert.startTime
-      ? `Opens ${formatTime(advert.startTime)}`
-      : `Closes ${formatTime(advert.endTime)}`;
+      ? `Opens ${startDate} ${formatTime(advert.startTime)}`
+      : `Closes ${endDate} ${formatTime(advert.endTime)}`;
 
   if (compact) {
     return (
