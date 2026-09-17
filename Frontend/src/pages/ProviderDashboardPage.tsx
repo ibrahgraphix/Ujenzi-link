@@ -50,11 +50,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   onSelectListing,
   onSelectProvider,
 }) => {
-  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'inquiries'>('listings');
   const { user, favorites, toggleFavorite } = useAuth();
   const { success, error } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'inquiries'>(initialTab || 'listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'inquiries'>('listings');
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [savedListings, setSavedListings] = useState<Listing[]>([]);
