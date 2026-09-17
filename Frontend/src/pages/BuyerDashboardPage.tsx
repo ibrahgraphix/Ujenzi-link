@@ -154,14 +154,24 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
           </div>
         </div>
 
-        <Button
-          variant="white"
-          size="sm"
-          onClick={() => onNavigate('listings')}
-          rightIcon={<ArrowRight className="w-4 h-4" />}
-        >
-          Explore Building Materials
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="white"
+            size="sm"
+            onClick={() => onNavigate('listings')}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
+          >
+            Explore Building Materials
+          </Button>
+          <Button
+            variant="white"
+            size="sm"
+            onClick={() => onNavigate('providers')}
+            rightIcon={<ArrowRight className="w-4 h-4" />}
+          >
+            Explore Sellers
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
