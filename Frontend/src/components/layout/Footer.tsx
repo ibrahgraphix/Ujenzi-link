@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Phone, Mail, MapPin, ShieldCheck, User } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, ShieldCheck, User, PlayCircle } from 'lucide-react';
 import { getCategories } from '../../services/categoriesService';
 import { Category } from '../../types';
 
@@ -176,6 +176,37 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                   planmoja2026@gmail.com
                 </a>
               </div>
+            </div>
+
+            {/* Video Tutorials */}
+            <div className="mt-4 pt-4 border-t border-slate-800 space-y-2">
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                Video Tutorials
+              </span>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <a
+                    href="https://drive.google.com/file/d/1UnsRtHhZJxqW98Z04r2FVBoZkMQTJ0-J/view?usp=drive_link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#2E86D8] text-slate-300 flex items-center gap-1.5 transition-colors group"
+                  >
+                    <PlayCircle className="w-3.5 h-3.5 text-[#2E86D8] shrink-0 group-hover:scale-110 transition-transform" />
+                    <span>Customer/Client Tutorial</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://drive.google.com/file/d/1t3u9-RhoHlazXEVBwKBNR-2UZ99RluMd/view?usp=drive_link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#8B5E3C] text-slate-300 flex items-center gap-1.5 transition-colors group"
+                  >
+                    <PlayCircle className="w-3.5 h-3.5 text-[#8B5E3C] shrink-0 group-hover:scale-110 transition-transform" />
+                    <span>Seller Tutorial</span>
+                  </a>
+                </li>
+              </ul>
             </div>
 
             <div className="mt-4 pt-4 border-t border-slate-800 space-y-1 text-[11px]">
