@@ -192,12 +192,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                     className="hover:text-[#2E86D8] text-slate-300 flex items-center gap-1.5 transition-colors group"
                   >
                     <PlayCircle className="w-3.5 h-3.5 text-[#2E86D8] shrink-0 group-hover:scale-110 transition-transform" />
-                    <span>Customer/Client Tutorial</span>
+                    <span>Client Tutorial</span>
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://drive.google.com/file/d/1t3u9-RhoHlazXEVBwKBNR-2UZ99RluMd/view?usp=drive_link"
+                    href="https://drive.google.com/file/d/1UnsRtHhZJxqW98Z04r2FVBoZkMQTJ0-J/view?usp=drive_link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-[#2E86D8] text-slate-300 flex items-center gap-1.5 transition-colors group"
+                  >
+                    <PlayCircle className="w-3.5 h-3.5 text-[#2E86D8] shrink-0 group-hover:scale-110 transition-transform" />
+                    <span>Customer Tutorial</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://drive.google.com/file/d/1GnvOIl51Xph1Bq9XM-iGyzXKi9KdXrNo/view?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-[#8B5E3C] text-slate-300 flex items-center gap-1.5 transition-colors group"
