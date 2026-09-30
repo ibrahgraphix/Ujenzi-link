@@ -186,7 +186,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <ul className="space-y-2 text-xs">
                 <li>
                   <a
-                    href="https://drive.google.com/file/d/1UnsRtHhZJxqW98Z04r2FVBoZkMQTJ0-J/view?usp=drive_link"
+                    href="https://drive.google.com/file/d/1Q9UDUjpYc5sVTiTvTp7sRUxIDTAZ0h0V/view?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-[#2E86D8] text-slate-300 flex items-center gap-1.5 transition-colors group"
@@ -197,7 +197,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </li>
                 <li>
                   <a
-                    href="https://drive.google.com/file/d/1UnsRtHhZJxqW98Z04r2FVBoZkMQTJ0-J/view?usp=drive_link"
+                    href="https://drive.google.com/file/d/1GnvOIl51Xph1Bq9XM-iGyzXKi9KdXrNo/view?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-[#2E86D8] text-slate-300 flex items-center gap-1.5 transition-colors group"
@@ -208,7 +208,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </li>
                 <li>
                   <a
-                    href="https://drive.google.com/file/d/1GnvOIl51Xph1Bq9XM-iGyzXKi9KdXrNo/view?usp=sharing"
+                    href="https://drive.google.com/file/d/1t3u9-RhoHlazXEVBwKBNR-2UZ99RluMd/view?usp=sharing"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-[#8B5E3C] text-slate-300 flex items-center gap-1.5 transition-colors group"
