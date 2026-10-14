@@ -1,28 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.ujenzi-link.com"
-        }
-      ],
-      "destination": "https://ujenzi-link.com/",
-      "permanent": true
-    },
-    {
-      "source": "/:path+",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.ujenzi-link.com"
-        }
-      ],
-      "destination": "https://ujenzi-link.com/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
@@ -41,4 +17,4 @@
       "destination": "/index.html"
     }
   ]
-}
+}
