@@ -1,7 +1,7 @@
 {
   "redirects": [
     {
-      "source": "/:path((?!assets).*)",
+      "source": "/:path*",
       "has": [
         {
           "type": "host",
@@ -9,14 +9,10 @@
         }
       ],
       "destination": "https://ujenzi-link.com/:path*",
-      "statusCode": 301
+      "permanent": true
     }
   ],
   "rewrites": [
-    {
-      "source": "/robots.txt",
-      "destination": "/robots.txt"
-    },
     {
       "source": "/sitemap.xml",
       "destination": "https://ujenzilink-backend.vercel.app/sitemap.xml"
