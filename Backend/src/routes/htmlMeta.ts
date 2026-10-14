@@ -7,7 +7,7 @@ const listingService = new ListingService();
 const providerService = new AdminProviderService();
 
 // Base frontend URL (update to your actual frontend deployment)
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ujenzi-link.com';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ujenzilink.vercel.app';
 
 /**
  * GET /html-meta/listings/:id

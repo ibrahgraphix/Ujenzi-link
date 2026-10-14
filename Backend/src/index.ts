@@ -30,6 +30,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://ujenzi-link.com',
   'https://www.ujenzi-link.com',
+  'https://ujenzilink.vercel.app',
   config.frontendUrl.replace(/\/+$/, ''), // Vercel preview/staging URL (set via FRONTEND_URL env var)
 ];
 
@@ -42,7 +43,8 @@ const corsOptions: cors.CorsOptions = {
 
     if (
       allowedOrigins.includes(normalizedOrigin) ||
-      /^https:\/\/ujenzi-link.*\.vercel\.app$/.test(normalizedOrigin)
+      /^https:\/\/ujenzi-link.*\.vercel\.app$/.test(normalizedOrigin) ||
+      /^https:\/\/ujenzilink\.vercel\.app$/.test(normalizedOrigin)
     ) {
       return callback(null, true);
     }

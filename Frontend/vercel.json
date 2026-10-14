@@ -19,15 +19,15 @@
     },
     {
       "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
+      "destination": "https://ujenzilink-backend.vercel.app/sitemap.xml"
     },
     {
       "source": "/listings/:id",
-      "destination": "https://ujenzi-link-backend.vercel.app/html-meta/listings/:id"
+      "destination": "https://ujenzilink-backend.vercel.app/html-meta/listings/:id"
     },
     {
       "source": "/providers/:id",
-      "destination": "https://ujenzi-link-backend.vercel.app/html-meta/providers/:id"
+      "destination": "https://ujenzilink-backend.vercel.app/html-meta/providers/:id"
     },
     {
       "source": "/(.*)",
