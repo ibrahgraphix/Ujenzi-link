@@ -70,6 +70,7 @@ export interface StoredImage {
 
 export interface Listing {
   id: string;
+  slug?: string;
   title: string;
   category: string;
   categoryId?: string;
@@ -98,6 +99,7 @@ export interface Listing {
 
 export interface Provider {
   id: string;
+  slug?: string;
   name: string;
   fullName?: string;
   businessName: string;

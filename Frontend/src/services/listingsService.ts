@@ -243,7 +243,7 @@ export async function getListingById(id: string): Promise<Listing | null> {
   }
 
   const all = await getListings();
-  return all.find((l) => l.id === id) || null;
+  return all.find((l) => l.id === id || l.id.toLowerCase().startsWith(id.toLowerCase())) || null;
 }
 
 export async function saveListing(

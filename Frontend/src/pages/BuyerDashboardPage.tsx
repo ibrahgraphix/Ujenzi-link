@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { Listing, Inquiry } from '../types';
 import { getInquiries } from '../services/inquiriesService';
 import { getListings } from '../services/listingsService';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { ListingCard } from '../components/common/ListingCard';
@@ -23,26 +24,19 @@ import { EmptyState } from '../components/common/EmptyState';
 import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 import apiClient from '../services/apiClient';
+import { useInquiry } from '../App';
 
-interface BuyerDashboardPageProps {
-  initialTab?: string;
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-  onSelectListing: (listing: Listing) => void;
-  onOpenInquiry: (listing: Listing) => void;
-}
-
-export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
-  initialTab = 'favorites',
-  onNavigate,
-  onSelectListing,
-  onOpenInquiry,
-}) => {
+export const BuyerDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { open: openInquiry } = useInquiry();
   const { user, favorites, toggleFavorite, updateUser } = useAuth();
   const { success, error } = useToast();
 
   const isClient = user?.buyerType === 'client';
 
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const activeTab = searchParams.get('tab') || 'favorites';
+  const setActiveTab = (tab: string) => setSearchParams({ tab }, { replace: true });
   const [favoriteListings, setFavoriteListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,7 +160,7 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
           <Button
             variant="white"
             size="sm"
-            onClick={() => onNavigate('listings')}
+            onClick={() => navigate('/materials')}
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
             Explore Building Materials
@@ -174,7 +168,7 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
           <Button
             variant="white"
             size="sm"
-            onClick={() => onNavigate('providers')}
+            onClick={() => navigate('/suppliers')}
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
             Explore Sellers
@@ -211,7 +205,7 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
               title="No saved building materials yet"
               description="Browse the marketplace and click the heart icon on any listing to save it here."
               actionText="Browse Marketplace"
-              onAction={() => onNavigate('listings')}
+              onAction={() => navigate('/materials')}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -219,8 +213,8 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
                 <div key={listing.id} className="relative group">
                   <ListingCard
                     listing={listing}
-                    onSelect={onSelectListing}
-                    onContactSupplier={onOpenInquiry}
+                    onSelect={(l) => navigate(`/listings/${l.slug || l.id}`)}
+                    onContactSupplier={(l) => openInquiry(l)}
                   />
                   <button
                     onClick={(e) => handleRemoveFavorite(listing.id, e)}
@@ -244,7 +238,7 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
               title="No inquiries sent yet"
               description="When you request a quotation or material delivery inquiry, your conversation logs will appear here."
               actionText="Find Suppliers"
-              onAction={() => onNavigate('listings')}
+              onAction={() => navigate('/materials')}
             />
           ) : (
             <div className="space-y-3">

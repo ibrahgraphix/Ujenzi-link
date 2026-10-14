@@ -1,12 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Home, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/common/Button';
 
-interface NotFoundPageProps {
-  onNavigate: (page: string) => void;
-}
-
-export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
+export const NotFoundPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <>
       <meta name="robots" content="noindex" />
@@ -23,7 +21,7 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
               variant="primary"
-              onClick={() => onNavigate('home')}
+              onClick={() => navigate('/')}
               leftIcon={<Home className="w-4 h-4" />}
             >
               Back to Home

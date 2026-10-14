@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Building2,
   Lock,
@@ -21,22 +22,33 @@ import { Seo } from '../components/common/Seo';
 import { AccountType, ProviderType, AvailabilityStatus, LocationHierarchy, TradeCategory, TRADE_CATEGORY_OPTIONS } from '../types';
 import { useToast } from '../context/ToastContext';
 
-interface AuthPageProps {
-  initialMode?: 'login' | 'signup';
-  initialType?: AccountType;
-  onSuccess: (loggedInUser?: any) => void;
-}
-
-export const AuthPage: React.FC<AuthPageProps> = ({
-  initialMode = 'login',
-  initialType = 'buyer',
-  onSuccess,
-}) => {
+export const AuthPage: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { login, signup } = useAuth();
   const { success, error } = useToast();
 
-  const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
-  const [accountType, setAccountType] = useState<AccountType>(initialType);
+  // Determine initial mode from URL path
+  const isSupplierSignup = location.pathname === '/signup/supplier';
+  const isSignup = location.pathname.startsWith('/signup') || isSupplierSignup;
+
+  const [mode, setMode] = useState<'login' | 'signup'>(isSignup ? 'signup' : 'login');
+  const [accountType, setAccountType] = useState<AccountType>(isSupplierSignup ? 'provider' : 'buyer');
+
+  const handlePostAuthRedirect = (user: any) => {
+    const from = (location.state as any)?.from?.pathname;
+    if (user?.accountType === 'admin') {
+      if (user?.mustChangePassword) {
+        navigate('/set-new-password', { replace: true });
+      } else {
+        navigate(from || '/admin', { replace: true });
+      }
+    } else if (user?.accountType === 'provider') {
+      navigate(from || '/provider/dashboard', { replace: true });
+    } else {
+      navigate(from || '/', { replace: true });
+    }
+  };
 
   // Form states
   const [email, setEmail] = useState('');
@@ -89,7 +101,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     if (mode === 'login') {
       const loggedUser = await login(email, password);
       if (loggedUser) {
-        onSuccess(loggedUser);
+        handlePostAuthRedirect(loggedUser);
       }
     } else {
       if (!name) {
@@ -136,7 +148,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
       if (ok) {
         success('Account created successfully! Welcome to Ujenzi Link.');
-        onSuccess();
+        handlePostAuthRedirect(null);
       }
     }
   };

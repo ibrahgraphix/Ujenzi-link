@@ -14,6 +14,7 @@ import {
   Share2,
   PlusCircle,
 } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Provider, Listing, Review, AvailabilityStatus, ProviderType } from '../types';
 import { getProviderById } from '../services/providersService';
 import { getListings } from '../services/listingsService';
@@ -31,31 +32,23 @@ import { useToast } from '../context/ToastContext';
 import { logoImageUrl } from '../utils/imagekit';
 import { trackSiteVisit } from '../services/adminAnalyticsService';
 import { generateProviderAltText } from '../utils/altText';
-import { generateProviderSlug, getShortId, createSlugWithId } from '../utils/slug';
+import { generateProviderSlug, getShortId, createSlugWithId, extractIdFromSlug } from '../utils/slug';
+import { useInquiry } from '../App';
 
-interface ProviderProfilePageProps {
-  providerId: string;
-  initialProvider?: Provider | null;
-  onBack: () => void;
-  onSelectListing: (listing: Listing) => void;
-  onOpenInquiry: (listing?: Listing, provider?: Provider) => void;
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-}
-
-export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
-  providerId,
-  initialProvider,
-  onBack,
-  onSelectListing,
-  onOpenInquiry,
-  onNavigate,
-}) => {
+export const ProviderProfilePage: React.FC = () => {
+  const { slugId } = useParams<{ slugId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { open: openInquiry } = useInquiry();
   const { success, error } = useToast();
 
-  const [provider, setProvider] = useState<Provider | null>(initialProvider || null);
+  const providerId: string =
+    (location.state as any)?.providerId || extractIdFromSlug(slugId || '') || (slugId || '');
+
+  const [provider, setProvider] = useState<Provider | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(!initialProvider);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Review Modal state
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -109,7 +102,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
         />
         <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
           <h2 className="text-2xl font-bold text-slate-900">Provider Profile Not Found</h2>
-          <Button variant="primary" onClick={onBack}>
+          <Button variant="primary" onClick={() => navigate(-1)}>
             Back
           </Button>
         </div>
@@ -249,8 +242,8 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
       />
       <Breadcrumb
         items={[
-          { label: 'Home', onClick: () => onNavigate('home') },
-          { label: 'Suppliers & Contractors', onClick: () => onNavigate('providers') },
+          { label: 'Home', onClick: () => navigate('/') },
+          { label: 'Suppliers & Contractors', onClick: () => navigate('/suppliers') },
           { label: provider.fullName || provider.name },
         ]}
       />
@@ -258,7 +251,7 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
       {/* Back button */}
       <div>
         <button
-          onClick={onBack}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#1B3A6B] bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -430,8 +423,8 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
               <ListingCard
                 key={listing.id}
                 listing={listing}
-                onSelect={onSelectListing}
-                onContactSupplier={(l) => onOpenInquiry(l, provider)}
+                onSelect={(l) => navigate(`/listings/${l.slug || l.id}`)}
+                onContactSupplier={(l) => openInquiry(l, provider)}
               />
             ))}
           </div>

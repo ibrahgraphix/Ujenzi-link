@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu,
   X,
-  Building2,
   Search,
   PlusCircle,
-  User,
   LogOut,
   LayoutDashboard,
-  ShieldCheck,
   HardHat,
   ChevronDown,
   Heart,
@@ -17,32 +15,33 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../common/Button';
 
-interface NavbarProps {
-  currentPage: string;
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-  onOpenSearch?: () => void;
-}
-
-export const Navbar: React.FC<NavbarProps> = ({
-  currentPage,
-  onNavigate,
-  onOpenSearch,
-}) => {
+export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout, favorites } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
-  const handleNav = (page: string, params?: Record<string, any>) => {
-    onNavigate(page, params);
+  const closeMenus = () => {
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
   };
 
-  const getDashboardTarget = () => {
-    if (!user) return 'auth';
-    if (user.accountType === 'admin') return 'admin-dashboard';
-    if (user.accountType === 'provider') return 'provider-dashboard';
-    return 'buyer-dashboard';
+  const getDashboardPath = () => {
+    if (!user) return '/login';
+    if (user.accountType === 'admin') return '/admin';
+    if (user.accountType === 'provider') return '/provider/dashboard';
+    return '/dashboard';
+  };
+
+  // Active link style helper (used for non-NavLink buttons)
+  const navClass = (path: string) => {
+    const isActive = location.pathname === path || location.pathname.startsWith(path + '/');
+    return `px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+      isActive
+        ? 'text-[#1B3A6B] bg-slate-100'
+        : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
+    }`;
   };
 
   return (
@@ -55,13 +54,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden sm:inline text-slate-200">"We connect, we care!"</span>
             <span className="text-slate-300 hidden md:inline">| Direct Construction Marketplace</span>
           </div>
-
           <div className="flex items-center gap-3">
             <a
               href="mailto:ujenzilink@gmail.com"
               className="text-slate-300 hover:text-amber-300 transition-colors inline-flex items-center gap-1 text-[11px]"
             >
-              <span>Need help?: contact - <span className="text-amber-300 font-semibold hover:underline">ujenzilink@gmail.com</span></span>
+              <span>
+                Need help?: contact -{' '}
+                <span className="text-amber-300 font-semibold hover:underline">
+                  ujenzilink@gmail.com
+                </span>
+              </span>
             </a>
           </div>
         </div>
@@ -71,8 +74,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 sm:h-24 lg:h-26">
           {/* Brand Logo */}
-          <div
-            onClick={() => handleNav('home')}
+          <Link
+            to="/"
+            onClick={closeMenus}
             className="flex items-center gap-3 sm:gap-4 cursor-pointer group py-1"
           >
             <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-2xl overflow-hidden shadow-lg border border-slate-200/80 group-hover:scale-105 transition-transform bg-[#0B305C] shrink-0 flex items-center justify-center">
@@ -95,72 +99,42 @@ export const Navbar: React.FC<NavbarProps> = ({
                 "We connect, we care!"
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
-            <button
-              onClick={() => handleNav('home')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'home'
-                  ? 'text-[#1B3A6B] bg-slate-100'
-                  : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-                }`}
-            >
+            <Link to="/" className={navClass('/')} onClick={closeMenus}>
               Home
-            </button>
-            <button
-              onClick={() => handleNav('listings')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'listings'
-                  ? 'text-[#1B3A6B] bg-slate-100'
-                  : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-                }`}
-            >
-              Materials & Services
-            </button>
-            <button
-              onClick={() => handleNav('providers')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'providers'
-                  ? 'text-[#1B3A6B] bg-slate-100'
-                  : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-                }`}
-            >
-              Suppliers & Contractors
-            </button>
-            <button
-              onClick={() => handleNav('about')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'about'
-                  ? 'text-[#1B3A6B] bg-slate-100'
-                  : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-                }`}
-            >
+            </Link>
+            <Link to="/materials" className={navClass('/materials')} onClick={closeMenus}>
+              Materials &amp; Services
+            </Link>
+            <Link to="/suppliers" className={navClass('/suppliers')} onClick={closeMenus}>
+              Suppliers &amp; Contractors
+            </Link>
+            <Link to="/about" className={navClass('/about')} onClick={closeMenus}>
               About Us
-            </button>
-            <button
-              onClick={() => handleNav('contact')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${currentPage === 'contact'
-                  ? 'text-[#1B3A6B] bg-slate-100'
-                  : 'text-slate-600 hover:text-[#1B3A6B] hover:bg-slate-50'
-                }`}
-            >
+            </Link>
+            <Link to="/contact" className={navClass('/contact')} onClick={closeMenus}>
               Contact
-            </button>
+            </Link>
           </nav>
 
           {/* Right Action Icons & Auth */}
           <div className="hidden sm:flex items-center gap-3">
             {/* Quick Search trigger */}
-            <button
-              onClick={() => handleNav('listings')}
+            <Link
+              to="/materials"
               className="p-2.5 rounded-xl text-slate-500 hover:text-[#1B3A6B] hover:bg-slate-100 transition-colors"
               title="Search marketplace"
             >
               <Search className="w-5 h-5" />
-            </button>
+            </Link>
 
             {/* Saved favorites shortcut for buyers */}
             {user?.accountType === 'buyer' && (
-              <button
-                onClick={() => handleNav('buyer-dashboard', { tab: 'favorites' })}
+              <Link
+                to="/dashboard?tab=favorites"
                 className="relative p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                 title="Saved Listings"
               >
@@ -170,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {favorites.length}
                   </span>
                 )}
-              </button>
+              </Link>
             )}
 
             {/* Post Listing CTA / Register CTA */}
@@ -178,7 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => handleNav('provider-dashboard', { action: 'add-listing' })}
+                onClick={() => { navigate('/provider/dashboard?action=add-listing'); closeMenus(); }}
                 leftIcon={<PlusCircle className="w-4 h-4" />}
               >
                 Post Listing
@@ -187,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => handleNav('admin-dashboard')}
+                onClick={() => { navigate('/admin'); closeMenus(); }}
                 leftIcon={<LayoutDashboard className="w-4 h-4" />}
               >
                 Admin Control
@@ -196,7 +170,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="bronze"
                 size="sm"
-                onClick={() => handleNav('auth', { initialType: 'provider' })}
+                onClick={() => { navigate('/signup/supplier'); closeMenus(); }}
                 leftIcon={<Store className="w-4 h-4" />}
               >
                 Register as Supplier
@@ -238,45 +212,49 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <div className="text-[11px] text-slate-500 truncate">{user.email}</div>
                         <div className="mt-1">
                           <span className="text-[10px] font-semibold bg-blue-50 text-[#1B3A6B] px-2 py-0.5 rounded-full border border-blue-200">
-                            {user.accountType === 'provider' ? user.providerType : user.accountType === 'admin' ? 'System Admin' : user.buyerRole}
+                            {user.accountType === 'provider'
+                              ? user.providerType
+                              : user.accountType === 'admin'
+                              ? 'System Admin'
+                              : user.buyerRole}
                           </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="py-1">
-                      <button
-                        onClick={() => handleNav(getDashboardTarget())}
+                      <Link
+                        to={getDashboardPath()}
                         className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
                       >
                         <LayoutDashboard className="w-4 h-4 text-[#2E86D8]" />
                         <span>My Dashboard</span>
-                      </button>
+                      </Link>
 
                       {user.accountType === 'buyer' && (
-                        <button
-                          onClick={() => handleNav('buyer-dashboard', { tab: 'inquiries' })}
+                        <Link
+                          to="/dashboard?tab=inquiries"
                           className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
                         >
                           <HardHat className="w-4 h-4 text-[#8B5E3C]" />
-                          <span>Sent Quotes & Inquiries</span>
-                        </button>
+                          <span>Sent Quotes &amp; Inquiries</span>
+                        </Link>
                       )}
 
                       {user.accountType === 'provider' && (
-                        <button
-                          onClick={() => handleNav('provider-dashboard', { tab: 'listings' })}
+                        <Link
+                          to="/provider/dashboard?tab=listings"
                           className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
                         >
                           <Store className="w-4 h-4 text-emerald-600" />
                           <span>Manage Catalog</span>
-                        </button>
+                        </Link>
                       )}
                     </div>
 
                     <div className="pt-1 border-t border-slate-100">
                       <button
-                        onClick={logout}
+                        onClick={() => { logout(); closeMenus(); }}
                         className="w-full text-left px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5"
                       >
                         <LogOut className="w-4 h-4" />
@@ -288,18 +266,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNav('auth', { mode: 'login' })}
-                >
+                <Button variant="outline" size="sm" onClick={() => navigate('/login')}>
                   Sign In
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleNav('auth', { mode: 'signup' })}
-                >
+                <Button variant="primary" size="sm" onClick={() => navigate('/signup')}>
                   Join Free
                 </Button>
               </div>
@@ -308,13 +278,9 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Mobile hamburger menu button */}
           <div className="flex items-center gap-2 sm:hidden">
-            <button
-              onClick={() => handleNav('listings')}
-              className="p-2 text-slate-600 hover:text-[#1B3A6B]"
-              aria-label="Search"
-            >
+            <Link to="/materials" className="p-2 text-slate-600 hover:text-[#1B3A6B]" aria-label="Search">
               <Search className="w-5 h-5" />
-            </button>
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 text-slate-700 hover:text-[#1B3A6B] hover:bg-slate-100 rounded-xl"
@@ -329,7 +295,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-3 shadow-xl max-h-[80vh] overflow-y-auto">
-          {/* User info if logged in */}
           {user ? (
             <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-200">
               <div className="flex items-center gap-3">
@@ -341,29 +306,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="text-xs text-[#2E86D8] font-semibold uppercase">{user.accountType}</div>
                 </div>
               </div>
-              <button
-                onClick={() => handleNav(getDashboardTarget())}
+              <Link
+                to={getDashboardPath()}
+                onClick={closeMenus}
                 className="px-3 py-1.5 bg-[#1B3A6B] text-white text-xs font-semibold rounded-lg"
               >
                 Dashboard
-              </button>
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2 pb-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleNav('auth', { mode: 'login' })}
-                fullWidth
-              >
+              <Button variant="outline" size="sm" onClick={() => { navigate('/login'); closeMenus(); }} fullWidth>
                 Sign In
               </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => handleNav('auth', { mode: 'signup' })}
-                fullWidth
-              >
+              <Button variant="primary" size="sm" onClick={() => { navigate('/signup'); closeMenus(); }} fullWidth>
                 Register
               </Button>
             </div>
@@ -371,37 +327,22 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Links */}
           <div className="space-y-1 pt-1">
-            <button
-              onClick={() => handleNav('home')}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
+            <Link to="/" onClick={closeMenus} className="block w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100">
               Home
-            </button>
-            <button
-              onClick={() => handleNav('listings')}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-            >
-              <span>Materials & Building Services</span>
+            </Link>
+            <Link to="/materials" onClick={closeMenus} className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center justify-between">
+              <span>Materials &amp; Building Services</span>
               <span className="text-xs bg-blue-50 text-[#2E86D8] px-2 py-0.5 rounded-full font-bold">100+</span>
-            </button>
-            <button
-              onClick={() => handleNav('providers')}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              Suppliers & Verified Contractors
-            </button>
-            <button
-              onClick={() => handleNav('about')}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
+            </Link>
+            <Link to="/suppliers" onClick={closeMenus} className="block w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100">
+              Suppliers &amp; Verified Contractors
+            </Link>
+            <Link to="/about" onClick={closeMenus} className="block w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100">
               About Ujenzi Link
-            </button>
-            <button
-              onClick={() => handleNav('contact')}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              Contact & Support
-            </button>
+            </Link>
+            <Link to="/contact" onClick={closeMenus} className="block w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100">
+              Contact &amp; Support
+            </Link>
           </div>
 
           {/* Call to action */}
@@ -410,7 +351,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="primary"
                 fullWidth
-                onClick={() => handleNav('provider-dashboard', { action: 'add-listing' })}
+                onClick={() => { navigate('/provider/dashboard?action=add-listing'); closeMenus(); }}
                 leftIcon={<PlusCircle className="w-4 h-4" />}
               >
                 Post New Material / Service
@@ -419,7 +360,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="bronze"
                 fullWidth
-                onClick={() => handleNav('auth', { initialType: 'provider' })}
+                onClick={() => { navigate('/signup/supplier'); closeMenus(); }}
                 leftIcon={<Store className="w-4 h-4" />}
               >
                 Register as Supplier / Contractor
@@ -430,7 +371,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {isAuthenticated && (
             <div className="pt-2">
               <button
-                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                onClick={() => { logout(); closeMenus(); }}
                 className="w-full py-2 text-center text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center justify-center gap-2"
               >
                 <LogOut className="w-4 h-4" />

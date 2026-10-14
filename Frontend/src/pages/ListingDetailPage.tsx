@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   MapPin,
   Heart,
@@ -32,27 +33,20 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { detailImageUrl, thumbnailUrl, logoImageUrl } from '../utils/imagekit';
 import { generateListingAltText } from '../utils/altText';
-import { generateListingSlug, getShortId, createSlugWithId } from '../utils/slug';
+import { generateListingSlug, getShortId, createSlugWithId, extractIdFromSlug, generateProviderSlug } from '../utils/slug';
+import { useInquiry } from '../App';
 
-interface ListingDetailPageProps {
-  listingId: string;
-  onBack: () => void;
-  onNavigate: (page: string, params?: any) => void;
-  onSelectListing: (listing: Listing) => void;
-  onSelectProvider: (provider: Provider) => void;
-  onOpenInquiry: (listing: Listing, provider?: Provider) => void;
-}
-
-export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
-  listingId,
-  onBack,
-  onNavigate,
-  onSelectListing,
-  onSelectProvider,
-  onOpenInquiry,
-}) => {
+export const ListingDetailPage: React.FC = () => {
+  const { slugId } = useParams<{ slugId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { open: openInquiry } = useInquiry();
   const { isFavorite, toggleFavorite } = useAuth();
   const { success, info } = useToast();
+
+  // Resolve listingId: prefer state passed via navigate(), fallback to extracting short ID from slug
+  const listingId: string = (location.state as any)?.listingId || extractIdFromSlug(slugId || '');
+
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -108,7 +102,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
         <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
           <h2 className="text-2xl font-bold text-slate-900">Listing Not Found</h2>
           <p className="text-sm text-slate-500">The requested material or service may have been unlisted or removed.</p>
-          <Button variant="primary" onClick={onBack}>
+          <Button variant="primary" onClick={() => navigate('/materials')}>
             Back to Listings
           </Button>
         </div>
@@ -216,8 +210,8 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
       />
       <Breadcrumb
         items={[
-          { label: 'Home', onClick: () => onNavigate('home') },
-          { label: 'Materials & Services', onClick: () => onNavigate('listings') },
+          { label: 'Home', onClick: () => navigate('/') },
+          { label: 'Materials & Services', onClick: () => navigate('/materials') },
           { label: listing.title },
         ]}
       />
@@ -225,7 +219,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
       {/* Breadcrumb / Back button */}
       <div className="flex items-center justify-between">
         <button
-          onClick={onBack}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#1B3A6B] bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -389,7 +383,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                 variant="primary"
                 size="lg"
                 fullWidth
-                onClick={() => onOpenInquiry(listing, provider || undefined)}
+                onClick={() => openInquiry(listing, provider || undefined)}
                 leftIcon={<MessageSquare className="w-5 h-5" />}
               >
                 Request Quote / Inquire Now
@@ -422,7 +416,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                 </span>
                 {provider && (
                   <button
-                    onClick={() => onSelectProvider(provider)}
+                    onClick={() => navigate(`/suppliers/${provider.slug || provider.id}`)}
                     className="text-xs text-[#2E86D8] hover:text-[#1B3A6B] font-bold flex items-center gap-1"
                   >
                     <span>View Full Profile</span>
@@ -432,7 +426,7 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
               </div>
 
               <div
-                onClick={() => provider && onSelectProvider(provider)}
+                onClick={() => provider && navigate(`/suppliers/${provider.slug || provider.id}`)}
                 className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-[#2E86D8] cursor-pointer transition-colors"
               >
                 <LazyImage
@@ -514,8 +508,8 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
               <ListingCard
                 key={rel.id}
                 listing={rel}
-                onSelect={onSelectListing}
-                onContactSupplier={onOpenInquiry}
+                onSelect={(selected) => navigate(`/listings/${selected.slug || selected.id}`)}
+                onContactSupplier={(selected) => openInquiry(selected)}
               />
             ))}
           </div>

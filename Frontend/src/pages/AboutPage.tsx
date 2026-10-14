@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Building2,
   ShieldCheck,
@@ -12,11 +13,8 @@ import {
 import { Button } from '../components/common/Button';
 import { Seo } from '../components/common/Seo';
 
-interface AboutPageProps {
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-}
-
-export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
+export const AboutPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <>
       <Seo
@@ -212,7 +210,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               <Button
                 variant="primary"
                 size="md"
-                onClick={() => onNavigate('contact')}
+                onClick={() => navigate('/contact')}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 Contact Our Team
@@ -220,7 +218,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
               <Button
                 variant="outline"
                 size="md"
-                onClick={() => onNavigate('listings')}
+                onClick={() => navigate('/materials')}
               >
                 Explore Marketplace
               </Button>

@@ -47,14 +47,8 @@ import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 import { UploadedImage } from '../services/uploadService';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { cardImageUrl, logoImageUrl } from '../utils/imagekit';
-
-interface AdminDashboardPageProps {
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-  onSelectListing: (listing: Listing) => void;
-  onSelectProvider: (provider: Provider) => void;
-  onRefreshProviders?: () => void;
-}
 
 const COLORS = ['#1B3A6B', '#2E86D8', '#8B5E3C', '#10B981', '#F59E0B', '#6366F1'];
 
@@ -121,15 +115,13 @@ function getAvailabilityStatusBadge(status?: AvailabilityStatus) {
   );
 }
 
-export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
-  onNavigate,
-  onSelectListing,
-  onSelectProvider,
-  onRefreshProviders,
-}) => {
+export const AdminDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { success, error } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'analytics' | 'providers' | 'listings' | 'adverts'>('analytics');
+  const activeTab = (searchParams.get('tab') as 'analytics' | 'providers' | 'listings' | 'adverts') || 'analytics';
+  const setActiveTab = (tab: 'analytics' | 'providers' | 'listings' | 'adverts') => setSearchParams({ tab }, { replace: true });
   const [providers, setProviders] = useState<Provider[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [adverts, setAdverts] = useState<Advert[]>([]);
@@ -267,10 +259,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     loadAnalytics();
     // Reload provider data to ensure consistency across the app
     await loadAdminData();
-    // Refresh providers directory to show updated verification status
-    if (onRefreshProviders) {
-      onRefreshProviders();
-    }
   };
 
   const handleDeleteProvider = async (providerId: string, providerName: string) => {

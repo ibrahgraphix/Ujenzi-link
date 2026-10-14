@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MapPin, ArrowRight, ChevronRight } from 'lucide-react';
 import { Listing, Category } from '../types';
 import { getListings } from '../services/listingsService';
@@ -8,33 +9,32 @@ import { ListingCard } from '../components/common/ListingCard';
 import { Seo } from '../components/common/Seo';
 import { Button } from '../components/common/Button';
 import { generateListingAltText } from '../utils/altText';
+import { useInquiry } from '../App';
+import { createSlugWithId, generateListingSlug, getShortId } from '../utils/slug';
 
-interface CategoryLandingPageProps {
-  categorySlug: string;
-  regionSlug?: string;
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-  onSelectListing: (listing: Listing) => void;
-  onOpenInquiry: (listing: Listing) => void;
-}
+export const CategoryLandingPage: React.FC = () => {
+  const { categorySlug = '', regionSlug } = useParams<{ categorySlug: string; regionSlug?: string }>();
+  const navigate = useNavigate();
+  const { open: openInquiry } = useInquiry();
 
-export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
-  categorySlug,
-  regionSlug,
-  onNavigate,
-  onSelectListing,
-  onOpenInquiry,
-}) => {
   const [category, setCategory] = useState<Category | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [regions, setRegions] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const handleSelectListing = (listing: Listing) => {
+    const slug = createSlugWithId(
+      generateListingSlug(listing.title, listing.location?.region || ''),
+      getShortId(listing.id)
+    );
+    navigate(`/listings/${slug}`, { state: { listingId: listing.id } });
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
 
-      // Load all categories to find matching one
       const allCats = await getCategories();
       setCategories(allCats);
 
@@ -44,7 +44,6 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
       setCategory(matchedCategory || null);
 
       if (matchedCategory) {
-        // Load listings filtered by category and optionally region
         const filters: any = { category: matchedCategory.name };
         if (regionSlug) {
           filters.region = regionSlug.replace(/-/g, ' ');
@@ -53,7 +52,6 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
         setListings(listingsData);
       }
 
-      // Load regions for related links
       const regs = await getRegions();
       setRegions(regs);
 
@@ -63,10 +61,8 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
     loadData();
   }, [categorySlug, regionSlug]);
 
-  // Determine if page should be noindex (zero results)
   const shouldNoindex = !isLoading && listings.length === 0;
 
-  // Generate SEO metadata
   const getSeoTitle = () => {
     if (!category) return 'Category Not Found';
     if (regionSlug) {
@@ -86,10 +82,8 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
   };
 
   const getCanonicalPath = () => {
-    if (regionSlug) {
-      return `/materials/${categorySlug}/${regionSlug}`;
-    }
-    return `/materials/${categorySlug}`;
+    if (regionSlug) return `/category/${categorySlug}/${regionSlug}`;
+    return `/category/${categorySlug}`;
   };
 
   if (isLoading) {
@@ -104,17 +98,10 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
   if (!category) {
     return (
       <>
-        <Seo
-          title="Category Not Found"
-          description="The requested category does not exist."
-          canonicalPath="/materials"
-          noindex
-        />
+        <Seo title="Category Not Found" description="The requested category does not exist." canonicalPath="/materials" noindex />
         <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
           <h1 className="text-2xl font-bold text-slate-900">Category Not Found</h1>
-          <Button variant="primary" onClick={() => onNavigate('listings')}>
-            Browse All Categories
-          </Button>
+          <Button variant="primary" onClick={() => navigate('/materials')}>Browse All Categories</Button>
         </div>
       </>
     );
@@ -154,8 +141,8 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
                 <ListingCard
                   key={listing.id}
                   listing={listing}
-                  onSelect={onSelectListing}
-                  onContactSupplier={onOpenInquiry}
+                  onSelect={handleSelectListing}
+                  onContactSupplier={(l) => openInquiry(l)}
                 />
               ))}
             </div>
@@ -165,50 +152,44 @@ export const CategoryLandingPage: React.FC<CategoryLandingPageProps> = ({
             <p className="text-slate-600 mb-4">
               No {category.name.toLowerCase()} currently available{regionName ? ` in ${regionName}` : ''}.
             </p>
-            <Button variant="outline" onClick={() => onNavigate('listings')}>
-              Browse All Listings
-            </Button>
+            <Button variant="outline" onClick={() => navigate('/materials')}>Browse All Listings</Button>
           </div>
         )}
 
         {/* Related Regions */}
         {!regionSlug && regions.length > 0 && (
           <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">
-              {category.name} by Region
-            </h3>
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{category.name} by Region</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {regions.slice(0, 8).map((region) => (
-                <button
-                  key={region}
-                  onClick={() => {
-                    const slug = region.toLowerCase().replace(/\s+/g, '-');
-                    onNavigate('category-landing', { categorySlug, regionSlug: slug });
-                  }}
-                  className="text-left px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-[#2E86D8] hover:text-[#1B3A6B] text-sm font-medium transition-colors flex items-center gap-2"
-                >
-                  <MapPin className="w-3.5 h-3.5 text-[#2E86D8] shrink-0" />
-                  {region}
-                </button>
-              ))}
+              {regions.slice(0, 8).map((region) => {
+                const slug = region.toLowerCase().replace(/\s+/g, '-');
+                return (
+                  <Link
+                    key={region}
+                    to={`/category/${categorySlug}/${slug}`}
+                    className="text-left px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-[#2E86D8] hover:text-[#1B3A6B] text-sm font-medium transition-colors flex items-center gap-2"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-[#2E86D8] shrink-0" />
+                    {region}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Related Categories */}
         <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">
-            Related Categories
-          </h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Related Categories</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {categories.slice(0, 8).map((cat) => (
-              <button
+              <Link
                 key={cat.id}
-                onClick={() => onNavigate('category-landing', { categorySlug: cat.slug })}
-                className="text-left px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-[#2E86D8] hover:text-[#1B3A6B] text-sm font-medium transition-colors"
+                to={`/category/${cat.slug}`}
+                className="text-left px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-[#2E86D8] hover:text-[#1B3A6B] text-sm font-medium transition-colors block"
               >
                 {cat.name}
-              </button>
+              </Link>
             ))}
           </div>
         </div>

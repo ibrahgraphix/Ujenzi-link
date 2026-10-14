@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Search,
   MapPin,
@@ -21,13 +22,8 @@ import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
 import { Seo } from '../components/common/Seo';
 import { logoImageUrl } from '../utils/imagekit';
-
-interface ProvidersDirectoryPageProps {
-  initialType?: string;
-  onSelectProvider: (provider: Provider) => void;
-  onOpenInquiry: (listing?: any, provider?: Provider) => void;
-  refreshKey?: number;
-}
+import { useInquiry } from '../App';
+import { createSlugWithId, generateProviderSlug, getShortId } from '../utils/slug';
 
 function normalizeProviderType(type?: string): string {
   if (!type) return '';
@@ -95,27 +91,39 @@ const getAvailabilityStatusBadge = (status?: AvailabilityStatus) => {
   );
 };
 
-export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
-  initialType = 'all',
-  onSelectProvider,
-  onOpenInquiry,
-  refreshKey = 0,
-}) => {
+export const ProvidersDirectoryPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { open: openInquiry } = useInquiry();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [providers, setProviders] = useState<Provider[]>([]);
   const [regionsList, setRegionsList] = useState<string[]>([]);
   const [activeAdvert, setActiveAdvert] = useState<Advert | null>(null);
-  const [selectedType, setSelectedType] = useState<string>(initialType);
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
-  const [query, setQuery] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || 'all');
+  const [selectedRegion, setSelectedRegion] = useState<string>(searchParams.get('region') || '');
+  const [query, setQuery] = useState<string>(searchParams.get('q') || '');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Use a separate state for data loading to control when to reload
-  const [dataLoadKey, setDataLoadKey] = useState<number>(0);
-
-  // Update dataLoadKey when refreshKey changes
+  // Sync filters → URL
   useEffect(() => {
-    setDataLoadKey(refreshKey);
-  }, [refreshKey]);
+    const params: Record<string, string> = {};
+    if (query) params.q = query;
+    if (selectedType && selectedType !== 'all') params.type = selectedType;
+    if (selectedRegion) params.region = selectedRegion;
+    setSearchParams(params, { replace: true });
+  }, [query, selectedType, selectedRegion]);
+
+  const handleSelectProvider = (provider: Provider) => {
+    const slug = createSlugWithId(
+      generateProviderSlug(
+        provider.name,
+        provider.businessName,
+        provider.location?.region || ''
+      ),
+      getShortId(provider.id)
+    );
+    navigate(`/suppliers/${slug}`, { state: { providerId: provider.id } });
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -131,7 +139,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
       setIsLoading(false);
     };
     load();
-  }, [selectedType, dataLoadKey]);
+  }, []);
 
   const filteredProviders = providers.filter((p) => {
     if (
@@ -252,7 +260,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
           {filteredProviders.map((provider) => (
             <div
               key={provider.id}
-              onClick={() => onSelectProvider(provider)}
+              onClick={() => handleSelectProvider(provider)}
               className="bg-white rounded-3xl p-6 border border-slate-200 hover:border-[#1B3A6B] hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
             >
               <div>
@@ -309,7 +317,7 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onSelectProvider(provider);
+                      handleSelectProvider(provider);
                     }}
                     className="w-full py-2.5 px-3 bg-[#1B3A6B] hover:bg-[#12284C] text-white text-xs font-semibold rounded-xl text-center transition-colors"
                   >

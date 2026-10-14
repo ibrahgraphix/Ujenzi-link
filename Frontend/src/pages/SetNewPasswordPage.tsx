@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -14,11 +15,8 @@ import { useAuth } from '../context/AuthContext';
 import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 
-interface SetNewPasswordPageProps {
-  onSuccess: () => void;
-}
-
-export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({ onSuccess }) => {
+export const SetNewPasswordPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user, completeAdminPasswordChange, logout } = useAuth();
   const { error } = useToast();
 
@@ -75,7 +73,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({ onSucces
     try {
       const ok = await completeAdminPasswordChange(newPassword);
       if (ok) {
-        onSuccess();
+        navigate('/admin', { replace: true });
       }
     } finally {
       setIsSubmitting(false);

@@ -31,30 +31,20 @@ import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { ListingCard } from '../components/common/ListingCard';
 import { EmptyState } from '../components/common/EmptyState';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 import { UploadedImage } from '../services/uploadService';
 import { logoImageUrl, thumbnailUrl } from '../utils/imagekit';
 
-interface ProviderDashboardPageProps {
-  initialAction?: string;
-  initialTab?: string;
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-  onSelectListing: (listing: Listing) => void;
-  onSelectProvider: (provider: Provider) => void;
-}
-
-export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
-  initialAction,
-  initialTab = 'listings',
-  onNavigate,
-  onSelectListing,
-  onSelectProvider,
-}) => {
+export const ProviderDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, favorites, toggleFavorite } = useAuth();
   const { success, error } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'inquiries'>('listings');
+  const activeTab = (searchParams.get('tab') as 'listings' | 'favorites' | 'inquiries') || 'listings';
+  const setActiveTab = (tab: 'listings' | 'favorites' | 'inquiries') => setSearchParams({ tab }, { replace: true });
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [savedListings, setSavedListings] = useState<Listing[]>([]);
@@ -63,7 +53,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   // Listing Modal State
-  const [isListingModalOpen, setIsListingModalOpen] = useState(initialAction === 'add-listing');
+  const [isListingModalOpen, setIsListingModalOpen] = useState(searchParams.get('action') === 'add-listing');
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
   const [listingTitle, setListingTitle] = useState('');
   const [listingCategory, setListingCategory] = useState<string>('');
@@ -453,7 +443,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
             <Button
               variant="white"
               size="sm"
-              onClick={() => onSelectProvider(myProvider)}
+              onClick={() => navigate(`/suppliers/${myProvider.slug || myProvider.id}`)}
               leftIcon={<Store className="w-4 h-4 text-[#1B3A6B]" />}
               className="w-full sm:w-auto justify-center"
             >
@@ -752,7 +742,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
 
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                     <button
-                      onClick={() => onSelectListing(listing)}
+                      onClick={() => navigate(`/listings/${listing.slug || listing.id}`)}
                       className="p-2 text-slate-500 hover:text-[#1B3A6B] hover:bg-slate-100 rounded-xl transition-colors"
                       title="View preview"
                     >
@@ -788,7 +778,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
               title="No saved building materials yet"
               description="Browse the marketplace and click the heart icon on any listing to save it here."
               actionText="Browse Marketplace"
-              onAction={() => onNavigate('listings')}
+              onAction={() => navigate('/materials')}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -796,8 +786,8 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
                 <div key={listing.id} className="relative group">
                   <ListingCard
                     listing={listing}
-                    onSelect={onSelectListing}
-                    onContactSupplier={(l) => onNavigate('listings')}
+                    onSelect={(l) => navigate(`/listings/${l.slug || l.id}`)}
+                    onContactSupplier={() => navigate('/materials')}
                   />
                   <button
                     onClick={(e) => handleRemoveFavorite(listing.id, e)}

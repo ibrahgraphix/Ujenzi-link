@@ -1,13 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, AlertTriangle, FileText, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Seo } from '../components/common/Seo';
 
-interface TermsPageProps {
-  onBack: () => void;
-}
-
-export const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
+export const TermsPage: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <>
       <Seo
@@ -18,7 +16,7 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <div>
         <button
-          onClick={onBack}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#1B3A6B] bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />

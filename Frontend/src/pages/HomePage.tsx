@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useInquiry } from '../App';
 import {
   Search,
   MapPin,
@@ -36,19 +38,9 @@ import { VerifiedBadge, ProviderTypeBadge } from '../components/common/Badge';
 import { Seo } from '../components/common/Seo';
 import { JsonLd } from '../components/common/JsonLd';
 
-interface HomePageProps {
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-  onSelectListing: (listing: Listing) => void;
-  onSelectProvider: (provider: Provider) => void;
-  onOpenInquiry: (listing: Listing) => void;
-}
-
-export const HomePage: React.FC<HomePageProps> = ({
-  onNavigate,
-  onSelectListing,
-  onSelectProvider,
-  onOpenInquiry,
-}) => {
+export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { open: openInquiry } = useInquiry();
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -94,12 +86,13 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    onNavigate('listings', {
-      query: searchQuery,
-      region: selectedRegion || undefined,
-      district: selectedDistrict || undefined,
-      category: selectedCategory !== 'all' ? selectedCategory : undefined,
-    });
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
+    if (selectedRegion) params.set('region', selectedRegion);
+    if (selectedDistrict) params.set('district', selectedDistrict);
+    if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory);
+    const qs = params.toString();
+    navigate(qs ? `/materials?${qs}` : '/materials');
   };
 
   const getCategoryIcon = (iconName: string) => {
@@ -288,7 +281,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     key={pill}
                     onClick={() => {
                       setSearchQuery(pill);
-                      onNavigate('listings', { query: pill });
+                      navigate(`/materials?q=${encodeURIComponent(pill)}`);
                     }}
                     className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#2E86D8]/10 hover:text-[#1B3A6B] text-slate-700 font-medium transition-colors cursor-pointer"
                   >
@@ -387,7 +380,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AdvertBanner
             advert={heroAdvert}
-            onNavigate={(url) => onNavigate('contact')}
+            onNavigate={() => navigate('/contact')}
           />
         </section>
       )}
@@ -405,7 +398,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </h2>
             </div>
             <button
-              onClick={() => onNavigate('listings')}
+              onClick={() => navigate('/materials')}
               className="hidden sm:inline-flex items-center gap-1 text-sm font-bold text-[#1B3A6B] hover:text-[#2E86D8] transition-colors"
             >
               <span>View All Categories</span>
@@ -417,7 +410,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             {categories.map((category) => (
               <div
                 key={category.id}
-                onClick={() => onNavigate('category-landing', { categorySlug: category.slug })}
+                onClick={() => navigate(`/category/${category.slug}`)}
                 className="group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-[#2E86D8] hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div className="flex items-start justify-between mb-3">
@@ -463,7 +456,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onNavigate('listings')}
+              onClick={() => navigate('/materials')}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Explore Marketplace
@@ -475,8 +468,8 @@ export const HomePage: React.FC<HomePageProps> = ({
               <ListingCard
                 key={listing.id}
                 listing={listing}
-                onSelect={onSelectListing}
-                onContactSupplier={onOpenInquiry}
+                onSelect={(l) => navigate(`/listings/${l.slug || l.id}`)}
+                onContactSupplier={(l) => openInquiry(l)}
               />
             ))}
           </div>
@@ -503,7 +496,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  onClick={() => onSelectProvider(provider)}
+                  onClick={() => navigate(`/suppliers/${provider.slug || provider.id}`)}
                   className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#1B3A6B] hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
                 >
                   <div>
@@ -540,7 +533,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onSelectProvider(provider);
+                        navigate(`/suppliers/${provider.slug || provider.id}`);
                       }}
                       className="w-full py-2 bg-slate-100 hover:bg-[#1B3A6B] text-slate-800 hover:text-white rounded-xl text-xs font-semibold transition-colors text-center"
                     >
@@ -555,7 +548,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <Button
                 variant="outline"
                 size="md"
-                onClick={() => onNavigate('providers')}
+                onClick={() => navigate('/suppliers')}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 Browse All Providers & Craftsmen
@@ -583,7 +576,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <Button
                 variant="white"
                 size="md"
-                onClick={() => onNavigate('about')}
+                onClick={() => navigate('/about')}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 Learn More About Us
@@ -628,13 +621,13 @@ export const HomePage: React.FC<HomePageProps> = ({
               <Button
                 variant="white"
                 size="lg"
-                onClick={() => onNavigate('auth', { initialType: 'provider' })}
+                onClick={() => navigate('/signup/supplier')}
                 leftIcon={<HardHat className="w-5 h-5 text-[#1B3A6B]" />}
               >
                 Register Your Business Free
               </Button>
               <button
-                onClick={() => onNavigate('about')}
+                onClick={() => navigate('/about')}
                 className="text-center text-xs text-blue-200 hover:text-white py-2 underline"
               >
                 Learn more about Ujenzi Link

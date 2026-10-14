@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Search,
   SlidersHorizontal,
   Grid,
   List,
-  MapPin,
   X,
   RotateCcw,
-  CheckCircle2,
   ShieldCheck,
-  ChevronDown,
-  Building,
 } from 'lucide-react';
 import { Listing, Category, ProviderType, LocationHierarchy, Advert } from '../types';
 import { getListings, ListingFilterParams } from '../services/listingsService';
@@ -23,16 +20,8 @@ import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
 import { Seo } from '../components/common/Seo';
 import { trackSiteVisit } from '../services/adminAnalyticsService';
-
-interface ListingsPageProps {
-  initialQuery?: string;
-  initialCategory?: string;
-  initialRegion?: string;
-  initialDistrict?: string;
-  onSelectListing: (listing: Listing) => void;
-  onOpenInquiry: (listing: Listing) => void;
-  onNavigate: (page: string, params?: Record<string, any>) => void;
-}
+import { useInquiry } from '../App';
+import { createSlugWithId, generateListingSlug, getShortId } from '../utils/slug';
 
 const PROVIDER_TYPES: { label: string; value: ProviderType | 'all' }[] = [
   { label: 'All Suppliers & Trades', value: 'all' },
@@ -58,39 +47,60 @@ function convertProviderTypeToDB(providerType: string): string {
   return typeMap[providerType] || providerType.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_');
 }
 
-export const ListingsPage: React.FC<ListingsPageProps> = ({
-  initialQuery = '',
-  initialCategory = 'all',
-  initialRegion = '',
-  initialDistrict = '',
-  onSelectListing,
-  onOpenInquiry,
-  onNavigate,
-}) => {
+export const ListingsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { open: openInquiry } = useInquiry();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [listings, setListings] = useState<Listing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeAdvert, setActiveAdvert] = useState<Advert | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filters
-  const [query, setQuery] = useState(initialQuery);
-  const [category, setCategory] = useState(initialCategory);
+  // Filters — initialised from URL search params
+  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [category, setCategory] = useState(searchParams.get('category') || 'all');
   const [location, setLocation] = useState<LocationHierarchy>({
     country: 'Tanzania',
-    region: initialRegion,
-    district: initialDistrict,
+    region: searchParams.get('region') || '',
+    district: searchParams.get('district') || '',
   });
-  const [providerType, setProviderType] = useState<string>('all');
-  const [minPrice, setMinPrice] = useState<string>('');
-  const [maxPrice, setMaxPrice] = useState<string>('');
-  const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
-  const [sortBy, setSortBy] = useState<ListingFilterParams['sortBy']>('newest');
+  const [providerType, setProviderType] = useState<string>(searchParams.get('type') || 'all');
+  const [minPrice, setMinPrice] = useState<string>(searchParams.get('minPrice') || '');
+  const [maxPrice, setMaxPrice] = useState<string>(searchParams.get('maxPrice') || '');
+  const [verifiedOnly, setVerifiedOnly] = useState<boolean>(searchParams.get('verified') === '1');
+  const [sortBy, setSortBy] = useState<ListingFilterParams['sortBy']>(
+    (searchParams.get('sort') as ListingFilterParams['sortBy']) || 'newest'
+  );
 
   // UI state
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
+
+  // Sync filters → URL (debounced for query)
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    if (query) params.q = query;
+    if (category && category !== 'all') params.category = category;
+    if (location.region) params.region = location.region;
+    if (location.district) params.district = location.district;
+    if (providerType && providerType !== 'all') params.type = providerType;
+    if (minPrice) params.minPrice = minPrice;
+    if (maxPrice) params.maxPrice = maxPrice;
+    if (verifiedOnly) params.verified = '1';
+    if (sortBy && sortBy !== 'newest') params.sort = sortBy;
+    setSearchParams(params, { replace: true });
+  }, [query, category, location, providerType, minPrice, maxPrice, verifiedOnly, sortBy]);
+
+  const handleSelectListing = (listing: Listing) => {
+    const slug = createSlugWithId(
+      generateListingSlug(listing.title, listing.location?.region || ''),
+      getShortId(listing.id)
+    );
+    navigate(`/listings/${slug}`, { state: { listingId: listing.id } });
+  };
 
   useEffect(() => {
     getCategories().then(setCategories);
@@ -381,7 +391,7 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
           {activeAdvert && (
             <AdvertBanner
               advert={activeAdvert}
-              onNavigate={(url) => onNavigate('contact')}
+              onNavigate={() => navigate('/contact')}
             />
           )}
 
@@ -453,8 +463,8 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
                   key={listing.id}
                   listing={listing}
                   layout={layout}
-                  onSelect={onSelectListing}
-                  onContactSupplier={onOpenInquiry}
+                  onSelect={handleSelectListing}
+                  onContactSupplier={(l) => openInquiry(l)}
                 />
               ))}
             </div>

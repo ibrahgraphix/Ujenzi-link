@@ -110,7 +110,7 @@ export async function getProviderById(id: string): Promise<Provider | null> {
   }
 
   const providers = await getProviders();
-  return providers.find((p) => p.id === id) || null;
+  return providers.find((p) => p.id === id || p.id.toLowerCase().startsWith(id.toLowerCase())) || null;
 }
 
 export async function saveProvider(providerData: Partial<Provider> & { id?: string }): Promise<Provider> {
