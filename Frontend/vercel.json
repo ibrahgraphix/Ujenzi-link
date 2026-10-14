@@ -19,7 +19,7 @@
     },
     {
       "source": "/sitemap.xml",
-      "destination": "https://ujenzi-link-backend.vercel.app/sitemap.xml"
+      "destination": "/sitemap.xml"
     },
     {
       "source": "/listings/:id",
