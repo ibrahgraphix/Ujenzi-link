@@ -1,7 +1,18 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.ujenzi-link.com"
+        }
+      ],
+      "destination": "https://ujenzi-link.com/",
+      "permanent": true
+    },
+    {
+      "source": "/:path+",
       "has": [
         {
           "type": "host",
