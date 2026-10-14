@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Phone, Mail, MapPin, ShieldCheck, User, PlayCircle } from 'lucide-react';
 import { getCategories } from '../../services/categoriesService';
+import { getRegions } from '../../services/locationsService';
 import { Category } from '../../types';
 
 interface FooterProps {
@@ -9,9 +10,11 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
 
   useEffect(() => {
     getCategories().then(setCategories).catch(console.error);
+    getRegions().then(setRegions).catch(console.error);
   }, []);
   return (
     <footer className="bg-[#12284C] text-slate-300 border-t border-slate-800">
@@ -49,7 +52,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
       {/* Main Footer grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
           {/* Col 1: Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <div
@@ -88,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               {categories.slice(0, 6).map((category) => (
                 <li key={category.id}>
                   <button
-                    onClick={() => onNavigate('listings', { category: category.id })}
+                    onClick={() => onNavigate('category-landing', { categorySlug: category.slug })}
                     className="hover:text-[#2E86D8] transition-colors text-left"
                   >
                     {category.name}
@@ -158,7 +161,32 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </ul>
           </div>
 
-          {/* Col 4: Contact & Ujenzi Link Office */}
+          {/* Col 4: Regions */}
+          <div>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-l-2 border-[#2E86D8] pl-2.5">
+              By Region
+            </h4>
+            <ul className="space-y-2 text-xs">
+              {regions.slice(0, 8).map((region) => (
+                <li key={region}>
+                  <button
+                    onClick={() => {
+                      const slug = region.toLowerCase().replace(/\s+/g, '-');
+                      onNavigate('region-landing', { regionSlug: slug });
+                    }}
+                    className="hover:text-[#2E86D8] transition-colors text-left"
+                  >
+                    {region}
+                  </button>
+                </li>
+              ))}
+              {regions.length === 0 && (
+                <li className="text-slate-500">Loading regions...</li>
+              )}
+            </ul>
+          </div>
+
+          {/* Col 6: Contact & Ujenzi Link Office */}
           <div>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 border-l-2 border-[#2E86D8] pl-2.5">
               Tanzania Headquarters

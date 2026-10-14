@@ -33,6 +33,8 @@ import { ListingCard } from '../components/common/ListingCard';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
 import { VerifiedBadge, ProviderTypeBadge } from '../components/common/Badge';
+import { Seo } from '../components/common/Seo';
+import { JsonLd } from '../components/common/JsonLd';
 
 interface HomePageProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
@@ -118,7 +120,51 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="space-y-12 sm:space-y-16 pb-16">
+    <>
+      <Seo
+        title="Ujenzi Link - Tanzania Construction Marketplace"
+        description="Find cement, steel, roofing materials, contractors, and building suppliers across Tanzania. Connect with verified construction professionals and suppliers."
+        canonicalPath="/"
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'Ujenzi Link',
+          legalName: 'Plan Moja Company Ltd',
+          url: 'https://ujenzi-link.com',
+          logo: 'https://ujenzi-link.com/logo.jpeg',
+          description: 'Tanzania construction marketplace connecting suppliers, contractors, and developers.',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Mwenge, Kinondoni',
+            addressLocality: 'Dar es Salaam',
+            postalCode: '33165',
+            addressCountry: 'TZ',
+          },
+          contactPoint: {
+            '@type': 'ContactPoint',
+            email: 'ujenzilink@gmail.com',
+            contactType: 'customer service',
+          },
+          sameAs: [],
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Ujenzi Link',
+          url: 'https://ujenzi-link.com',
+          description: 'Tanzania construction marketplace for building materials and services.',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: 'https://ujenzi-link.com/listings?query={search_term_string}',
+            'query-input': 'required name=search_term_string',
+          },
+        }}
+      />
+      <div className="space-y-12 sm:space-y-16 pb-16">
       {/* 1. HERO SECTION */}
       <section className="relative bg-gradient-to-b from-[#12284C] via-[#1B3A6B] to-[#12284C] text-white pt-8 pb-16 sm:pt-14 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Subtle decorative background grids */}
@@ -371,7 +417,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             {categories.map((category) => (
               <div
                 key={category.id}
-                onClick={() => onNavigate('listings', { category: category.name })}
+                onClick={() => onNavigate('category-landing', { categorySlug: category.slug })}
                 className="group bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 hover:border-[#2E86D8] hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div className="flex items-start justify-between mb-3">
@@ -598,5 +644,6 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
     </div>
+    </>
   );
 };

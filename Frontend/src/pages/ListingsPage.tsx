@@ -21,6 +21,7 @@ import { LocationSelector } from '../components/common/LocationSelector';
 import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
+import { Seo } from '../components/common/Seo';
 import { trackSiteVisit } from '../services/adminAnalyticsService';
 
 interface ListingsPageProps {
@@ -149,8 +150,35 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
     currentPage * itemsPerPage
   );
 
+  // Generate dynamic title based on filters
+  const getPageTitle = () => {
+    const parts = ['Building Materials'];
+    if (category !== 'all') {
+      const catName = categories.find((c) => c.id === category || c.name.toLowerCase() === category.toLowerCase())?.name || category;
+      parts.push(catName);
+    }
+    if (location.region) {
+      parts.push(`in ${location.region}`);
+    }
+    return parts.join(' ');
+  };
+
+  const getDescription = () => {
+    const base = 'Browse construction materials and services. Find verified suppliers, cement, steel, roofing, and contractors across Tanzania.';
+    if (location.region) {
+      return `${base} Available in ${location.region} and nearby districts.`;
+    }
+    return base;
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <Seo
+        title={getPageTitle()}
+        description={getDescription()}
+        canonicalPath="/listings"
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Top Search & Filter Bar */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs mb-8">
         <div className="flex flex-col md:flex-row items-center gap-3">
@@ -555,5 +583,6 @@ export const ListingsPage: React.FC<ListingsPageProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };

@@ -2,8 +2,10 @@ import React from 'react';
 import { MapPin, Heart, MessageSquare, Phone, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { Listing } from '../../types';
 import { ProviderTypeBadge, VerifiedBadge } from './Badge';
+import { LazyImage } from './LazyImage';
 import { useAuth } from '../../context/AuthContext';
 import { cardImageUrl } from '../../utils/imagekit';
+import { generateListingAltText } from '../../utils/altText';
 
 interface ListingCardProps {
   listing: Listing;
@@ -55,11 +57,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({
       >
         {/* Thumbnail */}
         <div className="relative sm:w-64 h-48 sm:h-auto shrink-0 overflow-hidden bg-slate-100">
-          <img
+          <LazyImage
             src={primaryImage}
-            alt={listing.title}
+            alt={generateListingAltText({ ...listing, title: listing.title, providerName: listing.providerName })}
+            width={256}
+            height={192}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
           />
           <button
             onClick={handleFavoriteClick}
@@ -138,11 +141,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({
     >
       {/* Image container */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-        <img
+        <LazyImage
           src={primaryImage}
-          alt={listing.title}
+          alt={generateListingAltText({ ...listing, title: listing.title, providerName: listing.providerName })}
+          width={400}
+          height={300}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
         />
         <button
           onClick={handleFavoriteClick}

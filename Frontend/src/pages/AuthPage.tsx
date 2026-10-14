@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { LocationSelector } from '../components/common/LocationSelector';
+import { Seo } from '../components/common/Seo';
 import { AccountType, ProviderType, AvailabilityStatus, LocationHierarchy, TradeCategory, TRADE_CATEGORY_OPTIONS } from '../types';
 import { useToast } from '../context/ToastContext';
 
@@ -141,7 +142,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <>
+      <Seo
+        title={mode === 'login' ? 'Sign In' : 'Register'}
+        description={mode === 'login' ? 'Sign in to your Ujenzi Link account to access the construction marketplace.' : 'Create a free account on Ujenzi Link to connect with suppliers and contractors.'}
+        canonicalPath="/auth"
+        noindex
+      />
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-[#12284C] to-[#1B3A6B] text-white p-6 sm:p-8 text-center relative">
@@ -478,5 +486,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         </form>
       </div>
     </div>
+    </>
   );
 };

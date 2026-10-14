@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShieldCheck, AlertTriangle, FileText, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/common/Button';
+import { Seo } from '../components/common/Seo';
 
 interface TermsPageProps {
   onBack: () => void;
@@ -8,7 +9,13 @@ interface TermsPageProps {
 
 export const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <>
+      <Seo
+        title="Terms of Service | Ujenzi Link"
+        description="Terms of service and marketplace guidelines for Ujenzi Link by Plan Moja Company Ltd. Learn about our directory model, supplier verification, and safe transaction practices."
+        canonicalPath="/terms"
+      />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <div>
         <button
           onClick={onBack}
@@ -79,5 +86,6 @@ export const TermsPage: React.FC<TermsPageProps> = ({ onBack }) => {
         </section>
       </div>
     </div>
+    </>
   );
 };

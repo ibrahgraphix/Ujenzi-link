@@ -10,6 +10,7 @@ import {
   HeartHandshake,
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
+import { Seo } from '../components/common/Seo';
 
 interface AboutPageProps {
   onNavigate: (page: string, params?: Record<string, any>) => void;
@@ -17,7 +18,13 @@ interface AboutPageProps {
 
 export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
   return (
-    <div className="space-y-16 py-8 pb-16">
+    <>
+      <Seo
+        title="About Ujenzi Link | Plan Moja Company Ltd"
+        description="Learn about Ujenzi Link by Plan Moja Company Ltd. Transforming Tanzania's construction sector with direct supplier connections, zero commissions, and verified professionals."
+        canonicalPath="/about"
+      />
+      <div className="space-y-16 py-8 pb-16">
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-br from-[#12284C] via-[#1B3A6B] to-[#2E86D8] rounded-3xl text-white p-8 sm:p-14 shadow-xl relative overflow-hidden text-center space-y-4">
@@ -222,5 +229,6 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onNavigate }) => {
         </div>
       </section>
     </div>
+    </>
   );
 };

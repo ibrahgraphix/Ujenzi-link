@@ -44,6 +44,7 @@ import { Input } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
 import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
+import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 import { UploadedImage } from '../services/uploadService';
 import { cardImageUrl, logoImageUrl } from '../utils/imagekit';
@@ -410,7 +411,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const recentActivity = analytics?.recentActivity || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <>
+      <Seo
+        title="Admin Dashboard"
+        description="Admin control panel for managing providers, listings, and platform analytics on Ujenzi Link."
+        canonicalPath="/admin-dashboard"
+        noindex
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Admin Ribbon */}
       <div className="bg-gradient-to-r from-[#12284C] via-[#1B3A6B] to-[#12284C] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -1417,5 +1425,6 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         </form>
       </Modal>
     </div>
+    </>
   );
 };

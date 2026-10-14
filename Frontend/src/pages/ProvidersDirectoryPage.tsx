@@ -19,6 +19,7 @@ import { getAdverts } from '../services/advertsService';
 import { ProviderTypeBadge, VerifiedBadge, TradeCategoryBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
+import { Seo } from '../components/common/Seo';
 import { logoImageUrl } from '../utils/imagekit';
 
 interface ProvidersDirectoryPageProps {
@@ -153,7 +154,13 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
   });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <>
+      <Seo
+        title="Suppliers & Contractors | Ujenzi Link"
+        description="Find verified construction suppliers, contractors, engineers, and artisans across Tanzania. Browse manufacturers, hardware stores, and service providers by region."
+        canonicalPath="/providers"
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <span className="text-xs font-bold uppercase tracking-widest text-[#2E86D8] block">
@@ -315,5 +322,6 @@ export const ProvidersDirectoryPage: React.FC<ProvidersDirectoryPageProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };

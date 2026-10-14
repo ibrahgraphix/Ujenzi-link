@@ -24,13 +24,20 @@ import { trackSiteVisit } from '../services/adminAnalyticsService';
 import { Button } from '../components/common/Button';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { ListingCard } from '../components/common/ListingCard';
+import { Seo } from '../components/common/Seo';
+import { JsonLd } from '../components/common/JsonLd';
+import { Breadcrumb } from '../components/common/Breadcrumb';
+import { LazyImage } from '../components/common/LazyImage';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { detailImageUrl, thumbnailUrl, logoImageUrl } from '../utils/imagekit';
+import { generateListingAltText } from '../utils/altText';
+import { generateListingSlug, getShortId, createSlugWithId } from '../utils/slug';
 
 interface ListingDetailPageProps {
   listingId: string;
   onBack: () => void;
+  onNavigate: (page: string, params?: any) => void;
   onSelectListing: (listing: Listing) => void;
   onSelectProvider: (provider: Provider) => void;
   onOpenInquiry: (listing: Listing, provider?: Provider) => void;
@@ -39,6 +46,7 @@ interface ListingDetailPageProps {
 export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
   listingId,
   onBack,
+  onNavigate,
   onSelectListing,
   onSelectProvider,
   onOpenInquiry,
@@ -91,13 +99,20 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
 
   if (!listing) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900">Listing Not Found</h2>
-        <p className="text-sm text-slate-500">The requested material or service may have been unlisted or removed.</p>
-        <Button variant="primary" onClick={onBack}>
-          Back to Listings
-        </Button>
-      </div>
+      <>
+        <Seo
+          title="Listing Not Found"
+          description="The requested material or service may have been unlisted or removed."
+          canonicalPath="/listings"
+        />
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
+          <h2 className="text-2xl font-bold text-slate-900">Listing Not Found</h2>
+          <p className="text-sm text-slate-500">The requested material or service may have been unlisted or removed.</p>
+          <Button variant="primary" onClick={onBack}>
+            Back to Listings
+          </Button>
+        </div>
+      </>
     );
   }
 
@@ -133,8 +148,80 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
   const favorited = isFavorite(listing.id);
   const images = listing.images && listing.images.length > 0 ? listing.images : ['https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=800&q=80'];
 
+  // Generate SEO title
+  const seoTitle = `${listing.title} in ${listing.location.region} | Ujenzi Link`;
+  const seoDescription = listing.description
+    ? listing.description.substring(0, 160)
+    : `View ${listing.title} from ${listing.providerName}. Available in ${listing.location.region}, Tanzania. Direct supplier pricing.`;
+
+  // Generate slug for future URL routing
+  const listingSlug = generateListingSlug(listing.title, listing.location.region);
+  const shortId = getShortId(listing.id);
+  const slugWithId = createSlugWithId(listingSlug, shortId);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath="/listings"
+        // TODO: When implementing React Router, use: canonicalPath={`/listings/${slugWithId}`}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: listing.title,
+          description: listing.description,
+          image: listing.images && listing.images.length > 0 ? listing.images[0] : undefined,
+          category: listing.category,
+          ...(listing.price && listing.price > 0 && {
+            offers: {
+              '@type': 'Offer',
+              price: listing.price,
+              priceCurrency: listing.currency || 'TZS',
+              availability: listing.status === 'active' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              seller: {
+                '@type': 'Organization',
+                name: listing.providerName,
+              },
+            },
+          }),
+        }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: 'https://ujenzi-link.com',
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Materials & Services',
+              item: 'https://ujenzi-link.com/listings',
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: listing.title,
+            },
+          ],
+        }}
+      />
+      <Breadcrumb
+        items={[
+          { label: 'Home', onClick: () => onNavigate('home') },
+          { label: 'Materials & Services', onClick: () => onNavigate('listings') },
+          { label: listing.title },
+        ]}
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* Breadcrumb / Back button */}
       <div className="flex items-center justify-between">
         <button
@@ -174,10 +261,11 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
         <div className="lg:col-span-7 space-y-4">
           {/* Main Large Image */}
           <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-md">
-            <img
+            <LazyImage
               src={detailImageUrl(images[selectedImageIndex] || images[0])}
-              alt={listing.title}
+              alt={generateListingAltText(listing)}
               className="w-full h-full object-cover"
+              loading="eager"
             />
             <div className="absolute top-4 left-4">
               <span className="bg-[#1B3A6B]/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
@@ -204,7 +292,13 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                       : 'border-slate-200 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={thumbnailUrl(img)} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                  <LazyImage
+                    src={thumbnailUrl(img)}
+                    alt={`${listing.title} thumbnail ${idx + 1}`}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -341,9 +435,11 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
                 onClick={() => provider && onSelectProvider(provider)}
                 className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-[#2E86D8] cursor-pointer transition-colors"
               >
-                <img
+                <LazyImage
                   src={logoImageUrl(provider?.logo || 'https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?auto=format&fit=crop&w=150&q=80')}
-                  alt={listing.providerName}
+                  alt={generateListingAltText({ ...listing, title: listing.title, providerName: provider?.name || listing.providerName })}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
                 />
                 <div className="min-w-0 flex-1">
@@ -426,5 +522,6 @@ export const ListingDetailPage: React.FC<ListingDetailPageProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };

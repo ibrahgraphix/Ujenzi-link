@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
+import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 
 export const ContactPage: React.FC = () => {
@@ -58,7 +59,13 @@ export const ContactPage: React.FC = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-16">
+    <>
+      <Seo
+        title="Contact Ujenzi Link Support"
+        description="Get in touch with Ujenzi Link for supplier verification, corporate sourcing, advertising, or general support. Visit our Tanzania headquarters in Mwenge, Kinondoni."
+        canonicalPath="/contact"
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12 pb-16">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <span className="text-xs font-bold uppercase tracking-widest text-[#2E86D8] block">
@@ -223,5 +230,6 @@ export const ContactPage: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };

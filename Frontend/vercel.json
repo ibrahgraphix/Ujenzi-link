@@ -1,5 +1,34 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.ujenzi-link.com"
+        }
+      ],
+      "destination": "https://ujenzi-link.com/:path*",
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://ujenzi-link-backend.vercel.app/sitemap.xml"
+    },
+    {
+      "source": "/listings/:id",
+      "destination": "https://ujenzi-link-backend.vercel.app/html-meta/listings/:id"
+    },
+    {
+      "source": "/providers/:id",
+      "destination": "https://ujenzi-link-backend.vercel.app/html-meta/providers/:id"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

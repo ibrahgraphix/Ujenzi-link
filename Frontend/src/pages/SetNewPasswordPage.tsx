@@ -11,6 +11,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 
 interface SetNewPasswordPageProps {
@@ -82,7 +83,14 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({ onSucces
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0B192C] to-[#1B3A6B] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
+    <>
+      <Seo
+        title="Set New Password"
+        description="Secure password reset page for Ujenzi Link administrators."
+        canonicalPath="/set-new-password"
+        noindex
+      />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0B192C] to-[#1B3A6B] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
       {/* Background Decorative Rings */}
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#2E86D8]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -296,5 +304,6 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({ onSucces
         </p>
       </div>
     </div>
+    </>
   );
 };

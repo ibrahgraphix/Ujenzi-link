@@ -20,6 +20,7 @@ import { Button } from '../components/common/Button';
 import { Input } from '../components/common/Input';
 import { ListingCard } from '../components/common/ListingCard';
 import { EmptyState } from '../components/common/EmptyState';
+import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 import apiClient from '../services/apiClient';
 
@@ -117,7 +118,14 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <>
+      <Seo
+        title="Buyer Dashboard"
+        description="Manage your saved listings, inquiries, and project details on Ujenzi Link."
+        canonicalPath="/buyer-dashboard"
+        noindex
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Profile Ribbon */}
       <div className="bg-gradient-to-r from-[#12284C] to-[#1B3A6B] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -419,5 +427,6 @@ export const BuyerDashboardPage: React.FC<BuyerDashboardPageProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };

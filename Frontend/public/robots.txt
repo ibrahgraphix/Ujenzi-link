@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /login
+Disallow: /register
+Disallow: /buyer-dashboard
+Disallow: /provider-dashboard
+Disallow: /admin-dashboard
+Disallow: /set-new-password
+
+Sitemap: https://ujenzi-link.com/sitemap.xml

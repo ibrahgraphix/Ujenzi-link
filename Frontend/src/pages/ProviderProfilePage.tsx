@@ -23,9 +23,15 @@ import { ListingCard } from '../components/common/ListingCard';
 import { ProviderTypeBadge, VerifiedBadge, TradeCategoryBadge } from '../components/common/Badge';
 import { Modal } from '../components/common/Modal';
 import { Input, Textarea } from '../components/common/Input';
+import { Seo } from '../components/common/Seo';
+import { JsonLd } from '../components/common/JsonLd';
+import { Breadcrumb } from '../components/common/Breadcrumb';
+import { LazyImage } from '../components/common/LazyImage';
 import { useToast } from '../context/ToastContext';
 import { logoImageUrl } from '../utils/imagekit';
 import { trackSiteVisit } from '../services/adminAnalyticsService';
+import { generateProviderAltText } from '../utils/altText';
+import { generateProviderSlug, getShortId, createSlugWithId } from '../utils/slug';
 
 interface ProviderProfilePageProps {
   providerId: string;
@@ -95,12 +101,19 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
 
   if (!provider) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-slate-900">Provider Profile Not Found</h2>
-        <Button variant="primary" onClick={onBack}>
-          Back
-        </Button>
-      </div>
+      <>
+        <Seo
+          title="Provider Not Found"
+          description="The requested supplier or contractor profile may have been removed or is no longer active."
+          canonicalPath="/providers"
+        />
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
+          <h2 className="text-2xl font-bold text-slate-900">Provider Profile Not Found</h2>
+          <Button variant="primary" onClick={onBack}>
+            Back
+          </Button>
+        </div>
+      </>
     );
   }
 
@@ -185,8 +198,63 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
     );
   };
 
+  // Generate SEO title and description
+  const seoTitle = `${provider.fullName || provider.name} - ${provider.businessName} | Ujenzi Link`;
+  const seoDescription = provider.bio
+    ? provider.bio.substring(0, 160)
+    : `View ${provider.businessName}, a ${provider.providerType} in ${provider.location?.region || 'Tanzania'}. ${provider.specialties?.slice(0, 3).join(', ') || 'Construction services and supplies'}.`;
+
+  // Generate slug for future URL routing
+  const providerSlug = generateProviderSlug(
+    provider.fullName || provider.name,
+    provider.businessName,
+    provider.location?.region || 'Tanzania'
+  );
+  const shortId = getShortId(provider.id);
+  const slugWithId = createSlugWithId(providerSlug, shortId);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath="/providers"
+        // TODO: When implementing React Router, use: canonicalPath={`/providers/${slugWithId}`}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': provider.providerType === 'Contractor' || provider.providerType === 'Consultant' ? 'LocalBusiness' : 'Organization',
+          name: provider.fullName || provider.name,
+          legalName: provider.businessName,
+          description: provider.bio,
+          url: 'https://ujenzi-link.com',
+          logo: provider.logo,
+          telephone: provider.phone,
+          email: provider.email,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: provider.location?.district,
+            addressRegion: provider.location?.region,
+            addressCountry: provider.location?.country || 'Tanzania',
+          },
+          ...(provider.rating && {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: provider.rating,
+              reviewCount: provider.reviewsCount,
+            },
+          }),
+        }}
+      />
+      <Breadcrumb
+        items={[
+          { label: 'Home', onClick: () => onNavigate('home') },
+          { label: 'Suppliers & Contractors', onClick: () => onNavigate('providers') },
+          { label: provider.fullName || provider.name },
+        ]}
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* Back button */}
       <div>
         <button
@@ -213,10 +281,13 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
         <div className="px-6 sm:px-10 pb-8 pt-0 relative">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <img
+              <LazyImage
                 src={logoImageUrl(provider.logo)}
-                alt={provider.name}
+                alt={generateProviderAltText(provider)}
+                width={112}
+                height={112}
                 className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-4 border-white shadow-xl bg-white shrink-0 -mt-12 sm:-mt-14"
+                loading="eager"
               />
               <div className="pt-2 sm:pt-4">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -291,9 +362,11 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
           {/* Bio & Specialties */}
           <div className="mt-6 space-y-4">
             <div className="flex items-center gap-2.5 mb-2">
-              <img
+              <LazyImage
                 src="/logo.jpeg"
-                alt="Ujenzi Link Logo"
+                alt="Ujenzi Link Logo - Tanzania Construction Marketplace"
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-lg object-contain border border-slate-200"
               />
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
@@ -329,9 +402,11 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img
+            <LazyImage
               src="/logo.jpeg"
-              alt="Ujenzi Link Logo"
+              alt="Ujenzi Link Logo - Tanzania Construction Marketplace"
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-lg object-contain border border-slate-200"
             />
             <div>
@@ -511,5 +586,6 @@ export const ProviderProfilePage: React.FC<ProviderProfilePageProps> = ({
         </form>
       </Modal>
     </div>
+    </>
   );
 };

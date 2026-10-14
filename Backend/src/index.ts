@@ -17,6 +17,8 @@ import buyerProfileRoutes from './routes/buyerProfile';
 import uploadRoutes from './routes/uploads';
 import providerProfileRoutes from './routes/providerProfile';
 import trafficRoutes from './routes/traffic';
+import sitemapRoutes from './routes/sitemap';
+import htmlMetaRoutes from './routes/htmlMeta';
 import { config } from './config';
 
 const app = express();
@@ -77,6 +79,12 @@ app.use('/api/buyer', buyerProfileRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/provider', providerProfileRoutes);
 app.use('/api/traffic', trafficRoutes);
+
+// Sitemap (public, no /api prefix for SEO)
+app.use('/', sitemapRoutes);
+
+// HTML metadata injection (public, no /api prefix for SEO)
+app.use('/html-meta', htmlMetaRoutes);
 
 // Error handling
 app.use(errorHandler);

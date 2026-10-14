@@ -31,6 +31,7 @@ import { ImageUpload } from '../components/common/ImageUpload';
 import { ProviderTypeBadge, VerifiedBadge } from '../components/common/Badge';
 import { ListingCard } from '../components/common/ListingCard';
 import { EmptyState } from '../components/common/EmptyState';
+import { Seo } from '../components/common/Seo';
 import { useToast } from '../context/ToastContext';
 import { UploadedImage } from '../services/uploadService';
 import { logoImageUrl, thumbnailUrl } from '../utils/imagekit';
@@ -407,7 +408,14 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <>
+      <Seo
+        title="Provider Dashboard"
+        description="Manage your listings, inquiries, and business profile on Ujenzi Link."
+        canonicalPath="/provider-dashboard"
+        noindex
+      />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-[#12284C] via-[#1B3A6B] to-[#8B5E3C] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -1010,5 +1018,6 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         </form>
       </Modal>
     </div>
+    </>
   );
 };
