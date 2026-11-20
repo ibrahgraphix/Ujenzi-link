@@ -50,11 +50,29 @@ function mapBackendProvider(p: any): Provider {
 export async function getProviders(type?: string): Promise<Provider[]> {
   try {
     console.log('Fetching providers from public endpoint');
-    // Try public endpoint first for customer/client views
-    const res = await apiClient.get<any>('/api/provider/all', { cache: 'no-store' });
-    console.log('Provider API response:', res);
-    const items = Array.isArray(res) ? res : (res as any)?.providers || (res as any)?.data?.providers || [];
-    console.log('Extracted provider items:', items);
+    // The directory searches client-side, so load every API page before returning providers.
+    const limit = 100;
+    const firstPage = await apiClient.get<any>(
+      `/api/provider/all?page=1&limit=${limit}`,
+      { cache: 'no-store' }
+    );
+    console.log('Provider API response:', firstPage);
+
+    const getItems = (response: any): any[] =>
+      Array.isArray(response)
+        ? response
+        : response?.providers || response?.data?.providers || [];
+    const items = getItems(firstPage);
+    const totalPages = firstPage?.pagination?.totalPages || firstPage?.data?.pagination?.totalPages || 1;
+
+    for (let page = 2; page <= totalPages; page += 1) {
+      const response = await apiClient.get<any>(
+        `/api/provider/all?page=${page}&limit=${limit}`,
+        { cache: 'no-store' }
+      );
+      items.push(...getItems(response));
+    }
+
     if (Array.isArray(items)) {
       const mapped = items.map(mapBackendProvider);
       console.log('Mapped providers:', mapped);
