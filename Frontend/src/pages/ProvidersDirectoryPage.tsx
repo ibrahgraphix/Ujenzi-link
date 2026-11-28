@@ -20,6 +20,7 @@ import { getAdverts } from '../services/advertsService';
 import { ProviderTypeBadge, VerifiedBadge, TradeCategoryBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { AdvertBanner } from '../components/common/AdvertBanner';
+import { Pagination } from '../components/common/Pagination';
 import { Seo } from '../components/common/Seo';
 import { logoImageUrl } from '../utils/imagekit';
 import { useInquiry } from '../App';
@@ -103,6 +104,8 @@ export const ProvidersDirectoryPage: React.FC = () => {
   const [selectedRegion, setSelectedRegion] = useState<string>(searchParams.get('region') || '');
   const [query, setQuery] = useState<string>(searchParams.get('q') || '');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   // Sync filters → URL
   useEffect(() => {
@@ -111,6 +114,7 @@ export const ProvidersDirectoryPage: React.FC = () => {
     if (selectedType && selectedType !== 'all') params.type = selectedType;
     if (selectedRegion) params.region = selectedRegion;
     setSearchParams(params, { replace: true });
+    setCurrentPage(1);
   }, [query, selectedType, selectedRegion]);
 
   const handleSelectProvider = (provider: Provider) => {
@@ -160,6 +164,18 @@ export const ProvidersDirectoryPage: React.FC = () => {
     }
     return true;
   });
+
+  // Pagination slicing
+  const totalPages = Math.ceil(filteredProviders.length / itemsPerPage);
+  const displayedProviders = filteredProviders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <>
@@ -256,8 +272,9 @@ export const ProvidersDirectoryPage: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProviders.map((provider) => (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedProviders.map((provider) => (
             <div
               key={provider.id}
               onClick={() => handleSelectProvider(provider)}
@@ -326,8 +343,15 @@ export const ProvidersDirectoryPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </>
       )}
     </div>
     </>
